@@ -1,0 +1,98 @@
+# Timeseries Pipeline Frontend
+
+A Django-based frontend for visualizing time series analysis results.
+
+## Features (Planned)
+
+- User-friendly interface for time series analysis
+- Interactive charts with Plotly
+- Dropdown selection for different indices
+- Display for model statistics and forecasts
+- API integration with the backend pipeline
+- User authentication and saved analysis
+
+## Architecture
+
+- Django REST Framework
+- Plotly for interactive visualizations
+- Responsive design with Bootstrap
+- Django forms for user input
+
+## Development Roadmap
+
+1. **Setup Django Project**
+   - Initialize Django project structure
+   - Configure dev/prod settings
+   - Set up Django REST Framework
+
+2. **Create Core Views**
+   - Homepage w/intro
+   - Analysis w/forms
+   - Results w/visualizations
+
+3. **API Integration**
+   - Connect to backend API endpoints
+   - Handle authentication and data transfer
+   - Implement error handling
+
+4. **Dashboard Development**
+   - Design interactive dashboard
+   - Implement data visualizations
+   - Add filtering and customization options
+
+5. **Testing & Deployment**
+   - Write unit and integration tests
+   - Setup CI/CD with GitHub Actions
+   - Configure for prod deployment
+
+6. Check Django API for Beginners, advanced topics for more.
+
+## Getting Started (Future)
+
+```bash
+# Clone the repository
+git clone https://github.com/garthmortensen/timeseries-pipeline-frontend.git
+cd timeseries-pipeline-frontend
+
+# Create a virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run migrations
+python manage.py migrate
+
+# Start the development server
+python manage.py runserver
+```
+
+## Deployment
+
+Deploy frontend using:
+
+- Docker containers
+- AWS ECS or EKS (?)
+- Nginx for serving static files
+- HTTPS with Let's Encrypt (?)
+
+## Integration with Backend
+
+Frontend will communicate with the backend API via:
+
+- RESTful API calls
+- JSON data exchange
+- JWT tokens authentication
+
+## Design Principles
+
+- Clean, intuitive user interface
+- Mobile-responsive design
+- Accessible visualization options
+- Clear presentation of statistical results
+- Efficient API usage to minimize latency
+
+## License
+
+[MIT License](LICENSE)
