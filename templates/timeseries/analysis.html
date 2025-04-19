@@ -151,7 +151,23 @@
             </div>
         </div>
     </div>
-    
+
+    <div class="form-section">
+        <h3 class="section-header">Spillover Analysis</h3>
+        <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="enable-spillover" name="enable_spillover">
+            <label class="form-check-label" for="enable-spillover">Enable Spillover Analysis</label>
+        </div>
+        
+        <div id="spillover-params" style="display: none;">
+            <div class="mb-3">
+                <label for="forecast-horizon" class="form-label">Forecast Horizon</label>
+                <input type="number" class="form-control" id="forecast-horizon" name="forecast_horizon" min="1" max="30" value="10">
+                <div class="form-text">Number of periods for forecast variance decomposition</div>
+            </div>
+        </div>
+    </div>
+
     <div class="d-grid gap-2">
         <button type="submit" class="btn btn-primary btn-lg mb-4" id="run-analysis-btn">Run Analysis</button>
     </div>
@@ -275,6 +291,14 @@
                 
                 alert(`Error running analysis: ${error.message}`);
             });
+            
+        });
+        // Toggle Spillover parameters
+        const spilloverSwitch = document.getElementById('enable-spillover');
+        const spilloverParams = document.getElementById('spillover-params');
+
+        spilloverSwitch.addEventListener('change', function() {
+            spilloverParams.style.display = this.checked ? 'block' : 'none';
         });
     });
 </script>
