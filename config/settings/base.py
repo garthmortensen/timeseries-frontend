@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # config/settings/base.py
+
 """
 Base settings for the Timeseries Frontend project.
 """
