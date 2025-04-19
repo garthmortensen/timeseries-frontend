@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# timeseries/apps.py
+
 from django.apps import AppConfig
 
 

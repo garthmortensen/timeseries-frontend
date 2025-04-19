@@ -1,3 +1,5 @@
+# .gitignore
+
 # django custom .gitignore
 
 # remove all files from the index, preparing them to be re-evaluated against your .gitignore settings

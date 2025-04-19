@@ -1,9 +1,10 @@
-name: timeseries-frontend CI/CD
+# .github/workflows/cicd.yml
+name: CI/CD
 
 # Run workflow on push
 on: 
   push:
-    branches: [ main, dev ]  # Only run on main and develop branches for pushes
+    branches: [ main, redev ]  # Only run on main and develop branches for pushes
   pull_request:
     branches: [ main ]
 

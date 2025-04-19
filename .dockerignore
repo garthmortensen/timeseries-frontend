@@ -1,3 +1,5 @@
+# .dockerignore
+
 # django customized .dockerignore
 
 # Git
