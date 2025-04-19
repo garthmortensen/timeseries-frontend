@@ -5,6 +5,3 @@
 Timeseries app initialization.
 """
 default_app_config = 'timeseries.apps.TimeseriesConfig'
-
-from utilities.chronicler import init_chronicler
-chronicler = init_chronicler()
