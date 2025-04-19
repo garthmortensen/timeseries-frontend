@@ -43,7 +43,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'djangosecure.middleware.SecurityMiddleware',
     'csp.middleware.CSPMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
