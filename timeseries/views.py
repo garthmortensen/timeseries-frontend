@@ -13,7 +13,8 @@ from django.http import JsonResponse
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 
-# Set up logger
+from utilities.chronicler import init_chronicler
+chronicler = init_chronicler()
 logger = logging.getLogger(__name__)
 
 def index(request):
