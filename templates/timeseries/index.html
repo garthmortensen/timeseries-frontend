@@ -1,0 +1,48 @@
+<!-- templates/timeseries/index.html -->
+
+{% extends 'base.html' %}
+
+{% block title %}Home - Timeseries Pipeline{% endblock %}
+
+{% block content %}
+<div class="jumbotron p-5 mb-4 bg-light rounded-3">
+    <h1 class="display-4">Timeseries Pipeline Frontend</h1>
+    <p class="lead">A Django-based frontend for visualizing time series analysis results.</p>
+    <hr class="my-4">
+    <p>This application connects to the Timeseries Pipeline API to analyze financial time series data using ARIMA and GARCH models.</p>
+    <a class="btn btn-primary btn-lg" href="{% url 'timeseries:analysis' %}" role="button">Start Analysis</a>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4>Data Sources</h4>
+            </div>
+            <div class="card-body">
+                <p>Choose between Yahoo Finance market data or synthetic data generation for your analysis.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4>Statistical Models</h4>
+            </div>
+            <div class="card-body">
+                <p>Apply ARIMA models for trend analysis and GARCH models for volatility forecasting.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4>Visualization</h4>
+            </div>
+            <div class="card-body">
+                <p>Interactive charts powered by Plotly to explore and interpret your analysis results.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

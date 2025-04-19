@@ -1,0 +1,281 @@
+<!-- templates/timeseries/analysis.html -->
+
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Analysis - Timeseries Pipeline{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+    }
+    
+    .section-header {
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Time Series Analysis</h1>
+
+<div class="alert alert-info" role="alert">
+    Configure your analysis parameters below and click "Run Analysis" to generate results.
+</div>
+
+<form id="analysis-form" method="post" action="{% url 'timeseries:run_pipeline' %}">
+    {% csrf_token %}
+    
+    <div class="form-section">
+        <h3 class="section-header">Data Source</h3>
+        <div class="form-check mb-3">
+            <input class="form-check-input" type="radio" name="source_actual_or_synthetic_data" id="data-source-actual" value="actual" checked>
+            <label class="form-check-label" for="data-source-actual">
+                Yahoo Finance Market Data
+            </label>
+        </div>
+        <div class="form-check mb-3">
+            <input class="form-check-input" type="radio" name="source_actual_or_synthetic_data" id="data-source-synthetic" value="synthetic">
+            <label class="form-check-label" for="data-source-synthetic">
+                Synthetic Data
+            </label>
+        </div>
+        
+        <!-- Market Data Parameters -->
+        <div id="market-params">
+            <div class="mb-3">
+                <label for="symbols" class="form-label">Symbols (comma-separated)</label>
+                <input type="text" class="form-control" id="symbols" name="symbols" value="AAPL,MSFT,GOOGL">
+            </div>
+        </div>
+        
+        <!-- Synthetic Data Parameters -->
+        <div id="synthetic-params" style="display: none;">
+            <div class="mb-3">
+                <label for="synthetic-symbols" class="form-label">Synthetic Symbols (comma-separated)</label>
+                <input type="text" class="form-control" id="synthetic-symbols" name="synthetic_symbols" value="SYM1,SYM2,SYM3">
+            </div>
+            <div class="mb-3">
+                <label for="synthetic-anchor-prices" class="form-label">Anchor Prices (comma-separated)</label>
+                <input type="text" class="form-control" id="synthetic-anchor-prices" name="synthetic_anchor_prices" value="150,200,15">
+            </div>
+            <div class="mb-3">
+                <label for="synthetic-random-seed" class="form-label">Random Seed</label>
+                <input type="number" class="form-control" id="synthetic-random-seed" name="synthetic_random_seed" value="1">
+            </div>
+        </div>
+        
+        <!-- Date Range (common to both) -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="data-start-date" class="form-label">Start Date</label>
+                    <input type="date" class="form-control" id="data-start-date" name="data_start_date" value="2023-01-01">
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="data-end-date" class="form-label">End Date</label>
+                    <input type="date" class="form-control" id="data-end-date" name="data_end_date" value="2023-02-01">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="form-section">
+        <h3 class="section-header">Data Preprocessing</h3>
+        <div class="mb-3">
+            <label for="scaling-method" class="form-label">Scaling Method</label>
+            <select class="form-select" id="scaling-method" name="scaling_method">
+                <option value="standardize">Standardize (Z-score)</option>
+                <option value="minmax">Min-Max Scaling</option>
+                <option value="none">No Scaling</option>
+            </select>
+        </div>
+    </div>
+    
+    <div class="form-section">
+        <h3 class="section-header">ARIMA Model Parameters</h3>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label for="arima-p" class="form-label">p (AR Order)</label>
+                    <input type="number" class="form-control" id="arima-p" name="arima_p" min="0" max="10" value="2">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label for="arima-d" class="form-label">d (Differencing)</label>
+                    <input type="number" class="form-control" id="arima-d" name="arima_d" min="0" max="2" value="1">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label for="arima-q" class="form-label">q (MA Order)</label>
+                    <input type="number" class="form-control" id="arima-q" name="arima_q" min="0" max="10" value="4">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="form-section">
+        <h3 class="section-header">GARCH Model Parameters</h3>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label for="garch-p" class="form-label">p (ARCH Order)</label>
+                    <input type="number" class="form-control" id="garch-p" name="garch_p" min="0" max="5" value="1">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label for="garch-q" class="form-label">q (GARCH Order)</label>
+                    <input type="number" class="form-control" id="garch-q" name="garch_q" min="0" max="5" value="1">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label for="garch-dist" class="form-label">Distribution</label>
+                    <select class="form-select" id="garch-dist" name="garch_dist">
+                        <option value="normal">Normal</option>
+                        <option value="t" selected>Student's t</option>
+                        <option value="skewt">Skewed t</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="d-grid gap-2">
+        <button type="submit" class="btn btn-primary btn-lg mb-4" id="run-analysis-btn">Run Analysis</button>
+    </div>
+</form>
+
+<div id="loading" class="text-center" style="display: none;">
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-2">Running analysis, please wait...</p>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Toggle between market and synthetic data parameters
+        const actualRadio = document.getElementById('data-source-actual');
+        const syntheticRadio = document.getElementById('data-source-synthetic');
+        const marketParams = document.getElementById('market-params');
+        const syntheticParams = document.getElementById('synthetic-params');
+        
+        actualRadio.addEventListener('change', function() {
+            if (this.checked) {
+                marketParams.style.display = 'block';
+                syntheticParams.style.display = 'none';
+            }
+        });
+        
+        syntheticRadio.addEventListener('change', function() {
+            if (this.checked) {
+                marketParams.style.display = 'none';
+                syntheticParams.style.display = 'block';
+            }
+        });
+        
+        // Handle form submission
+        const form = document.getElementById('analysis-form');
+        const loadingIndicator = document.getElementById('loading');
+        
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Show loading indicator
+            loadingIndicator.style.display = 'block';
+            form.style.display = 'none';
+            
+            // Prepare form data
+            const formData = new FormData(form);
+            const data = {};
+            
+            // Convert FormData to a plain object
+            for (const [key, value] of formData.entries()) {
+                data[key] = value;
+            }
+            
+            // Special handling for symbols and synthetic_anchor_prices
+            if (data.symbols) {
+                data.symbols = data.symbols.split(',').map(s => s.trim());
+            }
+            
+            if (data.synthetic_symbols) {
+                data.synthetic_symbols = data.synthetic_symbols.split(',').map(s => s.trim());
+            }
+            
+            if (data.synthetic_anchor_prices) {
+                data.synthetic_anchor_prices = data.synthetic_anchor_prices.split(',').map(p => parseFloat(p.trim()));
+            }
+            
+            // Construct ARIMA and GARCH params objects
+            data.arima_params = {
+                p: parseInt(data.arima_p),
+                d: parseInt(data.arima_d),
+                q: parseInt(data.arima_q)
+            };
+            
+            data.garch_params = {
+                p: parseInt(data.garch_p),
+                q: parseInt(data.garch_q),
+                dist: data.garch_dist
+            };
+            
+            // Remove individual parameters that are now in objects
+            delete data.arima_p;
+            delete data.arima_d;
+            delete data.arima_q;
+            delete data.garch_p;
+            delete data.garch_q;
+            delete data.garch_dist;
+            
+            // Send the AJAX request
+            fetch('{% url "timeseries:run_pipeline" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': data.csrfmiddlewaretoken
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(`API Error: ${JSON.stringify(err)}`);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Store results in sessionStorage for the results page
+                sessionStorage.setItem('analysisResults', JSON.stringify(data));
+                
+                // Redirect to results page
+                window.location.href = '{% url "timeseries:results" %}';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                
+                // Show error message
+                loadingIndicator.style.display = 'none';
+                form.style.display = 'block';
+                
+                alert(`Error running analysis: ${error.message}`);
+            });
+        });
+    });
+</script>
+{% endblock %}

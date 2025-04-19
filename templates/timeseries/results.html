@@ -1,0 +1,238 @@
+<!-- templates/timeseries/results.html -->
+
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Results - Timeseries Pipeline{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Analysis Results</h1>
+
+<div id="no-results" class="alert alert-warning" style="display: none;">
+    <p>No analysis results found. Please run an analysis first.</p>
+    <a href="{% url 'timeseries:analysis' %}" class="btn btn-primary">Go to Analysis</a>
+</div>
+
+<div id="results-container" style="display: none;">
+    <ul class="nav nav-tabs mb-4" id="resultsTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="time-series-tab" data-bs-toggle="tab" data-bs-target="#time-series" 
+                    type="button" role="tab" aria-controls="time-series" aria-selected="true">
+                Time Series
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="stationarity-tab" data-bs-toggle="tab" data-bs-target="#stationarity" 
+                    type="button" role="tab" aria-controls="stationarity" aria-selected="false">
+                Stationarity
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="arima-tab" data-bs-toggle="tab" data-bs-target="#arima" 
+                    type="button" role="tab" aria-controls="arima" aria-selected="false">
+                ARIMA
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="garch-tab" data-bs-toggle="tab" data-bs-target="#garch" 
+                    type="button" role="tab" aria-controls="garch" aria-selected="false">
+                GARCH
+            </button>
+        </li>
+    </ul>
+    
+    <div class="tab-content" id="resultsTabsContent">
+        <!-- Time Series Tab -->
+        <div class="tab-pane fade show active" id="time-series" role="tabpanel" aria-labelledby="time-series-tab">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Time Series Plot</h5>
+                </div>
+                <div class="card-body">
+                    <div id="time-series-plot" style="height: 500px;"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Stationarity Tab -->
+        <div class="tab-pane fade" id="stationarity" role="tabpanel" aria-labelledby="stationarity-tab">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Stationarity Test Results</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert" id="stationarity-alert">
+                        <strong>Interpretation:</strong> <span id="stationarity-interpretation"></span>
+                    </div>
+                    
+                    <h6>ADF Test Results</h6>
+                    <table class="table table-bordered">
+                        <tbody>
+                            <tr>
+                                <th>ADF Statistic</th>
+                                <td id="adf-statistic"></td>
+                            </tr>
+                            <tr>
+                                <th>p-value</th>
+                                <td id="p-value"></td>
+                            </tr>
+                            <tr>
+                                <th>Is Stationary</th>
+                                <td id="is-stationary"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <h6>Critical Values</h6>
+                    <table class="table table-bordered" id="critical-values-table">
+                        <thead>
+                            <tr>
+                                <th>Significance Level</th>
+                                <th>Critical Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Will be filled dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ARIMA Tab -->
+        <div class="tab-pane fade" id="arima" role="tabpanel" aria-labelledby="arima-tab">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">ARIMA Model Results</h5>
+                </div>
+                <div class="card-body">
+                    <h6>Model Summary</h6>
+                    <pre id="arima-summary" class="p-3 bg-light rounded"></pre>
+                    
+                    <h6>Forecast</h6>
+                    <div id="arima-forecast-plot" style="height: 400px;"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- GARCH Tab -->
+        <div class="tab-pane fade" id="garch" role="tabpanel" aria-labelledby="garch-tab">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">GARCH Model Results</h5>
+                </div>
+                <div class="card-body">
+                    <h6>Model Summary</h6>
+                    <pre id="garch-summary" class="p-3 bg-light rounded"></pre>
+                    
+                    <h6>Volatility Forecast</h6>
+                    <div id="garch-forecast-plot" style="height: 400px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Try to get analysis results from sessionStorage
+        const resultsJson = sessionStorage.getItem('analysisResults');
+        
+        if (!resultsJson) {
+            // No results found, show message
+            document.getElementById('no-results').style.display = 'block';
+            document.getElementById('results-container').style.display = 'none';
+            return;
+        }
+        
+        // Parse results JSON
+        const results = JSON.parse(resultsJson);
+        
+        // Show results container
+        document.getElementById('no-results').style.display = 'none';
+        document.getElementById('results-container').style.display = 'block';
+        
+        // Populate stationarity tab
+        const stationarityResults = results.stationarity_results;
+        
+        document.getElementById('stationarity-interpretation').textContent = stationarityResults.interpretation;
+        document.getElementById('adf-statistic').textContent = stationarityResults.adf_statistic.toFixed(4);
+        document.getElementById('p-value').textContent = stationarityResults.p_value.toFixed(4);
+        document.getElementById('is-stationary').textContent = stationarityResults.is_stationary ? 'Yes' : 'No';
+        
+        // Set alert class based on stationarity
+        const stationarityAlert = document.getElementById('stationarity-alert');
+        stationarityAlert.className = stationarityResults.is_stationary ? 
+            'alert alert-success' : 'alert alert-warning';
+        
+        // Populate critical values table
+        const criticalValuesTable = document.getElementById('critical-values-table').getElementsByTagName('tbody')[0];
+        for (const [level, value] of Object.entries(stationarityResults.critical_values)) {
+            const row = criticalValuesTable.insertRow();
+            const levelCell = row.insertCell(0);
+            const valueCell = row.insertCell(1);
+            
+            levelCell.textContent = level;
+            valueCell.textContent = value.toFixed(4);
+        }
+        
+        // Populate ARIMA tab
+        document.getElementById('arima-summary').textContent = results.arima_summary;
+        
+        // Populate GARCH tab
+        document.getElementById('garch-summary').textContent = results.garch_summary;
+        
+        // Create time series plot
+        const timeSeriesPlot = document.getElementById('time-series-plot');
+        Plotly.newPlot(timeSeriesPlot, [{
+            x: Array.from({ length: results.arima_forecast.length }, (_, i) => i),
+            y: results.arima_forecast,
+            type: 'scatter',
+            mode: 'lines',
+            name: 'Time Series'
+        }], {
+            title: 'Time Series Data',
+            xaxis: { title: 'Time' },
+            yaxis: { title: 'Value' }
+        });
+        
+        // Create ARIMA forecast plot
+        const arimaForecastPlot = document.getElementById('arima-forecast-plot');
+        Plotly.newPlot(arimaForecastPlot, [{
+            x: Array.from({ length: results.arima_forecast.length }, (_, i) => i),
+            y: results.arima_forecast,
+            type: 'scatter',
+            mode: 'lines',
+            name: 'ARIMA Forecast'
+        }], {
+            title: 'ARIMA Forecast',
+            xaxis: { title: 'Time' },
+            yaxis: { title: 'Value' }
+        });
+        
+        // Create GARCH forecast plot
+        const garchForecastPlot = document.getElementById('garch-forecast-plot');
+        Plotly.newPlot(garchForecastPlot, [{
+            x: Array.from({ length: results.garch_forecast.length }, (_, i) => i),
+            y: results.garch_forecast,
+            type: 'scatter',
+            mode: 'lines',
+            name: 'GARCH Forecast'
+        }], {
+            title: 'Volatility Forecast',
+            xaxis: { title: 'Time' },
+            yaxis: { title: 'Volatility' }
+        });
+        
+        // Resize plots when tabs are shown
+        const tabElements = document.querySelectorAll('button[data-bs-toggle="tab"]');
+        tabElements.forEach(tab => {
+            tab.addEventListener('shown.bs.tab', function() {
+                window.dispatchEvent(new Event('resize'));
+            });
+        });
+    });
+</script>
+{% endblock %}
