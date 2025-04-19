@@ -16,10 +16,6 @@ chronicler = get_chronicler()
 env_path = Path('.') / '.env'
 load_dotenv(dotenv_path=env_path)
 
-# Load environment variables from .env file
-env_path = Path('.') / '.env'
-load_dotenv(dotenv_path=env_path)
-
 def main():
     """Run administrative tasks."""
     # Default to development settings if DJANGO_SETTINGS_MODULE is not set
