@@ -27,7 +27,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # Third party apps
     'whitenoise.runserver_nostatic',
-    'djangosecure',
     'csp',
     'debug_toolbar',
     # Local apps
