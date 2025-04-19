@@ -6,6 +6,11 @@ Production settings for the Timeseries Frontend project.
 """
 import os
 from .base import *
+from .security_settings import configure_for_production
+
+# Enable production security settings
+production_security = configure_for_production(is_production=True)
+globals().update(production_security)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
