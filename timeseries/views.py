@@ -13,9 +13,6 @@ from django.http import JsonResponse
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 
-from utilities import get_chronicler
-# Get the singleton instance
-chronicler = get_chronicler()
 logger = logging.getLogger(__name__)
 
 def index(request):

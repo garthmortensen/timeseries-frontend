@@ -112,6 +112,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 TIMESERIES_API_URL = os.environ.get('TIMESERIES_API_URL', 'http://localhost:8001')
 
 # Logging configuration
+# Logging configuration
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -133,9 +134,11 @@ LOGGING = {
         },
         'file': {
             'level': 'INFO',
-            'class': 'logging.FileHandler',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
             'filename': BASE_DIR / 'logs/app.log',
             'formatter': 'verbose',
+            'when': 'midnight',
+            'backupCount': 7,
         },
     },
     'root': {

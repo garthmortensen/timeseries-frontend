@@ -7,10 +7,6 @@ import os
 import sys
 from pathlib import Path
 from dotenv import load_dotenv
-from utilities import get_chronicler
-
-# Initialize logging with Chronicler
-chronicler = get_chronicler()
 
 # Load environment variables from .env file
 env_path = Path('.') / '.env'
