@@ -17,7 +17,6 @@
      ╚═╝     ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝   ╚═╝   ╚══════╝╚═╝  ╚═══╝╚═════╝
 ```
 
-TODO: initialize django
 TODO: Add codecov
 TODO: Add docker
 TODO: Add pytests
