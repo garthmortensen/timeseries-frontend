@@ -8,8 +8,7 @@
    - Different configurations for development vs production environments
 
 2. **Environment Detection**:
-   - Checks for `PYTHONANYWHERE_DOMAIN` to determine hosting environment
-   - Adjusts settings like `DEBUG` and `ALLOWED_HOSTS` accordingly
+   - Adjusts settings like `DEBUG` and `ALLOWED_HOSTS`
 
 ## Security Implementations
 
@@ -107,4 +106,3 @@
    - Set up appropriate security headers
    - Prepare logging structure
    - Configure media and static file handling
-

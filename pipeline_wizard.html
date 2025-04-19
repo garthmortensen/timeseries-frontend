@@ -1,0 +1,571 @@
+<!-- templates/timeseries/pipeline_wizard.html -->
+ {% extends "base.html" %}
+{% load static %}
+
+{% block title %}Time Series Analysis Pipeline{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-color: #2c3e50;
+        --accent-color: #3498db;
+        --success-color: #27ae60;
+        --light-bg: #ecf0f1;
+    }
+    
+    .wizard-container {
+        max-width: 900px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    
+    .wizard-header {
+        background: var(--primary-color);
+        color: white;
+        padding: 20px;
+        text-align: center;
+    }
+    
+    .wizard-steps {
+        display: flex;
+        padding: 15px;
+        background: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+        overflow-x: auto;
+    }
+    
+    .step-item {
+        flex: 1;
+        text-align: center;
+        padding: 10px;
+        position: relative;
+        font-size: 14px;
+        font-weight: 500;
+        color: #6c757d;
+        min-width: 100px;
+        cursor: pointer;
+    }
+    
+    .step-item.active {
+        color: var(--accent-color);
+        font-weight: 700;
+    }
+    
+    .step-item.completed {
+        color: var(--success-color);
+    }
+    
+    .step-item::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: #dee2e6;
+    }
+    
+    .step-item.active::after {
+        background: var(--accent-color);
+    }
+    
+    .step-item.completed::after {
+        background: var(--success-color);
+    }
+    
+    .form-section {
+        display: none;
+        padding: 30px;
+    }
+    
+    .form-section.active {
+        display: block;
+        animation: fadeIn 0.5s;
+    }
+    
+    .section-title {
+        margin-bottom: 20px;
+        color: var(--primary-color);
+        border-bottom: 2px solid var(--accent-color);
+        padding-bottom: 10px;
+    }
+    
+    .parameter-card {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        border-left: 4px solid var(--accent-color);
+    }
+    
+    .wizard-buttons {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 30px;
+    }
+    
+    .tooltip-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 18px;
+        height: 18px;
+        background: var(--primary-color);
+        color: white;
+        border-radius: 50%;
+        font-size: 12px;
+        margin-left: 5px;
+        cursor: help;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="wizard-container">
+    <div class="wizard-header">
+        <h1>Time Series Analysis Pipeline</h1>
+        <p class="mb-0">Configure your analysis in six simple steps</p>
+    </div>
+    
+    <div class="wizard-steps">
+        <div class="step-item active" data-step="data-input">1. Data Input</div>
+        <div class="step-item" data-step="preprocessing">2. Preprocessing</div>
+        <div class="step-item" data-step="arima-modeling">3. ARIMA</div>
+        <div class="step-item" data-step="garch-modeling">4. GARCH</div>
+        <div class="step-item" data-step="spillover">5. Spillover</div>
+        <div class="step-item" data-step="review">6. Review & Run</div>
+    </div>
+    
+    <form id="analysis-form" method="post" action="{% url 'pipeline_submit' %}">
+        {% csrf_token %}
+        
+        <!-- Step 1: Data Input -->
+        <div class="form-section active" id="data-input-section">
+            <h3 class="section-title">Data Input</h3>
+            
+            <div class="parameter-card">
+                <div class="mb-3">
+                    <label class="form-label">Data Source</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="data_source" id="synthetic-data" value="synthetic" checked>
+                        <label class="form-check-label" for="synthetic-data">
+                            Generate Synthetic Data
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="data_source" id="actual-data" value="actual">
+                        <label class="form-check-label" for="actual-data">
+                            Fetch Yahoo Finance Market Data
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="synthetic-data-params" class="parameter-card">
+                <h5>Synthetic Data Parameters</h5>
+                <div class="mb-3">
+                    <label for="start-date" class="form-label">Start Date</label>
+                    <input type="date" class="form-control" id="start-date" name="start_date" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="end-date" class="form-label">End Date</label>
+                    <input type="date" class="form-control" id="end-date" name="end_date" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="anchor-prices" class="form-label">
+                        Anchor Prices 
+                        <span class="tooltip-icon" title="Enter as JSON with ticker symbols and starting prices">?</span>
+                    </label>
+                    <textarea class="form-control" id="anchor-prices" name="anchor_prices" rows="3" placeholder='{"GME": 150.0, "BYND": 200.0, "BP": 15.0}' required></textarea>
+                    <div class="form-text">Example: {"GME": 150.0, "BYND": 200.0, "BP": 15.0}</div>
+                </div>
+            </div>
+            
+            <div id="actual-data-params" class="parameter-card" style="display: none;">
+                <h5>Market Data Parameters</h5>
+                <div class="mb-3">
+                    <label for="ticker-symbols" class="form-label">Ticker Symbols</label>
+                    <input type="text" class="form-control" id="ticker-symbols" name="ticker_symbols" placeholder="AAPL, MSFT, GOOGL">
+                    <div class="form-text">Enter comma-separated ticker symbols</div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="data-start-date" class="form-label">Start Date</label>
+                    <input type="date" class="form-control" id="data-start-date" name="data_start_date">
+                </div>
+                
+                <div class="mb-3">
+                    <label for="data-end-date" class="form-label">End Date</label>
+                    <input type="date" class="form-control" id="data-end-date" name="data_end_date">
+                </div>
+            </div>
+            
+            <div class="wizard-buttons">
+                <button type="button" class="btn btn-secondary btn-prev" disabled>Previous</button>
+                <button type="button" class="btn btn-primary btn-next">Next</button>
+            </div>
+        </div>
+        
+        <!-- Step 2: Preprocessing -->
+        <div class="form-section" id="preprocessing-section">
+            <h3 class="section-title">Preprocessing Options</h3>
+            
+            <div class="parameter-card">
+                <h5>Log Returns</h5>
+                <p>Convert prices to log returns to address non-stationarity issues</p>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="log-returns-switch" name="use_log_returns" checked>
+                    <label class="form-check-label" for="log-returns-switch">Enable log returns conversion</label>
+                </div>
+            </div>
+            
+            <div class="parameter-card">
+                <h5>Stationarity Testing</h5>
+                <p>Test if your data is constant over time (required for ARIMA/GARCH)</p>
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" id="stationarity-switch" name="run_stationarity_test" checked>
+                    <label class="form-check-label" for="stationarity-switch">Run ADF stationarity test</label>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="adf-significance" class="form-label">ADF Test Significance Level</label>
+                    <select class="form-select" id="adf-significance" name="adf_significance">
+                        <option value="0.01">1% (Most Strict)</option>
+                        <option value="0.05" selected>5% (Recommended)</option>
+                        <option value="0.1">10% (Least Strict)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="parameter-card">
+                <h5>Scaling Method</h5>
+                <p>Standardize data to prevent numerical issues in GARCH modeling</p>
+                <div class="mb-3">
+                    <label for="scaling-method" class="form-label">Scaling Method</label>
+                    <select class="form-select" id="scaling-method" name="scaling_method">
+                        <option value="standardize" selected>Standardize (Z-score)</option>
+                        <option value="minmax">Min-Max Scaling</option>
+                        <option value="none">No Scaling</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="wizard-buttons">
+                <button type="button" class="btn btn-secondary btn-prev">Previous</button>
+                <button type="button" class="btn btn-primary btn-next">Next</button>
+            </div>
+        </div>
+        
+        <!-- Step 3: ARIMA Modeling -->
+        <div class="form-section" id="arima-modeling-section">
+            <h3 class="section-title">ARIMA Modeling</h3>
+            
+            <div class="parameter-card">
+                <p>ARIMA combines Autoregressive (AR), Integrated (I), and Moving Average (MA) components</p>
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="arima_method" id="auto-arima" value="auto" checked>
+                        <label class="form-check-label" for="auto-arima">
+                            Auto ARIMA (Automatically find optimal parameters)
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="arima_method" id="manual-arima" value="manual">
+                        <label class="form-check-label" for="manual-arima">
+                            Manual ARIMA (Specify parameters)
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="manual-arima-params" class="parameter-card" style="display: none;">
+                <h5>ARIMA Parameters</h5>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="arima-p" class="form-label">p (AR Order)</label>
+                            <input type="number" class="form-control" id="arima-p" name="arima_p" min="0" max="5" value="1">
+                            <div class="form-text">Autoregressive order</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="arima-d" class="form-label">d (Differencing)</label>
+                            <input type="number" class="form-control" id="arima-d" name="arima_d" min="0" max="2" value="1">
+                            <div class="form-text">Differencing order</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="arima-q" class="form-label">q (MA Order)</label>
+                            <input type="number" class="form-control" id="arima-q" name="arima_q" min="0" max="5" value="1">
+                            <div class="form-text">Moving average order</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="wizard-buttons">
+                <button type="button" class="btn btn-secondary btn-prev">Previous</button>
+                <button type="button" class="btn btn-primary btn-next">Next</button>
+            </div>
+        </div>
+        
+        <!-- Step 4: GARCH Modeling -->
+        <div class="form-section" id="garch-modeling-section">
+            <h3 class="section-title">GARCH Modeling</h3>
+            
+            <div class="parameter-card">
+                <p>GARCH models volatility clustering in financial time series</p>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="garch-p" class="form-label">p (GARCH Order)</label>
+                            <input type="number" class="form-control" id="garch-p" name="garch_p" min="0" max="5" value="1">
+                            <div class="form-text">GARCH order</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="garch-q" class="form-label">q (ARCH Order)</label>
+                            <input type="number" class="form-control" id="garch-q" name="garch_q" min="0" max="5" value="1">
+                            <div class="form-text">ARCH order</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="garch-dist" class="form-label">Distribution</label>
+                            <select class="form-select" id="garch-dist" name="garch_dist">
+                                <option value="normal">Normal</option>
+                                <option value="t" selected>Student's t</option>
+                                <option value="skewed-t">Skewed Student's t</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="wizard-buttons">
+                <button type="button" class="btn btn-secondary btn-prev">Previous</button>
+                <button type="button" class="btn btn-primary btn-next">Next</button>
+            </div>
+        </div>
+        
+        <!-- Step 5: Spillover Analysis -->
+        <div class="form-section" id="spillover-section">
+            <h3 class="section-title">Spillover Analysis</h3>
+            
+            <div class="parameter-card">
+                <p>Spillover analysis examines how movements in one time series affect others</p>
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" id="spillover-switch" name="run_spillover_analysis">
+                    <label class="form-check-label" for="spillover-switch">Enable spillover analysis</label>
+                </div>
+                
+                <div id="spillover-params" style="display: none;">
+                    <div class="mb-3">
+                        <label for="forecast-horizon" class="form-label">Forecast Horizon</label>
+                        <input type="number" class="form-control" id="forecast-horizon" name="forecast_horizon" min="1" max="30" value="10">
+                        <div class="form-text">Number of periods for forecast variance decomposition</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="wizard-buttons">
+                <button type="button" class="btn btn-secondary btn-prev">Previous</button>
+                <button type="button" class="btn btn-primary btn-next">Next</button>
+            </div>
+        </div>
+        
+        <!-- Step 6: Review & Run -->
+        <div class="form-section" id="review-section">
+            <h3 class="section-title">Review & Run Analysis</h3>
+            
+            <div class="parameter-card">
+                <h5>Analysis Configuration Summary</h5>
+                <div id="configuration-summary">
+                    <div class="alert alert-info">
+                        Your configuration will be summarized here once you complete all steps.
+                    </div>
+                </div>
+            </div>
+            
+            <div class="wizard-buttons">
+                <button type="button" class="btn btn-secondary btn-prev">Previous</button>
+                <button type="submit" class="btn btn-success btn-lg">Run Analysis</button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Step navigation
+    const sections = document.querySelectorAll('.form-section');
+    const steps = document.querySelectorAll('.step-item');
+    const prevBtns = document.querySelectorAll('.btn-prev');
+    const nextBtns = document.querySelectorAll('.btn-next');
+    
+    // Toggle between synthetic and actual data
+    const dataSourceRadios = document.querySelectorAll('input[name="data_source"]');
+    const syntheticParams = document.getElementById('synthetic-data-params');
+    const actualParams = document.getElementById('actual-data-params');
+    
+    // Toggle ARIMA parameters
+    const arimaMethodRadios = document.querySelectorAll('input[name="arima_method"]');
+    const manualArimaParams = document.getElementById('manual-arima-params');
+    
+    // Toggle Spillover parameters
+    const spilloverSwitch = document.getElementById('spillover-switch');
+    const spilloverParams = document.getElementById('spillover-params');
+    
+    // Form data collector for summary
+    const form = document.getElementById('analysis-form');
+    const configSummary = document.getElementById('configuration-summary');
+    
+    // Helper function to find current active step index
+    function getCurrentStepIndex() {
+        let activeIndex = 0;
+        sections.forEach((section, index) => {
+            if (section.classList.contains('active')) {
+                activeIndex = index;
+            }
+        });
+        return activeIndex;
+    }
+    
+    // Go to specific step
+    function goToStep(index) {
+        sections.forEach(section => section.classList.remove('active'));
+        steps.forEach(step => {
+            step.classList.remove('active');
+            step.classList.remove('completed');
+        });
+        
+        // Mark completed steps
+        for (let i = 0; i < index; i++) {
+            steps[i].classList.add('completed');
+        }
+        
+        // Mark active step
+        steps[index].classList.add('active');
+        sections[index].classList.add('active');
+        
+        // Update summary if we're on the last step
+        if (index === sections.length - 1) {
+            updateSummary();
+        }
+    }
+    
+    // Update configuration summary
+    function updateSummary() {
+        const formData = new FormData(form);
+        let summaryHTML = '<dl class="row">';
+        
+        // Data source
+        const dataSource = formData.get('data_source');
+        summaryHTML += `<dt class="col-sm-4">Data Source</dt><dd class="col-sm-8">${dataSource === 'synthetic' ? 'Synthetic Data' : 'Yahoo Finance Market Data'}</dd>`;
+        
+        if (dataSource === 'synthetic') {
+            summaryHTML += `<dt class="col-sm-4">Date Range</dt><dd class="col-sm-8">${formData.get('start_date')} to ${formData.get('end_date')}</dd>`;
+            summaryHTML += `<dt class="col-sm-4">Anchor Prices</dt><dd class="col-sm-8">${formData.get('anchor_prices')}</dd>`;
+        } else {
+            summaryHTML += `<dt class="col-sm-4">Ticker Symbols</dt><dd class="col-sm-8">${formData.get('ticker_symbols')}</dd>`;
+            summaryHTML += `<dt class="col-sm-4">Date Range</dt><dd class="col-sm-8">${formData.get('data_start_date')} to ${formData.get('data_end_date')}</dd>`;
+        }
+        
+        // Preprocessing
+        summaryHTML += `<dt class="col-sm-4">Log Returns</dt><dd class="col-sm-8">${formData.get('use_log_returns') ? 'Enabled' : 'Disabled'}</dd>`;
+        summaryHTML += `<dt class="col-sm-4">Stationarity Test</dt><dd class="col-sm-8">${formData.get('run_stationarity_test') ? 'Enabled' : 'Disabled'}</dd>`;
+        summaryHTML += `<dt class="col-sm-4">Scaling Method</dt><dd class="col-sm-8">${formData.get('scaling_method')}</dd>`;
+        
+        // ARIMA
+        const arimaMethod = formData.get('arima_method');
+        summaryHTML += `<dt class="col-sm-4">ARIMA Method</dt><dd class="col-sm-8">${arimaMethod === 'auto' ? 'Auto ARIMA' : 'Manual ARIMA'}</dd>`;
+        
+        if (arimaMethod === 'manual') {
+            summaryHTML += `<dt class="col-sm-4">ARIMA Parameters</dt><dd class="col-sm-8">p=${formData.get('arima_p')}, d=${formData.get('arima_d')}, q=${formData.get('arima_q')}</dd>`;
+        }
+        
+        // GARCH
+        summaryHTML += `<dt class="col-sm-4">GARCH Parameters</dt><dd class="col-sm-8">p=${formData.get('garch_p')}, q=${formData.get('garch_q')}, distribution=${formData.get('garch_dist')}</dd>`;
+        
+        // Spillover
+        const spilloverEnabled = formData.get('run_spillover_analysis');
+        summaryHTML += `<dt class="col-sm-4">Spillover Analysis</dt><dd class="col-sm-8">${spilloverEnabled ? 'Enabled' : 'Disabled'}</dd>`;
+        
+        if (spilloverEnabled) {
+            summaryHTML += `<dt class="col-sm-4">Forecast Horizon</dt><dd class="col-sm-8">${formData.get('forecast_horizon')}</dd>`;
+        }
+        
+        summaryHTML += '</dl>';
+        configSummary.innerHTML = summaryHTML;
+    }
+    
+    // Event handlers
+    prevBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const currentIndex = getCurrentStepIndex();
+            if (currentIndex > 0) {
+                goToStep(currentIndex - 1);
+            }
+        });
+    });
+    
+    nextBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const currentIndex = getCurrentStepIndex();
+            if (currentIndex < sections.length - 1) {
+                goToStep(currentIndex + 1);
+            }
+        });
+    });
+    
+    steps.forEach((step, index) => {
+        step.addEventListener('click', function() {
+            goToStep(index);
+        });
+    });
+    
+    // Toggle data source parameters
+    dataSourceRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.value === 'synthetic') {
+                syntheticParams.style.display = 'block';
+                actualParams.style.display = 'none';
+            } else {
+                syntheticParams.style.display = 'none';
+                actualParams.style.display = 'block';
+            }
+        });
+    });
+    
+    // Toggle ARIMA parameters
+    arimaMethodRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            manualArimaParams.style.display = this.value === 'manual' ? 'block' : 'none';
+        });
+    });
+    
+    // Toggle Spillover parameters
+    spilloverSwitch.addEventListener('change', function() {
+        spilloverParams.style.display = this.checked ? 'block' : 'none';
+    });
+    
+    // Initialize the form
+    goToStep(0);
+});
+</script>
+{% endblock %}

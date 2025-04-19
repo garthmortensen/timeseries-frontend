@@ -17,10 +17,10 @@
      ╚═╝     ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝   ╚═╝   ╚══════╝╚═╝  ╚═══╝╚═════╝
 ```
 
+TODO: initialize django
 TODO: Add codecov
 TODO: Add docker
-TODO: Add tests
-TODO: initialize django
+TODO: Add pytests
 
 A Django-based frontend for visualizing time series analysis results.
 
@@ -64,9 +64,9 @@ flowchart TB
 ## Architecture
 
 - Django REST Framework
-- Plotly for interactive visualizations
-- Responsive design with Bootstrap
-- Django forms for user input
+- Plotly for visualizations interactive results
+- Responsive Bootstrap design
+- Django forms for user input, styled as a wizard
 
 ## Development Roadmap
 
@@ -124,8 +124,8 @@ Deploy frontend using:
 
 - Docker containers
 - Google Cloud Run
-- Nginx for serving static files (?)
-- HTTPS with Let's Encrypt (?)
+- Nginx for serving static files (is this needed with cloud run?)
+- HTTPS with Let's Encrypt (is this needed with cloud run?)
 
 ## Integration with Backend
 
