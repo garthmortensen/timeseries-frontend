@@ -18,8 +18,28 @@
 ```
 
 TODO: Add codecov
+
 TODO: Add docker
+
 TODO: Add pytests
+
+TODO: Netsec add CSP policies and such. Look at other projects. Maybe git log oneline pretty summarize django improvements for historical inspiration on this.
+
+TODO: Add multiple price series support.
+
+TODO: Add API best practice/methodological comments into HTML front end
+
+TODO: Add into base.html keywords, accessibility, etc
+
+TODO: add database container
+
+TODO: containerize
+
+TODO: darkmode, improve style, bootstrap, color palletes. It seems "brat" is the hip new thing cool kids do.
+
+Neon/lime green (#BFFF00) background elements and text fragments
+Pink/coral (#FF9E8F)
+Black background (#000000)
 
 A Django-based frontend for visualizing time series analysis results.
 
