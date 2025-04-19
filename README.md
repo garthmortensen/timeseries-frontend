@@ -23,8 +23,6 @@ TODO: Add docker
 
 TODO: Add pytests
 
-TODO: Netsec add CSP policies and such. Look at other projects. Maybe git log oneline pretty summarize django improvements for historical inspiration on this.
-
 TODO: Add multiple price series support.
 
 TODO: Add API best practice/methodological comments into HTML front end
@@ -36,6 +34,10 @@ TODO: add database container
 TODO: containerize
 
 TODO: darkmode, improve style, bootstrap, color palletes. It seems "brat" is the hip new thing cool kids do.
+
+TODO: Replace "Timeseries Pipeline Frontend" with something more user-centric and less dev-centric. User doesn't care about architecture
+
+TODO: Verify bootstrap, etc integrity checks in base.html
 
 Neon/lime green (#BFFF00) background elements and text fragments
 Pink/coral (#FF9E8F)
