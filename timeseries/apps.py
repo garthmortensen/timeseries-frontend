@@ -5,5 +5,9 @@ from django.apps import AppConfig
 
 
 class TimeseriesConfig(AppConfig):
-    default_auto_field = "django.db.models.BigAutoField"
-    name = "timeseries"
+    """
+    Configuration for the timeseries application.
+    """
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'timeseries'
+    verbose_name = 'Time Series Analysis'
