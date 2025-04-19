@@ -1,11 +1,71 @@
+# django customized .dockerignore
+
+# Git
 .git
 .github
 .gitignore
-.pytest_cache
-.vscode
-__pycache__
-venv
-logs
-*.egg-info
-dist
-build
+.gitattributes
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Django
+staticfiles/
+media/
+db.sqlite3
+db.sqlite3-journal
+*.log
+
+# Virtual Environment
+venv/
+ENV/
+.env
+.venv
+
+# IDE Files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+nosetests.xml
+coverage.xml
+*.cover
+
+# Logs
+logs/
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Documentation
+README.md
+LICENSE
+docs/

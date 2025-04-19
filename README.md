@@ -1,5 +1,27 @@
 # Timeseries Pipeline Frontend
 
+## Overview
+
+```ascii
+  ████████╗██╗███╗   ███╗███████╗███████╗███████╗██████╗ ██╗███████╗███████╗
+  ╚══██╔══╝██║████╗ ████║██╔════╝██╔════╝██╔════╝██╔══██╗██║██╔════╝██╔════╝
+     ██║   ██║██╔████╔██║█████╗  ███████╗█████╗  ██████╔╝██║█████╗  ███████╗
+     ██║   ██║██║╚██╔╝██║██╔══╝  ╚════██║██╔══╝  ██╔══██╗██║██╔══╝  ╚════██║
+     ██║   ██║██║ ╚═╝ ██║███████╗███████║███████╗██║  ██║██║███████╗███████║
+     ╚═╝   ╚═╝╚═╝     ╚═╝╚══════╝╚══════╝╚══════╝╚═╝  ╚═╝╚═╝╚══════╝╚══════╝
+     ███████╗██████╗  ██████╗ ███╗   ██╗████████╗███████╗███╗   ██╗██████╗
+     ██╔════╝██╔══██╗██╔═══██╗████╗  ██║╚══██╔══╝██╔════╝████╗  ██║██╔══██╗
+     █████╗  ██████╔╝██║   ██║██╔██╗ ██║   ██║   █████╗  ██╔██╗ ██║██║  ██║
+     ██╔══╝  ██╔══██╗██║   ██║██║╚██╗██║   ██║   ██╔══╝  ██║╚██╗██║██║  ██║
+     ██║     ██║  ██║╚██████╔╝██║ ╚████║   ██║   ███████╗██║ ╚████║██████╔╝
+     ╚═╝     ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝   ╚═╝   ╚══════╝╚═╝  ╚═══╝╚═════╝
+```
+
+TODO: Add codecov
+TODO: Add docker
+TODO: Add tests
+TODO: initialize django
+
 A Django-based frontend for visualizing time series analysis results.
 
 ## Features (Planned)
@@ -10,6 +32,34 @@ A Django-based frontend for visualizing time series analysis results.
 - Display for model statistics and forecasts
 - API integration with the backend pipeline
 - User authentication and saved analysis
+
+## Integration Overview
+
+```mermaid
+flowchart TB
+    %% Styling
+    classDef person fill:#08427B,color:#fff,stroke:#052E56,stroke-width:1px
+    classDef system fill:#1168BD,color:#fff,stroke:#0B4884,stroke-width:1px
+    classDef external fill:#999999,color:#fff,stroke:#6B6B6B,stroke-width:1px
+    %% Actors and Systems
+    User((User)):::person
+    %% Main Systems
+    TimeSeriesFrontend["Timeseries Frontend
+    (Django)"]:::system
+    TimeSeriesPipeline["Timeseries Pipeline
+    (FastAPI)"]:::system
+    TimeseriesCompute["Timeseries Compute
+    (Python Package)"]:::system
+    %% External Systems
+    ExternalDataSource[(Yahoo Finance)]:::external
+    %% Relationships
+    User -- "Uses" --> TimeSeriesFrontend
+    TimeSeriesFrontend -- "Makes API calls to" --> TimeSeriesPipeline
+    TimeSeriesPipeline -- "Pip installs from" --> TimeseriesCompute
+    User -- "Can use package directly" --> TimeseriesCompute  
+    ExternalDataSource -- "Provides time series data" --> TimeSeriesPipeline
+    TimeseriesCompute -- "Publishes to" --> PyPI/DockerHub/ReadTheDocs
+```
 
 ## Architecture
 
@@ -73,8 +123,8 @@ python manage.py runserver
 Deploy frontend using:
 
 - Docker containers
-- AWS ECS or EKS (?)
-- Nginx for serving static files
+- Google Cloud Run
+- Nginx for serving static files (?)
 - HTTPS with Let's Encrypt (?)
 
 ## Integration with Backend
@@ -92,7 +142,3 @@ Frontend will communicate with the backend API via:
 - Accessible visualization options
 - Clear presentation of statistical results
 - Efficient API usage to minimize latency
-
-## License
-
-[MIT License](LICENSE)
