@@ -151,3 +151,4 @@ Frontend will communicate with the backend API via:
 - Accessible visualization options
 - Clear presentation of statistical results
 - Efficient API usage to minimize latency
+
