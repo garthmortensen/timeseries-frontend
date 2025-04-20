@@ -1,4 +1,4 @@
-# Timeseries Pipeline Frontend
+# Timeseries Frontend
 
 ## Overview
 
@@ -17,6 +17,8 @@
      ╚═╝     ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝   ╚═╝   ╚══════╝╚═╝  ╚═══╝╚═════╝
 ```
 
+A Django frontend for modeling time series.
+
 TODO: Add codecov
 
 TODO: Add docker
@@ -25,25 +27,11 @@ TODO: Add pytests
 
 TODO: Add multiple price series support.
 
-TODO: Add API best practice/methodological comments into HTML front end
-
-TODO: Add into base.html keywords, accessibility, etc
-
 TODO: add database container
-
-TODO: containerize
-
-TODO: darkmode, improve style, bootstrap, color palletes. It seems "brat" is the hip new thing cool kids do.
-
-TODO: Replace "Timeseries Pipeline Frontend" with something more user-centric and less dev-centric. User doesn't care about architecture
-
-TODO: Verify bootstrap, etc integrity checks in base.html
 
 Neon/lime green (#BFFF00) background elements and text fragments
 Pink/coral (#FF9E8F)
 Black background (#000000)
-
-A Django-based frontend for visualizing time series analysis results.
 
 ## Features (Planned)
 
@@ -122,8 +110,8 @@ flowchart TB
 
 ```bash
 # Clone the repository
-git clone https://github.com/garthmortensen/timeseries-pipeline-frontend.git
-cd timeseries-pipeline-frontend
+git https://github.com/garthmortensen/timeseries-frontend
+cd timeseries-frontend
 
 # Create a virtual environment
 python -m venv venv
