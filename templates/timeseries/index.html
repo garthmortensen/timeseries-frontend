@@ -2,14 +2,14 @@
 
 {% extends 'base.html' %}
 
-{% block title %}Home - Timeseries Pipeline{% endblock %}
+{% block title %}Home - Timeseries Modeling{% endblock %}
 
 {% block content %}
 <div class="jumbotron p-5 mb-4 bg-light rounded-3">
-    <h1 class="display-4">Timeseries Pipeline Frontend</h1>
-    <p class="lead">A Django-based frontend for visualizing time series analysis results.</p>
+    <h1 class="display-4">Timeseries Modeling</h1>
+    <p class="lead">Frontend UI for visualizing time series analysis results.</p>
     <hr class="my-4">
-    <p>This application connects to the Timeseries Pipeline API to analyze financial time series data using ARIMA and GARCH models.</p>
+    <p>This app connects to the Timeseries API to analyze financial time series data using ARIMA and GARCH models.</p>
     <a class="btn btn-primary btn-lg" href="{% url 'timeseries:analysis' %}" role="button">Start Analysis</a>
 </div>
 

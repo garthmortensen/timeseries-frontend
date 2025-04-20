@@ -21,6 +21,12 @@ def index(request):
     """
     return render(request, 'timeseries/index.html')
 
+def about(request):
+    """
+    About page with project information and repository links.
+    """
+    return render(request, 'timeseries/about.html')
+
 def analysis(request):
     """
     Analysis page with form for configuring and running analysis.

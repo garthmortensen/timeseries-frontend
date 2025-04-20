@@ -13,6 +13,7 @@ urlpatterns = [
     path('', views.index, name='index'),
     path('analysis/', views.analysis, name='analysis'),
     path('results/', views.results, name='results'),
+    path('about/', views.about, name='about'),
     # API proxy endpoints
     path('api/run_pipeline/', views.run_pipeline, name='run_pipeline'),
 ]
