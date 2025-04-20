@@ -21,13 +21,9 @@ A Django frontend for modeling time series.
 
 TODO: Add codecov
 
-TODO: Add docker
-
 TODO: Add pytests
 
 TODO: Add multiple price series support.
-
-TODO: add database container
 
 Neon/lime green (#BFFF00) background elements and text fragments
 Pink/coral (#FF9E8F)
