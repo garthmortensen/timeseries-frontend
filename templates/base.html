@@ -7,21 +7,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>{% block title %}Timeseries Pipeline Frontend{% endblock %}</title>
+    <title>{% block title %}Timeseries Modeling{% endblock %}</title>
     
     <!-- SEO Metadata -->
     <meta name="description" content="Interactive time series analysis tool for financial and econometric modeling with ARIMA and GARCH capabilities">
     <meta name="keywords" content="time series analysis, ARIMA, GARCH, econometrics, financial modeling, forecasting, volatility">
     
     <!-- Open Graph / Social Media -->
-    <meta property="og:title" content="Timeseries Pipeline Frontend">
+    <meta property="og:title" content="Timeseries Modeling">
     <meta property="og:description" content="Interactive time series analysis tool for financial and econometric modeling">
     <meta property="og:url" content="{{ request.build_absolute_uri }}">
     <meta property="og:type" content="website">
     
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Timeseries Pipeline Frontend">
+    <meta name="twitter:title" content="Timeseries Modeling">
     <meta name="twitter:description" content="Interactive time series analysis tool for financial and econometric modeling">
 
     <!-- Favicons -->
@@ -37,10 +37,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
     
     <!-- Bootstrap CSS with integrity -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" 
-          integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" 
-          crossorigin="anonymous">
-    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" 
+        rel="stylesheet" 
+        integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7" 
+        crossorigin="anonymous">
+
     <!-- Plotly.js -->
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     
@@ -82,17 +83,19 @@
     <!-- Footer -->
     <footer class="footer bg-light mt-5" aria-label="Footer">
         <div class="container py-3">
-            <p class="text-center mb-0">Timeseries Pipeline Frontend &copy; {% now "Y" %} | A statistical forecasting tool</p>
+            <p class="text-center mb-0">Timeseries Modeling &copy; {% now "Y" %} | A statistical forecasting tool</p>
             <!-- Hidden message for screen readers -->
             <p class="sr-only" aria-hidden="false">This tool provides time series analysis with ARIMA and GARCH models. If you need assistance with accessibility, please contact us.</p>
         </div>
     </footer>
 
     <!-- Bootstrap JS Bundle with integrity -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" 
-            integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js" 
+            integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq" 
             crossorigin="anonymous"></script>
-    
+
+
+
     <!-- Custom JS -->
     <script src="{% static 'js/main.js' %}"></script>
     

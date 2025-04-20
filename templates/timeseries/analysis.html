@@ -15,9 +15,44 @@
     }
     
     .section-header {
+        display: flex;
+        align-items: center;
         margin-bottom: 1.5rem;
         padding-bottom: 0.5rem;
         border-bottom: 1px solid #dee2e6;
+    }
+    
+    .info-panel {
+        background-color: #e9f7fe;
+        border-left: 4px solid #3498db;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        border-radius: 0.25rem;
+    }
+    
+    .methodology-toggle {
+        cursor: pointer;
+        color: #3498db;
+        display: inline-flex;
+        align-items: center;
+        margin-left: 0.5rem;
+        font-size: 1.0rem;
+        font-weight: normal;
+    }
+    
+    .methodology-toggle i {
+        margin-right: 0.25rem;
+    }
+    
+    .methodology-content {
+        display: none;
+        margin-top: 1rem;
+    }
+    
+    .param-help {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
     }
 </style>
 {% endblock %}
@@ -33,25 +68,43 @@
     {% csrf_token %}
     
     <div class="form-section">
-        <h3 class="section-header">Data Source</h3>
+        <h3 class="section-header">
+            Data Source
+            <span class="methodology-toggle" data-target="data-source-methodology">
+                <i class="bi bi-info-circle"></i> details +
+            </span>
+        </h3>
+        
+        <div id="data-source-methodology" class="methodology-content info-panel">
+            <h5>About Data Sources</h5>
+            <p>You can choose between two data sources for your analysis:</p>
+            <ul>
+                <li><strong>Yahoo Finance:</strong> Real market data from publicly traded securities and indices</li>
+                <li><strong>Synthetic Data:</strong> Generated time series following a random walk model, useful for testing or educational purposes</li>
+            </ul>
+        </div>
+        
         <div class="form-check mb-3">
             <input class="form-check-input" type="radio" name="source_actual_or_synthetic_data" id="data-source-actual" value="actual" checked>
             <label class="form-check-label" for="data-source-actual">
                 Yahoo Finance Market Data
             </label>
+            <div class="param-help">Fetches real historical market data from Yahoo Finance API</div>
         </div>
         <div class="form-check mb-3">
             <input class="form-check-input" type="radio" name="source_actual_or_synthetic_data" id="data-source-synthetic" value="synthetic">
             <label class="form-check-label" for="data-source-synthetic">
                 Synthetic Data
             </label>
+            <div class="param-help">Generates artificial time series with slightly correlated properties</div>
         </div>
         
         <!-- Market Data Parameters -->
         <div id="market-params">
             <div class="mb-3">
                 <label for="symbols" class="form-label">Symbols (comma-separated)</label>
-                <input type="text" class="form-control" id="symbols" name="symbols" value="AAPL,MSFT,GOOGL">
+                <input type="text" class="form-control" id="symbols" name="symbols" value="^DJI,399001.SZ,^FCHI">
+                <div class="param-help">Examples: ^DJI (Dow Jones), 399001.SZ (Shenzhen), ^FCHI (CAC 40)</div>
             </div>
         </div>
         
@@ -59,15 +112,18 @@
         <div id="synthetic-params" style="display: none;">
             <div class="mb-3">
                 <label for="synthetic-symbols" class="form-label">Synthetic Symbols (comma-separated)</label>
-                <input type="text" class="form-control" id="synthetic-symbols" name="synthetic_symbols" value="SYM1,SYM2,SYM3">
+                <input type="text" class="form-control" id="synthetic-symbols" name="synthetic_symbols" value="DJI,SZ,FCHI">
+                <div class="param-help">Name identifiers for your synthetic time series</div>
             </div>
             <div class="mb-3">
                 <label for="synthetic-anchor-prices" class="form-label">Anchor Prices (comma-separated)</label>
-                <input type="text" class="form-control" id="synthetic-anchor-prices" name="synthetic_anchor_prices" value="150,200,15">
+                <input type="text" class="form-control" id="synthetic-anchor-prices" name="synthetic_anchor_prices" value="37000,9000,7500">
+                <div class="param-help">Starting prices for synthetic data generation (corresponding to symbols above)</div>
             </div>
             <div class="mb-3">
                 <label for="synthetic-random-seed" class="form-label">Random Seed</label>
                 <input type="number" class="form-control" id="synthetic-random-seed" name="synthetic_random_seed" value="1">
+                <div class="param-help">Controls randomness - using the same seed produces identical results (for reproducibility)</div>
             </div>
         </div>
         
@@ -76,20 +132,49 @@
             <div class="col-md-6">
                 <div class="mb-3">
                     <label for="data-start-date" class="form-label">Start Date</label>
-                    <input type="date" class="form-control" id="data-start-date" name="data_start_date" value="2023-01-01">
+                    <input type="date" class="form-control" id="data-start-date" name="data_start_date" value="2024-01-01">
+                    <div class="param-help">Analysis period start</div>
                 </div>
             </div>
             <div class="col-md-6">
                 <div class="mb-3">
                     <label for="data-end-date" class="form-label">End Date</label>
-                    <input type="date" class="form-control" id="data-end-date" name="data_end_date" value="2023-02-01">
+                    <input type="date" class="form-control" id="data-end-date" name="data_end_date" value="2024-04-01">
+                    <div class="param-help">Analysis period stop</div>
                 </div>
             </div>
         </div>
     </div>
     
     <div class="form-section">
-        <h3 class="section-header">Data Preprocessing</h3>
+        <h3 class="section-header">
+            Data Preprocessing
+            <span class="methodology-toggle" data-target="preprocessing-methodology">
+                <i class="bi bi-info-circle"></i> details +
+            </span>
+        </h3>
+        
+        <div id="preprocessing-methodology" class="methodology-content info-panel">
+            <h5>Importance of Data Preparation</h5>
+            <p>Raw price processes are problematic because of non-stationarity. We convert prices to log returns because:</p>
+            <ul>
+                <li>Percentage point changes are comparable across different price levels.</li>
+                <li>Series is more symmetric and closer to normal distribution.</li>
+                <li>Makes volatility more consistent across the series.</li>
+            </ul>
+            
+            <h5>Stationarity Testing</h5>
+            <p>ADF tests if your data's constant over time. ARIMA and GARCH assume stationarity. A stationary series has:</p>
+            <ul>
+                <li>Constant mean</li>
+                <li>Constant variance</li>
+                <li>Autocorrelation</li>
+            </ul>
+            
+            <h5>Scaling for GARCH</h5>
+            <p>Scaling standardizes data to prevent numerical issues. For GARCH, it helps the optimization algorithms converge better and produces more stable volatility estimates.</p>
+        </div>
+        
         <div class="mb-3">
             <label for="scaling-method" class="form-label">Scaling Method</label>
             <select class="form-select" id="scaling-method" name="scaling_method">
@@ -97,46 +182,101 @@
                 <option value="minmax">Min-Max Scaling</option>
                 <option value="none">No Scaling</option>
             </select>
+            <div class="param-help">
+                Standardize: centers data around mean 0 with variance 1<br>
+                Min-Max: scales data [0, 1]<br>
+                None: uses raw data (may cause computational problems)
+            </div>
         </div>
     </div>
     
     <div class="form-section">
-        <h3 class="section-header">ARIMA Model Parameters</h3>
+        <h3 class="section-header">
+            ARIMA Model Parameters
+            <span class="methodology-toggle" data-target="arima-methodology">
+                <i class="bi bi-info-circle"></i> details +
+            </span>
+        </h3>
+        
+        <div id="arima-methodology" class="methodology-content info-panel">
+            <h5>ARIMA Modeling</h5>
+            <p>ARIMA combines three components:</p>
+            <ol>
+                <li><strong>Autoregressive (AR):</strong> Models relationship between current and past values.</li>
+                <li><strong>Integrated (I):</strong> Accounts for differencing to make data stationary.</li>
+                <li><strong>Moving Average (MA):</strong> Models the relationship between current and past value error terms.</li>
+            </ol>
+            <p><strong>Inputs:</strong> Stationary time series data</p>
+            <p><strong>Outputs:</strong></p>
+            <ul>
+                <li>Conditional mean forecasts (expected future values)</li>
+                <li>Model residuals (unexplained movements)</li>
+                <li>Parameter estimates (showing which past lags are most important)</li>
+            </ul>
+        </div>
+        
         <div class="row">
             <div class="col-md-4">
                 <div class="mb-3">
                     <label for="arima-p" class="form-label">p (AR Order)</label>
                     <input type="number" class="form-control" id="arima-p" name="arima_p" min="0" max="10" value="2">
+                    <div class="param-help">n lagged values (autoregressive terms)</div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="mb-3">
                     <label for="arima-d" class="form-label">d (Differencing)</label>
                     <input type="number" class="form-control" id="arima-d" name="arima_d" min="0" max="2" value="1">
+                    <div class="param-help">diff the data n times (usually 1 for financial data)</div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="mb-3">
                     <label for="arima-q" class="form-label">q (MA Order)</label>
                     <input type="number" class="form-control" id="arima-q" name="arima_q" min="0" max="10" value="4">
+                    <div class="param-help">lagged error terms (moving average terms)</div>
                 </div>
             </div>
         </div>
     </div>
     
     <div class="form-section">
-        <h3 class="section-header">GARCH Model Parameters</h3>
+        <h3 class="section-header">
+            GARCH Model Parameters
+            <span class="methodology-toggle" data-target="garch-methodology">
+                <i class="bi bi-info-circle"></i> details +
+            </span>
+        </h3>
+        
+        <div id="garch-methodology" class="methodology-content info-panel">
+            <h5>GARCH Modeling</h5>
+            <p>GARCH models volatility clustering by:</p>
+            <ul>
+                <li>Modeling how past volatility affects current volatility (GARCH terms)</li>
+                <li>Modeling how past shocks affect current volatility (ARCH terms)</li>
+                <li>Accounting for fat-tailed distributions (common in financial data)</li>
+            </ul>
+            <p><strong>Inputs:</strong> ARIMA model residuals</p>
+            <p><strong>Outputs:</strong></p>
+            <ul>
+                <li>Volatility forecasts (predicted future uncertainty)</li>
+                <li>Volatility parameters (showing persistence of volatility)</li>
+            </ul>
+        </div>
+        
         <div class="row">
             <div class="col-md-4">
                 <div class="mb-3">
-                    <label for="garch-p" class="form-label">p (ARCH Order)</label>
+                    <label for="garch-p" class="form-label">p (GARCH Order)</label>
                     <input type="number" class="form-control" id="garch-p" name="garch_p" min="0" max="5" value="1">
+                    <div class="param-help">Number of lagged volatility terms</div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="mb-3">
-                    <label for="garch-q" class="form-label">q (GARCH Order)</label>
+                    <label for="garch-q" class="form-label">q (ARCH Order)</label>
                     <input type="number" class="form-control" id="garch-q" name="garch_q" min="0" max="5" value="1">
+                    <div class="param-help">Number of lagged squared error terms</div>
                 </div>
             </div>
             <div class="col-md-4">
@@ -147,23 +287,47 @@
                         <option value="t" selected>Student's t</option>
                         <option value="skewt">Skewed t</option>
                     </select>
+                    <div class="param-help">Assumed error distribution (t-dist to capture (financial data) fat tails)</div>
                 </div>
             </div>
         </div>
     </div>
 
     <div class="form-section">
-        <h3 class="section-header">Spillover Analysis</h3>
+        <h3 class="section-header">
+            Spillover Analysis
+            <span class="methodology-toggle" data-target="spillover-methodology">
+                <i class="bi bi-info-circle"></i> details +
+            </span>
+        </h3>
+        
+        <div id="spillover-methodology" class="methodology-content info-panel">
+            <h5>Spillover Analysis</h5>
+            <p>Analyzes how movements in one time series affect others by:</p>
+            <ul>
+                <li>Measuring how shocks to one variable explain forecast error variance in others</li>
+                <li>Capturing both direct and indirect transmission effects</li>
+            </ul>
+            <p><strong>Inputs:</strong> Returns data and GARCH volatility estimates</p>
+            <p><strong>Outputs:</strong></p>
+            <ul>
+                <li>Total spillover index (system-wide interconnectedness)</li>
+                <li>Directional spillover (which variables are net transmitters or receivers of shocks)</li>
+                <li>Pairwise spillover (specific relationship between any two variables)</li>
+            </ul>
+        </div>
+        
         <div class="form-check form-switch mb-3">
             <input class="form-check-input" type="checkbox" id="enable-spillover" name="enable_spillover">
             <label class="form-check-label" for="enable-spillover">Enable Spillover Analysis</label>
+            <div class="param-help">Analyzes how volatility transfers between different assets (requires multiple symbols)</div>
         </div>
         
         <div id="spillover-params" style="display: none;">
             <div class="mb-3">
                 <label for="forecast-horizon" class="form-label">Forecast Horizon</label>
                 <input type="number" class="form-control" id="forecast-horizon" name="forecast_horizon" min="1" max="30" value="10">
-                <div class="form-text">Number of periods for forecast variance decomposition</div>
+                <div class="param-help">Number of periods for forecast variance decomposition (typically 10-day for financial data)</div>
             </div>
         </div>
     </div>
@@ -189,7 +353,28 @@
         const syntheticRadio = document.getElementById('data-source-synthetic');
         const marketParams = document.getElementById('market-params');
         const syntheticParams = document.getElementById('synthetic-params');
+
+        const today = new Date();
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
         
+        // Calculate one month ago
+        const oneMonthAgo = new Date(today);
+        oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+        
+        // Calculate start of current year
+        const startOfYear = new Date(today.getFullYear(), 0, 1); // January 1st of current year
+        
+        // Compare dates and choose the earlier one (less recent)
+        const startDate = oneMonthAgo < startOfYear ? oneMonthAgo : startOfYear;
+        
+        // Format dates as YYYY-MM-DD
+        const yesterdayFormatted = yesterday.toISOString().split('T')[0];
+        const startDateFormatted = startDate.toISOString().split('T')[0];
+        
+        // Set the date input fields
+        document.getElementById('data-start-date').value = startDateFormatted;
+        document.getElementById('data-end-date').value = yesterdayFormatted;
         actualRadio.addEventListener('change', function() {
             if (this.checked) {
                 marketParams.style.display = 'block';
@@ -203,6 +388,25 @@
                 syntheticParams.style.display = 'block';
             }
         });
+        
+        // Toggle methodology content sections
+        document.querySelectorAll('.methodology-toggle').forEach(function(toggle) {
+            toggle.addEventListener('click', function() {
+                const targetId = this.getAttribute('data-target');
+                const target = document.getElementById(targetId);
+                
+                if (target.style.display === 'none' || target.style.display === '') {
+                    target.style.display = 'block';
+                    this.innerHTML = '<i class="bi bi-dash-circle"></i> details -';
+                } else {
+                    target.style.display = 'none';
+                    this.innerHTML = '<i class="bi bi-info-circle"></i> details +';
+                }
+            });
+        });
+            
+        // Set the end date input field to yesterday's date
+        document.getElementById('data-end-date').value = yesterdayFormatted;
         
         // Handle form submission
         const form = document.getElementById('analysis-form');
@@ -291,8 +495,8 @@
                 
                 alert(`Error running analysis: ${error.message}`);
             });
-            
         });
+        
         // Toggle Spillover parameters
         const spilloverSwitch = document.getElementById('enable-spillover');
         const spilloverParams = document.getElementById('spillover-params');
