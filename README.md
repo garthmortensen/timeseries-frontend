@@ -27,6 +27,10 @@ TODO: Add multiple price series support.
 
 TODO: Add db container to About and integration overview
 
+TODO: restore time series analysis start - end dates to end date = previous business day, start date = 1 month prior. conform plotly x-axis. trading symbols.
+
+TODO: time series analysis synthetic data broken.
+
 Neon/lime green (#BFFF00) background elements and text fragments
 Pink/coral (#FF9E8F)
 Black background (#000000)

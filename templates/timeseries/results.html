@@ -194,17 +194,86 @@
         // Show results container
         document.getElementById('no-results').style.display = 'none';
         document.getElementById('results-container').style.display = 'block';
-        
-        // Extract historical data from the API response - assumes data is in data.data
-        let historicalData = {};
+            
+        // Extract time series data from the API response
+        let timeSeriesData = null;
         
         // Check for different potential data structures from the API
         if (results.data && typeof results.data === 'object') {
-            historicalData = results.data;
+            timeSeriesData = results.data;
         } else if (results.time_series_data && typeof results.time_series_data === 'object') {
-            historicalData = results.time_series_data;
+            timeSeriesData = results.time_series_data;
         } else if (results.historical_data && typeof results.historical_data === 'object') {
-            historicalData = results.historical_data;
+            timeSeriesData = results.historical_data;
+        } else if (results.original_data && typeof results.original_data === 'object') {
+            timeSeriesData = results.original_data;
+        }
+        
+        console.log("Time series data structure:", timeSeriesData);
+        
+        if (timeSeriesData) {
+            // Update the time series plot with all symbols at once
+            updateTimeSeriesPlot(timeSeriesData);
+            
+            // Update the raw data table with all symbols
+            updateRawDataTable(timeSeriesData);
+            
+            // We don't need symbol selectors anymore since we're showing all symbols
+            // You can remove or hide the selector elements
+            const symbolSelector = document.getElementById('symbol-selector');
+            const dataSymbolSelector = document.getElementById('data-symbol-selector');
+            if (symbolSelector) symbolSelector.style.display = 'none';
+            if (dataSymbolSelector) dataSymbolSelector.style.display = 'none';
+        } else {
+            console.error("No time series data found in results");
+        }
+
+        // handle historical data
+        function transformTimeSeriesData(data) {
+            // Transform from date->symbol->value to symbol->date->value
+            const transformed = {};
+            
+            // First, check if we have the expected structure
+            if (typeof data !== 'object') return {};
+            
+            // Get all symbols from the first date entry (if it exists)
+            const dates = Object.keys(data);
+            if (dates.length === 0) return {};
+            
+            const firstDate = dates[0];
+            const symbols = data[firstDate] ? Object.keys(data[firstDate]) : [];
+            
+            // Initialize the transformed object with empty objects for each symbol
+            symbols.forEach(symbol => {
+                transformed[symbol] = {};
+            });
+            
+            // Populate the transformed object
+            dates.forEach(date => {
+                if (data[date]) {
+                    symbols.forEach(symbol => {
+                        if (data[date][symbol] !== undefined) {
+                            transformed[symbol][date] = data[date][symbol];
+                        }
+                    });
+                }
+            });
+            
+            return transformed;
+        }
+
+        // Extract historical data from the API response
+        let historicalData = {};
+
+        // Check for different potential data structures from the API
+        if (results.data && typeof results.data === 'object') {
+            historicalData = transformTimeSeriesData(results.data);
+        } else if (results.time_series_data && typeof results.time_series_data === 'object') {
+            historicalData = transformTimeSeriesData(results.time_series_data);
+        } else if (results.historical_data && typeof results.historical_data === 'object') {
+            historicalData = transformTimeSeriesData(results.historical_data);
+        } else if (results.original_data && typeof results.original_data === 'object') {
+            historicalData = transformTimeSeriesData(results.original_data);
         }
         
         console.log("Historical data:", historicalData); // Debug: Log the historical data
@@ -227,127 +296,122 @@
         // Set default symbol
         const defaultSymbol = symbols[0] || '';
         
-        // Function to update time series plot
-        function updateTimeSeriesPlot(symbol) {
+        function updateTimeSeriesPlot(timeSeriesData) {
             const timeSeriesPlot = document.getElementById('time-series-plot');
-            const symbolData = historicalData[symbol] || {};
             
-            console.log(`Data for ${symbol}:`, symbolData); // Debug: Log the data for the selected symbol
+            // Clear any existing plot
+            Plotly.purge(timeSeriesPlot);
             
-            // Convert data to arrays for plotting
-            const dates = Object.keys(symbolData).sort();
-            const values = dates.map(date => symbolData[date]);
-            
-            console.log("Dates:", dates); // Debug: Log dates
-            console.log("Values:", values); // Debug: Log values
-            
-            // Create plot with historical data
-            const plotData = [
-                {
-                    x: dates,
-                    y: values,
-                    type: 'scatter',
-                    mode: 'lines',
-                    name: 'Historical Data',
-                    line: {
-                        color: 'blue'
-                    }
-                }
-            ];
-            
-            // Add forecast data if available
-            if (results.arima_forecast && results.arima_forecast.length > 0) {
-                // Calculate the last date for connecting historical data with forecast
-                const lastDate = dates[dates.length - 1];
-                const lastDateObj = new Date(lastDate);
-                
-                // Create forecast dates starting from the day after the last historical date
-                const forecastDates = [];
-                for (let i = 0; i < results.arima_forecast.length; i++) {
-                    const forecastDate = new Date(lastDateObj);
-                    forecastDate.setDate(lastDateObj.getDate() + i + 1);
-                    forecastDates.push(forecastDate.toISOString().split('T')[0]);
-                }
-                
-                plotData.push({
-                    x: forecastDates,
-                    y: results.arima_forecast,
-                    type: 'scatter',
-                    mode: 'lines',
-                    name: 'ARIMA Forecast',
-                    line: {
-                        color: 'red',
-                        dash: 'dash'
-                    }
-                });
+            // Check if we have valid data
+            if (!timeSeriesData || typeof timeSeriesData !== 'object') {
+                console.error("Invalid time series data:", timeSeriesData);
+                return;
             }
             
-            console.log("Plot data:", plotData); // Debug: Log the plot data
+            const dates = Object.keys(timeSeriesData).sort();
+            if (dates.length === 0) {
+                console.error("No dates found in time series data");
+                return;
+            }
+            
+            // Get all symbols from the first date
+            const firstDate = dates[0];
+            const symbols = timeSeriesData[firstDate] ? Object.keys(timeSeriesData[firstDate]) : [];
+            console.log("Found symbols:", symbols);
+            
+            // Create a trace for each symbol
+            const plotData = symbols.map(symbol => {
+                const x = [];
+                const y = [];
+                
+                // Collect data points for this symbol
+                dates.forEach(date => {
+                    if (timeSeriesData[date] && timeSeriesData[date][symbol] !== undefined) {
+                        x.push(date);
+                        y.push(timeSeriesData[date][symbol]);
+                    }
+                });
+                
+                return {
+                    x: x,
+                    y: y,
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: symbol
+                };
+            });
             
             const layout = {
-                title: `Time Series for ${symbol}`,
+                title: 'Time Series Plot',
                 xaxis: { 
                     title: 'Date',
                     rangeselector: {
                         buttons: [
-                            {
-                                count: 7,
-                                label: '1w',
-                                step: 'day',
-                                stepmode: 'backward'
-                            },
-                            {
-                                count: 1,
-                                label: '1m',
-                                step: 'month',
-                                stepmode: 'backward'
-                            },
-                            {
-                                count: 3,
-                                label: '3m',
-                                step: 'month',
-                                stepmode: 'backward'
-                            },
-                            {
-                                count: 6,
-                                label: '6m',
-                                step: 'month',
-                                stepmode: 'backward'
-                            },
+                            {count: 7, label: '1w', step: 'day', stepmode: 'backward'},
+                            {count: 1, label: '1m', step: 'month', stepmode: 'backward'},
+                            {count: 3, label: '3m', step: 'month', stepmode: 'backward'},
+                            {count: 6, label: '6m', step: 'month', stepmode: 'backward'},
                             {step: 'all'}
                         ]
                     },
                     rangeslider: { visible: true }
                 },
-                yaxis: { title: 'Value' },
+                yaxis: { title: 'Price' },
                 legend: { orientation: 'h', y: -0.2 }
             };
             
-            // Create the plot
             Plotly.newPlot(timeSeriesPlot, plotData, layout);
-            console.log("Plot created for", symbol); // Debug: Log when plot is created
+            console.log("Plot created with", plotData.length, "traces");
         }
-        
+
         // Function to update raw data table
-        function updateRawDataTable(symbol) {
+        function updateRawDataTable(timeSeriesData) {
             const tableBody = document.getElementById('raw-data-table').getElementsByTagName('tbody')[0];
-            const symbolData = historicalData[symbol] || {};
+            const tableHead = document.getElementById('raw-data-table').getElementsByTagName('thead')[0];
             
-            // Clear existing rows
+            // Clear existing content
             tableBody.innerHTML = '';
             
-            // Convert data to arrays and sort by date
-            const dates = Object.keys(symbolData).sort();
+            // Check if we have valid data
+            if (!timeSeriesData || typeof timeSeriesData !== 'object') {
+                console.error("Invalid time series data for table");
+                return;
+            }
             
-            // Add rows for each data point
+            const dates = Object.keys(timeSeriesData).sort();
+            if (dates.length === 0) {
+                console.error("No dates found in time series data for table");
+                return;
+            }
+            
+            // Get all symbols from the first date
+            const firstDate = dates[0];
+            const symbols = timeSeriesData[firstDate] ? Object.keys(timeSeriesData[firstDate]) : [];
+            
+            // Update table header with symbol columns
+            let headerHTML = '<tr><th>Date</th>';
+            symbols.forEach(symbol => {
+                headerHTML += `<th>${symbol}</th>`;
+            });
+            headerHTML += '</tr>';
+            tableHead.innerHTML = headerHTML;
+            
+            // Add rows for each date
             dates.forEach(date => {
                 const row = tableBody.insertRow();
                 const dateCell = row.insertCell(0);
-                const valueCell = row.insertCell(1);
-                
                 dateCell.textContent = date;
-                valueCell.textContent = typeof symbolData[date] === 'number' ? 
-                    symbolData[date].toFixed(4) : symbolData[date];
+                
+                // Add values for each symbol
+                symbols.forEach((symbol, index) => {
+                    const valueCell = row.insertCell(index + 1);
+                    if (timeSeriesData[date] && timeSeriesData[date][symbol] !== undefined) {
+                        const value = timeSeriesData[date][symbol];
+                        valueCell.textContent = typeof value === 'number' ? value.toFixed(4) : value;
+                    } else {
+                        valueCell.textContent = 'N/A';
+                    }
+                });
             });
         }
         
