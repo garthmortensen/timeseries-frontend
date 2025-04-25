@@ -25,6 +25,8 @@ TODO: Add pytests
 
 TODO: Add multiple price series support.
 
+TODO: Add db container to About and integration overview
+
 Neon/lime green (#BFFF00) background elements and text fragments
 Pink/coral (#FF9E8F)
 Black background (#000000)
