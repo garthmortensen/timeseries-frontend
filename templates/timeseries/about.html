@@ -36,81 +36,106 @@
                         that work together to provide a complete solution:
                     </p>
                     <ul>
-                        <li><strong>Frontend</strong>: A Django web application that provides an intuitive UI for data analysis</li>
-                        <li><strong>API</strong>: A FastAPI service that handles the computational tasks</li>
-                        <li><strong>Compute Package</strong>: A Python package that implements statistical models</li>
+                        <li><strong>Frontend</strong>: Web app provides an intuitive UI for data analysis.</li>
+                        <li><strong>API</strong>: API service handles the computational tasks.</li>
+                        <li><strong>Database</strong>: Database stores pipeline run metadata and model results.</li>
+                        <li><strong>Compute Package</strong>: Python package implements statistical models.</li>
                     </ul>
                 </div>
             </div>
         </div>
     </div>
-
-    <div class="row mb-4">
-        <div class="col-md-4 mb-4">
-            <div class="card h-100">
-                <div class="card-header bg-primary text-white">
-                    <h3 class="card-title h5 mb-0">Frontend</h3>
+    
+    <div class="row mb-5">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="h5 mb-0">Tech Stack</h3>
                 </div>
                 <div class="card-body">
-                    <p>The web interface built with Django, providing user-friendly access to time series analysis tools.</p>
-                    <a href="https://github.com/garthmortensen/timeseries-frontend" class="btn btn-outline-primary btn-sm" target="_blank">
-                        <i class="bi bi-github"></i> GitHub Repository
-                    </a>
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card h-100">
+                                <div class="card-header bg-primary text-white">
+                                    <h3 class="card-title h5 mb-0">Frontend</h3>
+                                </div>
+                                <div class="card-body">
+                                    <p>The web interface is built with Django because: less boilerplate, faster prototyping, batteries-included (auth, forms, routing).</p>
+                                    <a href="https://github.com/garthmortensen/timeseries-frontend" class="btn btn-outline-primary btn-sm" target="_blank">
+                                        <i class="bi bi-github"></i> GitHub Repository
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+    
+                        <div class="col-md-3">
+                            <div class="card h-100">
+                                <div class="card-header bg-success text-white">
+                                    <h3 class="card-title h5 mb-0">API</h3>
+                                </div>
+                                <div class="card-body">
+                                    <p>The API is built with FastAPI because: Fast, easy to write, auto-docs with Swagger/OpenAPI (useful for front end data handoffs).</p>
+                                    <div class="mb-2">
+                                        <a href="https://github.com/garthmortensen/timeseries-api" class="btn btn-outline-primary btn-sm" target="_blank">
+                                            <i class="bi bi-github"></i> GitHub Repository
+                                        </a>
+                                    </div>
+                                    <div>
+                                        <a href="https://hub.docker.com/r/goattheprofessionalmeower/timeseries-api" class="btn btn-outline-secondary btn-sm" target="_blank">
+                                            <i class="bi bi-box"></i> Docker Hub
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+    
+                        <div class="col-md-3">
+                            <div class="card h-100">
+                                <div class="card-header bg-warning text-white">
+                                    <h3 class="card-title h5 mb-0">Database</h3>
+                                </div>
+                                <div class="card-body">
+                                    <p>Database is stored in PostgreSQL because: scales, good Python libraries (psycopg2, SQLAlchemy).</p>
+                                </div>
+                            </div>
+                        </div>
+    
+                        <div class="col-md-3">
+                            <div class="card h-100">
+                                <div class="card-header bg-info text-white">
+                                    <h3 class="card-title h5 mb-0">Compute Package</h3>
+                                </div>
+                                <div class="card-body">
+                                    <p>Stats logic is kept in a py project because: package once, use everywhere (API, CLI). Easy to publish and share via pypi or github.</p>
+                                    <div class="mb-2">
+                                        <a href="https://github.com/garthmortensen/timeseries-compute" class="btn btn-outline-primary btn-sm" target="_blank">
+                                            <i class="bi bi-github"></i> GitHub Repository
+                                        </a>
+                                    </div>
+                                    <div class="mb-2">
+                                        <a href="https://hub.docker.com/r/goattheprofessionalmeower/timeseries-compute" class="btn btn-outline-secondary btn-sm" target="_blank">
+                                            <i class="bi bi-box"></i> Docker Hub
+                                        </a>
+                                    </div>
+                                    <div class="mb-2">
+                                        <a href="https://pypi.org/project/timeseries-compute/" class="btn btn-outline-secondary btn-sm" target="_blank">
+                                            <i class="bi bi-box"></i> PyPI Package
+                                        </a>
+                                    </div>
+                                    <div>
+                                        <a href="https://timeseries-compute.readthedocs.io/en/latest/" class="btn btn-outline-info btn-sm" target="_blank">
+                                            <i class="bi bi-book"></i> ReadTheDocs
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div> <!-- inner row -->
                 </div>
             </div>
         </div>
-        
-        <div class="col-md-4 mb-4">
-            <div class="card h-100">
-                <div class="card-header bg-success text-white">
-                    <h3 class="card-title h5 mb-0">API</h3>
-                </div>
-                <div class="card-body">
-                    <p>FastAPI service that processes time series data and runs statistical models.</p>
-                    <div class="mb-2">
-                        <a href="https://github.com/garthmortensen/timeseries-api" class="btn btn-outline-primary btn-sm" target="_blank">
-                            <i class="bi bi-github"></i> GitHub Repository
-                        </a>
-                    </div>
-                    <div>
-                        <a href="https://hub.docker.com/r/goattheprofessionalmeower/timeseries-api" class="btn btn-outline-secondary btn-sm" target="_blank">
-                            <i class="bi bi-box"></i> Docker Hub
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-4 mb-4">
-            <div class="card h-100">
-                <div class="card-header bg-info text-white">
-                    <h3 class="card-title h5 mb-0">Compute Package</h3>
-                </div>
-                <div class="card-body">
-                    <p>Core Python package implementing ARIMA, GARCH, and other time series models.</p>
-                    <div class="mb-2">
-                        <a href="https://github.com/garthmortensen/timeseries-compute" class="btn btn-outline-primary btn-sm" target="_blank">
-                            <i class="bi bi-github"></i> GitHub Repository
-                        </a>
-                    </div>
-                    <div class="mb-2">
-                        <a href="https://hub.docker.com/r/goattheprofessionalmeower/timeseries-compute" class="btn btn-outline-secondary btn-sm" target="_blank">
-                            <i class="bi bi-box"></i> Docker Hub
-                        </a>
-                    </div>
-                    <div class="mb-2">
-                        <a href="https://pypi.org/project/timeseries-compute/" class="btn btn-outline-secondary btn-sm" target="_blank">
-                            <i class="bi bi-box"></i> PyPI Package
-                        </a>
-                    </div>
-                    <div>
-                        <a href="https://timeseries-compute.readthedocs.io/en/latest/" class="btn btn-outline-info btn-sm" target="_blank">
-                            <i class="bi bi-book"></i> ReadTheDocs
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
+    </div>
+    
     
     <div class="row">
         <div class="col-md-12">
@@ -122,17 +147,20 @@
                     <p>The components interact according to the following architecture:</p>
                     
                     <div class="mermaid">
-sequenceDiagram
-    actor User
-    participant Frontend as Frontend
-    participant API as API
-    participant Package as Compute Package
-    User->>Frontend: Submit analysis request
-    Frontend->>API: Forward request parameters
-    API->>Package: Execute statistical models
-    Package-->>API: Return model results
-    API-->>Frontend: Return processed results
-    Frontend-->>User: Display visualization
+                        sequenceDiagram
+                        actor User
+                        participant Frontend as Frontend
+                        participant API as API
+                        participant Package as Compute Package
+                        participant DB as PostgreSQL DB
+                    
+                        User->>Frontend: Submit analysis request
+                        Frontend->>API: Forward request parameters
+                        API->>Package: Execute statistical models
+                        Package-->>API: Return model results
+                        API->>DB: Write results to database
+                        API-->>Frontend: Return processed results
+                        Frontend-->>User: Display visualization                    
                     </div>
                     
                     <p class="mt-4">This separation of concerns allows for:</p>
