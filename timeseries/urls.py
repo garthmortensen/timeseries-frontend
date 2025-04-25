@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# timeseries/views.py
+# timeseries/urls.py
 
 """
 URL patterns for the timeseries app.
@@ -16,4 +16,7 @@ urlpatterns = [
     path('about/', views.about, name='about'),
     # API proxy endpoints
     path('api/run_pipeline/', views.run_pipeline, name='run_pipeline'),
+    # Debug endpoints
+    path('debug/api-data/', views.debug_data, name='debug_data'),
+    path('debug/results/', views.debug_results, name='debug_results'),
 ]

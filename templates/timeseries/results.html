@@ -5,66 +5,6 @@
 
 {% block title %}Results - Timeseries Pipeline{% endblock %}
 
-{% block extra_css %}
-<style>
-/* Chart container styling */
-.plotly-chart-container {
-    background-color: white;
-    border-radius: 6px;
-    box-shadow: 0 1px 5px rgba(0,0,0,0.05);
-    padding: 5px;
-    margin-bottom: 1.5rem;
-    height: 500px; /* Fixed height for consistent sizing */
-}
-
-/* Pre element styling for model summaries */
-pre {
-    white-space: pre-wrap;
-    font-size: 0.85rem;
-    max-height: 400px;
-    overflow-y: auto;
-    background-color: #f8f9fa;
-    border-radius: 4px;
-    padding: 10px;
-}
-
-/* Improve tab styling */
-.nav-tabs .nav-link.active {
-    font-weight: 600;
-    border-bottom: 2px solid #0d6efd;
-}
-
-/* Card styling for statistics */
-.stats-card {
-    background-color: white;
-    border-radius: 6px;
-    box-shadow: 0 1px 5px rgba(0,0,0,0.05);
-    padding: 15px;
-    text-align: center;
-}
-
-.stats-card .card-title {
-    font-size: 24px;
-    font-weight: 600;
-    margin-bottom: 5px;
-    color: #2c3e50;
-}
-
-.stats-card .card-subtitle {
-    font-size: 14px;
-    color: #7f8c8d;
-    margin-bottom: 10px;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .plotly-chart-container {
-        height: 350px;
-    }
-}
-</style>
-{% endblock %}
-
 {% block content %}
 <h1 class="mb-4">Analysis Results</h1>
 
@@ -99,41 +39,28 @@ pre {
                 GARCH
             </button>
         </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="data-tab" data-bs-toggle="tab" data-bs-target="#data" 
+                    type="button" role="tab" aria-controls="data" aria-selected="false">
+                Raw Data
+            </button>
+        </li>
     </ul>
     
     <div class="tab-content" id="resultsTabsContent">
         <!-- Time Series Tab -->
         <div class="tab-pane fade show active" id="time-series" role="tabpanel" aria-labelledby="time-series-tab">
             <div class="card mb-4">
-                <div class="card-header">
+                <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">Time Series Plot</h5>
+                    <div>
+                        <select id="symbol-selector" class="form-select form-select-sm" style="width: auto; display: inline-block;">
+                            <!-- Will be populated dynamically -->
+                        </select>
+                    </div>
                 </div>
                 <div class="card-body">
-                    <div id="time-series-plot" class="plotly-chart-container"></div>
-                    
-                    <div class="row mt-4">
-                        <div class="col-md-4">
-                            <div class="stats-card">
-                                <h6 class="card-subtitle mb-2 text-muted">Volatility</h6>
-                                <h4 class="card-title" id="volatility-value">Loading...</h4>
-                                <p class="card-text">Standard deviation of returns</p>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="stats-card">
-                                <h6 class="card-subtitle mb-2 text-muted">Forecast Accuracy</h6>
-                                <h4 class="card-title" id="accuracy-value">Loading...</h4>
-                                <p class="card-text">Based on model performance</p>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="stats-card">
-                                <h6 class="card-subtitle mb-2 text-muted">Forecast Horizon</h6>
-                                <h4 class="card-title" id="horizon-value">Loading...</h4>
-                                <p class="card-text">Number of periods ahead</p>
-                            </div>
-                        </div>
-                    </div>
+                    <div id="time-series-plot" style="height: 500px;"></div>
                 </div>
             </div>
         </div>
@@ -194,7 +121,7 @@ pre {
                     <pre id="arima-summary" class="p-3 bg-light rounded"></pre>
                     
                     <h6>Forecast</h6>
-                    <div id="arima-forecast-plot" class="plotly-chart-container"></div>
+                    <div id="arima-forecast-plot" style="height: 400px;"></div>
                 </div>
             </div>
         </div>
@@ -210,7 +137,36 @@ pre {
                     <pre id="garch-summary" class="p-3 bg-light rounded"></pre>
                     
                     <h6>Volatility Forecast</h6>
-                    <div id="garch-forecast-plot" class="plotly-chart-container"></div>
+                    <div id="garch-forecast-plot" style="height: 400px;"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Raw Data Tab -->
+        <div class="tab-pane fade" id="data" role="tabpanel" aria-labelledby="data-tab">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Raw Time Series Data</h5>
+                    <div>
+                        <select id="data-symbol-selector" class="form-select form-select-sm" style="width: auto; display: inline-block;">
+                            <!-- Will be populated dynamically -->
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover" id="raw-data-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Will be filled dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -220,261 +176,198 @@ pre {
 
 {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    console.log("Results page loaded, checking for analysis results...");
-    
-    // Try to get analysis results from sessionStorage
-    const resultsJson = sessionStorage.getItem('analysisResults');
-    
-    if (!resultsJson) {
-        console.log("No results found in sessionStorage");
-        document.getElementById('no-results').style.display = 'block';
-        document.getElementById('results-container').style.display = 'none';
-        return;
-    }
-    
-    try {
-        // Parse results JSON
-        console.log("Parsing results from sessionStorage");
-        const results = JSON.parse(resultsJson);
+    document.addEventListener('DOMContentLoaded', function() {
+        // Try to get analysis results from sessionStorage
+        const resultsJson = sessionStorage.getItem('analysisResults');
         
-        // Debug: Log the entire results object
-        console.log("Analysis results:", results);
+        if (!resultsJson) {
+            // No results found, show message
+            document.getElementById('no-results').style.display = 'block';
+            document.getElementById('results-container').style.display = 'none';
+            return;
+        }
+        
+        // Parse results JSON
+        const results = JSON.parse(resultsJson);
+        console.log("Results data:", results); // Debug: Log the results object structure
         
         // Show results container
         document.getElementById('no-results').style.display = 'none';
         document.getElementById('results-container').style.display = 'block';
         
-        // Make sure Plotly is loaded before trying to create charts
-        ensurePlotlyLoaded(function() {
-            // Populate all tabs
-            populateStationarityTab(results);
-            populateARIMATab(results);
-            populateGARCHTab(results);
-            createTimeSeriesPlot(results);
-            updateStatisticsCards(results);
-        });
+        // Extract historical data from the API response - assumes data is in data.data
+        let historicalData = {};
         
-        // Set up tab event handlers
-        const tabElements = document.querySelectorAll('button[data-bs-toggle="tab"]');
-        tabElements.forEach(tab => {
-            tab.addEventListener('shown.bs.tab', function() {
-                window.dispatchEvent(new Event('resize'));
-            });
-        });
-    } catch (error) {
-        console.error("Error processing results:", error);
-        document.getElementById('no-results').style.display = 'block';
-        document.getElementById('results-container').style.display = 'none';
-        alert("Error processing analysis results: " + error.message);
-    }
-});
-
-// Helper function to ensure Plotly is loaded
-function ensurePlotlyLoaded(callback) {
-    if (typeof Plotly !== 'undefined') {
-        console.log("Plotly is already loaded, proceeding with charts");
-        callback();
-    } else {
-        console.log("Plotly not loaded yet, loading from CDN...");
-        const script = document.createElement('script');
-        script.src = 'https://cdn.plot.ly/plotly-latest.min.js';
-        script.onload = function() {
-            console.log("Plotly loaded successfully");
-            callback();
-        };
-        script.onerror = function() {
-            console.error("Failed to load Plotly from CDN");
-            alert("Failed to load Plotly chart library. Please refresh the page and try again.");
-        };
-        document.head.appendChild(script);
-    }
-}
-
-// Create time series plot with date formatting
-function createTimeSeriesPlot(results) {
-    try {
-        if (!results.arima_forecast || !Array.isArray(results.arima_forecast)) {
-            console.error("Invalid ARIMA forecast data:", results.arima_forecast);
-            return;
+        // Check for different potential data structures from the API
+        if (results.data && typeof results.data === 'object') {
+            historicalData = results.data;
+        } else if (results.time_series_data && typeof results.time_series_data === 'object') {
+            historicalData = results.time_series_data;
+        } else if (results.historical_data && typeof results.historical_data === 'object') {
+            historicalData = results.historical_data;
         }
         
-        console.log("Creating time series plot with", results.arima_forecast.length, "data points");
+        console.log("Historical data:", historicalData); // Debug: Log the historical data
         
-        // Generate dates for x-axis
-        const dates = [];
-        const today = new Date();
-        for (let i = 0; i < results.arima_forecast.length; i++) {
-            const date = new Date(today);
-            date.setDate(today.getDate() + i);
-            dates.push(date);
-        }
+        const symbols = Object.keys(historicalData);
+        console.log("Symbols:", symbols); // Debug: Log the available symbols
         
-        // Create forecast trace
-        const forecastTrace = {
-            x: dates,
-            y: results.arima_forecast,
-            type: 'scatter',
-            mode: 'lines',
-            name: 'ARIMA Forecast',
-            line: {
-                color: 'rgba(50, 150, 200, 0.8)',
-                width: 2.5
+        // Populate symbol selectors
+        const symbolSelector = document.getElementById('symbol-selector');
+        const dataSymbolSelector = document.getElementById('data-symbol-selector');
+        
+        symbolSelector.innerHTML = '';
+        dataSymbolSelector.innerHTML = '';
+        
+        symbols.forEach(symbol => {
+            symbolSelector.innerHTML += `<option value="${symbol}">${symbol}</option>`;
+            dataSymbolSelector.innerHTML += `<option value="${symbol}">${symbol}</option>`;
+        });
+        
+        // Set default symbol
+        const defaultSymbol = symbols[0] || '';
+        
+        // Function to update time series plot
+        function updateTimeSeriesPlot(symbol) {
+            const timeSeriesPlot = document.getElementById('time-series-plot');
+            const symbolData = historicalData[symbol] || {};
+            
+            console.log(`Data for ${symbol}:`, symbolData); // Debug: Log the data for the selected symbol
+            
+            // Convert data to arrays for plotting
+            const dates = Object.keys(symbolData).sort();
+            const values = dates.map(date => symbolData[date]);
+            
+            console.log("Dates:", dates); // Debug: Log dates
+            console.log("Values:", values); // Debug: Log values
+            
+            // Create plot with historical data
+            const plotData = [
+                {
+                    x: dates,
+                    y: values,
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'Historical Data',
+                    line: {
+                        color: 'blue'
+                    }
+                }
+            ];
+            
+            // Add forecast data if available
+            if (results.arima_forecast && results.arima_forecast.length > 0) {
+                // Calculate the last date for connecting historical data with forecast
+                const lastDate = dates[dates.length - 1];
+                const lastDateObj = new Date(lastDate);
+                
+                // Create forecast dates starting from the day after the last historical date
+                const forecastDates = [];
+                for (let i = 0; i < results.arima_forecast.length; i++) {
+                    const forecastDate = new Date(lastDateObj);
+                    forecastDate.setDate(lastDateObj.getDate() + i + 1);
+                    forecastDates.push(forecastDate.toISOString().split('T')[0]);
+                }
+                
+                plotData.push({
+                    x: forecastDates,
+                    y: results.arima_forecast,
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'ARIMA Forecast',
+                    line: {
+                        color: 'red',
+                        dash: 'dash'
+                    }
+                });
             }
-        };
-        
-        // Create confidence interval (estimated as ±10% for demonstration)
-        const upperBound = results.arima_forecast.map(val => val * 1.1);
-        const lowerBound = results.arima_forecast.map(val => val * 0.9);
-        
-        const confidenceTrace = {
-            x: dates.concat(dates.slice().reverse()),
-            y: upperBound.concat(lowerBound.slice().reverse()),
-            fill: 'toself',
-            fillcolor: 'rgba(50, 150, 200, 0.2)',
-            line: {color: 'transparent'},
-            name: '90% Confidence Interval',
-            showlegend: true,
-            hoverinfo: 'skip'
-        };
-        
-        // Layout configuration
-        const layout = {
-            title: {
-                text: 'Time Series Forecast',
-                font: {size: 18}
-            },
-            xaxis: {
-                title: 'Date',
-                type: 'date'
-            },
-            yaxis: {
-                title: 'Value',
-                zeroline: false
-            },
-            legend: {
-                orientation: 'h',
-                y: -0.2
-            },
-            margin: {l: 60, r: 40, t: 50, b: 80},
-            hovermode: 'closest'
-        };
-        
-        // Create the plot
-        Plotly.newPlot('time-series-plot', [confidenceTrace, forecastTrace], layout);
-        console.log("Time series plot created successfully");
-    } catch (error) {
-        console.error("Error creating time series plot:", error);
-        document.getElementById('time-series-plot').innerHTML = 
-            '<div class="alert alert-danger">Error creating time series plot: ' + error.message + '</div>';
-    }
-}
-
-// Update statistics cards with calculated values
-function updateStatisticsCards(results) {
-    try {
-        // Check if forecast data exists
-        if (!results.arima_forecast || !Array.isArray(results.arima_forecast)) {
-            console.warn("No forecast data available for statistics");
-            return;
+            
+            console.log("Plot data:", plotData); // Debug: Log the plot data
+            
+            const layout = {
+                title: `Time Series for ${symbol}`,
+                xaxis: { 
+                    title: 'Date',
+                    rangeselector: {
+                        buttons: [
+                            {
+                                count: 7,
+                                label: '1w',
+                                step: 'day',
+                                stepmode: 'backward'
+                            },
+                            {
+                                count: 1,
+                                label: '1m',
+                                step: 'month',
+                                stepmode: 'backward'
+                            },
+                            {
+                                count: 3,
+                                label: '3m',
+                                step: 'month',
+                                stepmode: 'backward'
+                            },
+                            {
+                                count: 6,
+                                label: '6m',
+                                step: 'month',
+                                stepmode: 'backward'
+                            },
+                            {step: 'all'}
+                        ]
+                    },
+                    rangeslider: { visible: true }
+                },
+                yaxis: { title: 'Value' },
+                legend: { orientation: 'h', y: -0.2 }
+            };
+            
+            // Create the plot
+            Plotly.newPlot(timeSeriesPlot, plotData, layout);
+            console.log("Plot created for", symbol); // Debug: Log when plot is created
         }
         
-        console.log("Updating statistics cards");
-        
-        // Calculate volatility (standard deviation)
-        const forecastData = results.arima_forecast;
-        const mean = forecastData.reduce((sum, val) => sum + val, 0) / forecastData.length;
-        const squaredDiffs = forecastData.map(val => Math.pow(val - mean, 2));
-        const variance = squaredDiffs.reduce((sum, val) => sum + val, 0) / forecastData.length;
-        const volatility = Math.sqrt(variance);
-        
-        // Update volatility card
-        if (document.getElementById('volatility-value')) {
-            document.getElementById('volatility-value').textContent = volatility.toFixed(4);
+        // Function to update raw data table
+        function updateRawDataTable(symbol) {
+            const tableBody = document.getElementById('raw-data-table').getElementsByTagName('tbody')[0];
+            const symbolData = historicalData[symbol] || {};
+            
+            // Clear existing rows
+            tableBody.innerHTML = '';
+            
+            // Convert data to arrays and sort by date
+            const dates = Object.keys(symbolData).sort();
+            
+            // Add rows for each data point
+            dates.forEach(date => {
+                const row = tableBody.insertRow();
+                const dateCell = row.insertCell(0);
+                const valueCell = row.insertCell(1);
+                
+                dateCell.textContent = date;
+                valueCell.textContent = typeof symbolData[date] === 'number' ? 
+                    symbolData[date].toFixed(4) : symbolData[date];
+            });
         }
         
-        // For accuracy, we'd typically compare with actual values, but here we use a placeholder
-        if (document.getElementById('accuracy-value')) {
-            // In a real application, this would be calculated based on model performance metrics
-            document.getElementById('accuracy-value').textContent = '95.2%';
-        }
-        
-        // Update forecast horizon
-        if (document.getElementById('horizon-value')) {
-            document.getElementById('horizon-value').textContent = forecastData.length + ' days';
-        }
-        
-        console.log("Statistics cards updated successfully");
-    } catch (error) {
-        console.error("Error updating statistics cards:", error);
-        // If there's an error, at least prevent the "Loading..." text from showing
-        if (document.getElementById('volatility-value')) {
-            document.getElementById('volatility-value').textContent = "N/A";
-        }
-        if (document.getElementById('accuracy-value')) {
-            document.getElementById('accuracy-value').textContent = "N/A";
-        }
-        if (document.getElementById('horizon-value')) {
-            document.getElementById('horizon-value').textContent = "N/A";
-        }
-    }
-}
-
-// Populate stationarity tab with error handling
-function populateStationarityTab(results) {
-    try {
-        // Check if stationarity results exist
-        if (!results.stationarity_results) {
-            console.error("No stationarity results found in data");
-            document.getElementById('stationarity-interpretation').textContent = "No stationarity results available";
-            return;
-        }
-        
-        const stationarityResults = results.stationarity_results;
-        console.log("Populating stationarity tab with:", stationarityResults);
-        
-        // Set interpretation text with null/undefined check
-        document.getElementById('stationarity-interpretation').textContent = 
-            stationarityResults.interpretation || "No interpretation available";
-        
-        // Set ADF statistics with null/undefined checks and proper formatting
-        if (stationarityResults.adf_statistic !== undefined) {
-            document.getElementById('adf-statistic').textContent = 
-                typeof stationarityResults.adf_statistic === 'number' 
-                    ? stationarityResults.adf_statistic.toFixed(4) 
-                    : String(stationarityResults.adf_statistic);
-        } else {
-            document.getElementById('adf-statistic').textContent = "N/A";
-        }
-        
-        if (stationarityResults.p_value !== undefined) {
-            document.getElementById('p-value').textContent = 
-                typeof stationarityResults.p_value === 'number' 
-                    ? stationarityResults.p_value.toFixed(4) 
-                    : String(stationarityResults.p_value);
-        } else {
-            document.getElementById('p-value').textContent = "N/A";
-        }
-        
-        document.getElementById('is-stationary').textContent = 
-            stationarityResults.is_stationary !== undefined 
-                ? (stationarityResults.is_stationary ? 'Yes' : 'No') 
-                : "Unknown";
-        
-        // Set alert class based on stationarity
-        const stationarityAlert = document.getElementById('stationarity-alert');
-        if (stationarityResults.is_stationary !== undefined) {
-            stationarityAlert.className = stationarityResults.is_stationary 
-                ? 'alert alert-success' 
-                : 'alert alert-warning';
-        } else {
-            stationarityAlert.className = 'alert alert-info';
-        }
-        
-        // Populate critical values table if available
-        if (stationarityResults.critical_values && typeof stationarityResults.critical_values === 'object') {
+        // Populate stationarity tab
+        if (results.stationarity_results) {
+            const stationarityResults = results.stationarity_results;
+            
+            document.getElementById('stationarity-interpretation').textContent = stationarityResults.interpretation;
+            document.getElementById('adf-statistic').textContent = stationarityResults.adf_statistic.toFixed(4);
+            document.getElementById('p-value').textContent = stationarityResults.p_value.toFixed(4);
+            document.getElementById('is-stationary').textContent = stationarityResults.is_stationary ? 'Yes' : 'No';
+            
+            // Set alert class based on stationarity
+            const stationarityAlert = document.getElementById('stationarity-alert');
+            stationarityAlert.className = stationarityResults.is_stationary ? 
+                'alert alert-success' : 'alert alert-warning';
+            
+            // Populate critical values table
             const criticalValuesTable = document.getElementById('critical-values-table').getElementsByTagName('tbody')[0];
-            criticalValuesTable.innerHTML = ''; // Clear existing rows
+            criticalValuesTable.innerHTML = ''; // Clear any existing rows
             
             for (const [level, value] of Object.entries(stationarityResults.critical_values)) {
                 const row = criticalValuesTable.insertRow();
@@ -482,157 +375,80 @@ function populateStationarityTab(results) {
                 const valueCell = row.insertCell(1);
                 
                 levelCell.textContent = level;
-                valueCell.textContent = typeof value === 'number' ? value.toFixed(4) : String(value);
+                valueCell.textContent = value.toFixed(4);
             }
-        } else {
-            console.warn("No critical values found in stationarity results");
-            document.getElementById('critical-values-table').closest('table').style.display = 'none';
         }
         
-        console.log("Stationarity tab populated successfully");
-    } catch (error) {
-        console.error("Error populating stationarity tab:", error);
-        document.getElementById('stationarity-interpretation').textContent = 
-            "Error loading stationarity results: " + error.message;
-    }
-}
-
-// Populate ARIMA tab with error handling
-function populateARIMATab(results) {
-    try {
-        // Check if ARIMA summary exists
-        if (!results.arima_summary) {
-            console.error("No ARIMA summary found in data");
-            document.getElementById('arima-summary').textContent = "No ARIMA summary available";
-            return;
-        }
-        
-        console.log("Populating ARIMA tab");
-        
-        // Set ARIMA summary
-        document.getElementById('arima-summary').textContent = results.arima_summary;
-        
-        // Create ARIMA forecast plot if forecast data exists
-        if (results.arima_forecast && Array.isArray(results.arima_forecast)) {
-            console.log("Creating ARIMA forecast plot with", results.arima_forecast.length, "data points");
+        // Populate ARIMA tab
+        if (results.arima_summary) {
+            document.getElementById('arima-summary').textContent = results.arima_summary;
             
-            // Generate dates for x-axis
-            const dates = [];
-            const today = new Date();
-            for (let i = 0; i < results.arima_forecast.length; i++) {
-                const date = new Date(today);
-                date.setDate(today.getDate() + i);
-                dates.push(date);
+            // Create ARIMA forecast plot if forecast data is available
+            if (results.arima_forecast && results.arima_forecast.length > 0) {
+                const arimaForecastPlot = document.getElementById('arima-forecast-plot');
+                Plotly.newPlot(arimaForecastPlot, [{
+                    x: Array.from({ length: results.arima_forecast.length }, (_, i) => i + 1),
+                    y: results.arima_forecast,
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'ARIMA Forecast'
+                }], {
+                    title: 'ARIMA Forecast',
+                    xaxis: { title: 'Time Horizon (Days)' },
+                    yaxis: { title: 'Value' }
+                });
             }
-            
-            // Layout configuration
-            const layout = {
-                title: 'ARIMA Forecast',
-                xaxis: {
-                    title: 'Date',
-                    type: 'date'
-                },
-                yaxis: {
-                    title: 'Value'
-                },
-                margin: {l: 50, r: 30, t: 50, b: 50},
-                hovermode: 'closest'
-            };
-            
-            // Create the plot
-            Plotly.newPlot('arima-forecast-plot', [{
-                x: dates,
-                y: results.arima_forecast,
-                type: 'scatter',
-                mode: 'lines',
-                line: {
-                    color: 'rgba(50, 200, 150, 0.8)',
-                    width: 2
-                },
-                name: 'ARIMA Forecast'
-            }], layout);
-            
-            console.log("ARIMA forecast plot created successfully");
-        } else {
-            console.warn("No ARIMA forecast data found");
-            document.getElementById('arima-forecast-plot').innerHTML = 
-                '<div class="alert alert-warning">No forecast data available</div>';
-        }
-    } catch (error) {
-        console.error("Error populating ARIMA tab:", error);
-        document.getElementById('arima-summary').textContent = 
-            "Error loading ARIMA results: " + error.message;
-    }
-}
-
-// Populate GARCH tab with error handling
-function populateGARCHTab(results) {
-    try {
-        // Check if GARCH summary exists
-        if (!results.garch_summary) {
-            console.error("No GARCH summary found in data");
-            document.getElementById('garch-summary').textContent = "No GARCH summary available";
-            return;
         }
         
-        console.log("Populating GARCH tab");
-        
-        // Set GARCH summary
-        document.getElementById('garch-summary').textContent = results.garch_summary;
-        
-        // Create GARCH forecast plot if forecast data exists
-        if (results.garch_forecast && Array.isArray(results.garch_forecast)) {
-            console.log("Creating GARCH forecast plot with", results.garch_forecast.length, "data points");
+        // Populate GARCH tab
+        if (results.garch_summary) {
+            document.getElementById('garch-summary').textContent = results.garch_summary;
             
-            // Generate dates for x-axis
-            const dates = [];
-            const today = new Date();
-            for (let i = 0; i < results.garch_forecast.length; i++) {
-                const date = new Date(today);
-                date.setDate(today.getDate() + i);
-                dates.push(date);
+            // Create GARCH forecast plot if forecast data is available
+            if (results.garch_forecast && results.garch_forecast.length > 0) {
+                const garchForecastPlot = document.getElementById('garch-forecast-plot');
+                Plotly.newPlot(garchForecastPlot, [{
+                    x: Array.from({ length: results.garch_forecast.length }, (_, i) => i + 1),
+                    y: results.garch_forecast,
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'GARCH Forecast'
+                }], {
+                    title: 'Volatility Forecast',
+                    xaxis: { title: 'Time Horizon (Days)' },
+                    yaxis: { title: 'Value' }
+                });
             }
-            
-            // Layout configuration
-            const layout = {
-                title: 'Volatility Forecast',
-                xaxis: {
-                    title: 'Date',
-                    type: 'date'
-                },
-                yaxis: {
-                    title: 'Volatility'
-                },
-                margin: {l: 50, r: 30, t: 50, b: 50},
-                hovermode: 'closest'
-            };
-            
-            // Create the plot
-            Plotly.newPlot('garch-forecast-plot', [{
-                x: dates,
-                y: results.garch_forecast,
-                type: 'scatter',
-                mode: 'lines',
-                line: {
-                    color: 'rgba(200, 80, 80, 0.8)',
-                    width: 2
-                },
-                fill: 'tozeroy',
-                fillcolor: 'rgba(200, 80, 80, 0.2)',
-                name: 'GARCH Forecast'
-            }], layout);
-            
-            console.log("GARCH forecast plot created successfully");
-        } else {
-            console.warn("No GARCH forecast data found");
-            document.getElementById('garch-forecast-plot').innerHTML = 
-                '<div class="alert alert-warning">No forecast data available</div>';
         }
-    } catch (error) {
-        console.error("Error populating GARCH tab:", error);
-        document.getElementById('garch-summary').textContent = 
-            "Error loading GARCH results: " + error.message;
-    }
-}
+        
+        // Initialize with default symbol if available
+        if (defaultSymbol) {
+            console.log("Initializing with default symbol:", defaultSymbol); // Debug: Log initialization
+            updateTimeSeriesPlot(defaultSymbol);
+            updateRawDataTable(defaultSymbol);
+        } else {
+            console.log("No default symbol available"); // Debug: Log when no symbol is available
+        }
+        
+        // Set up event listeners for symbol selectors
+        symbolSelector.addEventListener('change', function() {
+            console.log("Symbol changed to:", this.value); // Debug: Log symbol change
+            updateTimeSeriesPlot(this.value);
+        });
+        
+        dataSymbolSelector.addEventListener('change', function() {
+            console.log("Data symbol changed to:", this.value); // Debug: Log data symbol change
+            updateRawDataTable(this.value);
+        });
+        
+        // Resize plots when tabs are shown
+        const tabElements = document.querySelectorAll('button[data-bs-toggle="tab"]');
+        tabElements.forEach(tab => {
+            tab.addEventListener('shown.bs.tab', function() {
+                console.log("Tab changed, triggering resize"); // Debug: Log tab change
+                window.dispatchEvent(new Event('resize'));
+            });
+        });
+    });
 </script>
 {% endblock %}
