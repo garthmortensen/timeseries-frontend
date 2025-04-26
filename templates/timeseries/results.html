@@ -194,23 +194,84 @@
         // Show results container
         document.getElementById('no-results').style.display = 'none';
         document.getElementById('results-container').style.display = 'block';
+        
+        function transformAPIData(apiData) {
+            // If we don't have data or it's not an array, return an empty object
+            if (!apiData || !Array.isArray(apiData)) {
+                console.error("Invalid API data format:", apiData);
+                return {};
+            }
             
+            console.log("Transforming data:", apiData);
+            
+            // Create the expected structure
+            const transformed = {};
+            
+            // Convert array format to the expected object format
+            apiData.forEach((item, index) => {
+                // Skip if the item is not properly formatted
+                if (!item || typeof item !== 'object') {
+                    console.warn(`Skipping invalid item at index ${index}:`, item);
+                    return;
+                }
+                
+                // Check for either 'index' or 'Date' field
+                const dateField = item.index || item.Date;
+                
+                // Handle case where date field might be missing
+                if (!dateField) {
+                    console.warn(`Item at index ${index} is missing date field:`, item);
+                    return;
+                }
+                
+                try {
+                    // Extract date from the date field (removing time part)
+                    const date = dateField.split('T')[0];
+                    
+                    // Create entry for this date
+                    transformed[date] = {};
+                    
+                    // Add all symbol values except the date field
+                    Object.keys(item).forEach(key => {
+                        if (key !== 'index' && key !== 'Date') {
+                            transformed[date][key] = item[key];
+                        }
+                    });
+                } catch (error) {
+                    console.error(`Error processing item at index ${index}:`, error, item);
+                }
+            });
+            
+            console.log("Transformed data:", transformed);
+            return transformed;
+        }
+
         // Extract time series data from the API response
         let timeSeriesData = null;
-        
+
+        // Log the entire results object to see its structure
+        console.log("Full results object:", results);
+
         // Check for different potential data structures from the API
         if (results.data && typeof results.data === 'object') {
             timeSeriesData = results.data;
+            console.log("Using 'data' property");
         } else if (results.time_series_data && typeof results.time_series_data === 'object') {
             timeSeriesData = results.time_series_data;
+            console.log("Using 'time_series_data' property");
         } else if (results.historical_data && typeof results.historical_data === 'object') {
             timeSeriesData = results.historical_data;
-        } else if (results.original_data && typeof results.original_data === 'object') {
-            timeSeriesData = results.original_data;
+            console.log("Using 'historical_data' property");
+        } else if (results.original_data && Array.isArray(results.original_data)) {
+            console.log("Using 'original_data' property:", results.original_data);
+            // Transform the array format to the expected object format
+            timeSeriesData = transformAPIData(results.original_data);
+        } else {
+            console.error("No valid data found in results");
         }
-        
-        console.log("Time series data structure:", timeSeriesData);
-        
+
+        console.log("Final timeSeriesData:", timeSeriesData);
+                
         if (timeSeriesData) {
             // Update the time series plot with all symbols at once
             updateTimeSeriesPlot(timeSeriesData);

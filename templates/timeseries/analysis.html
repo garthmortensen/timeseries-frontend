@@ -288,22 +288,27 @@
                 return response.json();
             })
             .then(data => {
-                // Store results in sessionStorage for the results page
-                sessionStorage.setItem('analysisResults', JSON.stringify(data));
+                // Log the response data
+                console.log("API Response received:", data);
+                
+                try {
+                    // Attempt to save to sessionStorage
+                    sessionStorage.setItem('analysisResults', JSON.stringify(data));
+                    console.log("Successfully saved to sessionStorage");
+                } catch (error) {
+                    console.error("Error saving to sessionStorage:", error);
+                }
                 
                 // Redirect to results page
                 window.location.href = '{% url "timeseries:results" %}';
             })
             .catch(error => {
                 console.error('Error:', error);
-                
-                // Show error message
+                // Show proper error message
                 loadingIndicator.style.display = 'none';
                 form.style.display = 'block';
-                
                 alert(`Error running analysis: ${error.message}`);
             });
-            
         });
         // Toggle Spillover parameters
         const spilloverSwitch = document.getElementById('enable-spillover');
