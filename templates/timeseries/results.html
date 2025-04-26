@@ -50,17 +50,33 @@
     <div class="tab-content" id="resultsTabsContent">
         <!-- Time Series Tab -->
         <div class="tab-pane fade show active" id="time-series" role="tabpanel" aria-labelledby="time-series-tab">
+            <!-- Price Series Plot -->
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">Time Series Plot</h5>
-                    <div>
-                        <select id="symbol-selector" class="form-select form-select-sm" style="width: auto; display: inline-block;">
-                            <!-- Will be populated dynamically -->
-                        </select>
-                    </div>
+                    <h5 class="card-title mb-0">Price Series</h5>
                 </div>
                 <div class="card-body">
-                    <div id="time-series-plot" style="height: 500px;"></div>
+                    <div id="price-series-plot" style="height: 400px;"></div>
+                </div>
+            </div>
+            
+            <!-- Returns Series Plot -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Returns Series</h5>
+                </div>
+                <div class="card-body">
+                    <div id="returns-series-plot" style="height: 400px;"></div>
+                </div>
+            </div>
+            
+            <!-- GARCH Series Plot -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Scaled for GARCH Series</h5>
+                </div>
+                <div class="card-body">
+                    <div id="garch-series-plot" style="height: 400px;"></div>
                 </div>
             </div>
         </div>
@@ -145,27 +161,95 @@
         <!-- Raw Data Tab -->
         <div class="tab-pane fade" id="data" role="tabpanel" aria-labelledby="data-tab">
             <div class="card mb-4">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">Raw Time Series Data</h5>
-                    <div>
-                        <select id="data-symbol-selector" class="form-select form-select-sm" style="width: auto; display: inline-block;">
-                            <!-- Will be populated dynamically -->
-                        </select>
-                    </div>
+                <div class="card-header">
+                    <ul class="nav nav-tabs card-header-tabs" id="datasetTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="price-data-tab" data-bs-toggle="tab" data-bs-target="#price-data" 
+                                    type="button" role="tab" aria-controls="price-data" aria-selected="true">
+                                Price Series
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="returns-data-tab" data-bs-toggle="tab" data-bs-target="#returns-data" 
+                                    type="button" role="tab" aria-controls="returns-data" aria-selected="false">
+                                Returns Series
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="garch-data-tab" data-bs-toggle="tab" data-bs-target="#garch-data" 
+                                    type="button" role="tab" aria-controls="garch-data" aria-selected="false">
+                                Scaled for GARCH
+                            </button>
+                        </li>
+                    </ul>
                 </div>
                 <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover" id="raw-data-table">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Value</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Will be filled dynamically -->
-                            </tbody>
-                        </table>
+                    <div class="tab-content" id="datasetTabContent">
+                        <!-- Price Series Data -->
+                        <div class="tab-pane fade show active" id="price-data" role="tabpanel" aria-labelledby="price-data-tab">
+                            <div class="d-flex justify-content-end mb-3">
+                                <button class="btn btn-outline-primary" id="export-price-csv">
+                                    <i class="bi bi-download"></i> Export as CSV
+                                </button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover" id="price-data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <!-- Dynamically filled -->
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Dynamically filled -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Returns Series Data -->
+                        <div class="tab-pane fade" id="returns-data" role="tabpanel" aria-labelledby="returns-data-tab">
+                            <div class="d-flex justify-content-end mb-3">
+                                <button class="btn btn-outline-primary" id="export-returns-csv">
+                                    <i class="bi bi-download"></i> Export as CSV
+                                </button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover" id="returns-data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <!-- Dynamically filled -->
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Dynamically filled -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- GARCH Series Data -->
+                        <div class="tab-pane fade" id="garch-data" role="tabpanel" aria-labelledby="garch-data-tab">
+                            <div class="d-flex justify-content-end mb-3">
+                                <button class="btn btn-outline-primary" id="export-garch-csv">
+                                    <i class="bi bi-download"></i> Export as CSV
+                                </button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover" id="garch-data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <!-- Dynamically filled -->
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Dynamically filled -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -271,7 +355,7 @@
         }
 
         console.log("Final timeSeriesData:", timeSeriesData);
-                
+
         if (timeSeriesData) {
             // Get all available dates (sorted)
             const dates = Object.keys(timeSeriesData).sort();
@@ -285,7 +369,7 @@
                 console.log("Found symbols:", symbols);
                 
                 if (symbols.length > 0) {
-                    // Create plot data for all symbols at once
+                    // Create plot data for price series
                     const plotData = symbols.map(symbol => {
                         const x = [];
                         const y = [];
@@ -307,28 +391,112 @@
                         };
                     });
                     
-                    // Create the plot with all symbols
-                    const timeSeriesPlot = document.getElementById('time-series-plot');
-                    Plotly.newPlot(timeSeriesPlot, plotData, {
-                        title: 'Time Series Plot',
-                        xaxis: { 
-                            title: 'Date',
-                            rangeselector: {
-                                buttons: [
-                                    {count: 7, label: '1w', step: 'day', stepmode: 'backward'},
-                                    {count: 1, label: '1m', step: 'month', stepmode: 'backward'},
-                                    {count: 3, label: '3m', step: 'month', stepmode: 'backward'},
-                                    {count: 6, label: '6m', step: 'month', stepmode: 'backward'},
-                                    {step: 'all'}
-                                ]
-                            },
-                            rangeslider: { visible: true }
-                        },
+                    // Create the price series plot
+                    const priceSeriesPlot = document.getElementById('price-series-plot');
+                    Plotly.newPlot(priceSeriesPlot, plotData, {
+                        title: 'Price Series',
+                        xaxis: { title: 'Date' },
                         yaxis: { title: 'Price' },
                         legend: { orientation: 'h', y: -0.2 }
                     });
                     
-                    console.log("Plot created with", plotData.length, "traces");
+                    console.log("Price series plot created with", plotData.length, "traces");
+                    
+                    // Create the returns series plot if available
+                    if (results.returns_data && Array.isArray(results.returns_data) && results.returns_data.length > 0) {
+                        // Transform returns data
+                        const returnsData = transformAPIData(results.returns_data);
+                        const returnsDates = Object.keys(returnsData).sort();
+                        
+                        if (returnsDates.length > 0) {
+                            const returnsSymbols = Object.keys(returnsData[returnsDates[0]] || {})
+                                .filter(key => key !== "Date" && key !== "index");
+                            
+                            // Create plot data for returns series
+                            const returnsPlotData = returnsSymbols.map(symbol => {
+                                const x = [];
+                                const y = [];
+                                
+                                // Collect data points for this symbol
+                                returnsDates.forEach(date => {
+                                    if (returnsData[date] && returnsData[date][symbol] !== undefined) {
+                                        x.push(date);
+                                        y.push(returnsData[date][symbol]);
+                                    }
+                                });
+                                
+                                return {
+                                    x: x,
+                                    y: y,
+                                    type: 'scatter',
+                                    mode: 'lines',
+                                    name: symbol
+                                };
+                            });
+                            
+                            const returnsSeriesPlot = document.getElementById('returns-series-plot');
+                            Plotly.newPlot(returnsSeriesPlot, returnsPlotData, {
+                                title: 'Returns Series',
+                                xaxis: { title: 'Date' },
+                                yaxis: { title: 'Return' },
+                                legend: { orientation: 'h', y: -0.2 }
+                            });
+                            
+                            console.log("Returns series plot created with", returnsPlotData.length, "traces");
+                        }
+                    } else {
+                        console.log("No returns data available for plotting");
+                        document.getElementById('returns-series-plot').innerHTML = 
+                            '<div class="alert alert-warning">No returns data available</div>';
+                    }
+                    
+                    // Create the GARCH series plot if available
+                    if (results.post_garch_data && Array.isArray(results.post_garch_data) && results.post_garch_data.length > 0) {
+                        // Transform GARCH data
+                        const garchData = transformAPIData(results.post_garch_data);
+                        const garchDates = Object.keys(garchData).sort();
+                        
+                        if (garchDates.length > 0) {
+                            const garchSymbols = Object.keys(garchData[garchDates[0]] || {})
+                                .filter(key => key !== "Date" && key !== "index");
+                            
+                            // Create plot data for GARCH series
+                            const garchPlotData = garchSymbols.map(symbol => {
+                                const x = [];
+                                const y = [];
+                                
+                                // Collect data points for this symbol
+                                garchDates.forEach(date => {
+                                    if (garchData[date] && garchData[date][symbol] !== undefined) {
+                                        x.push(date);
+                                        y.push(garchData[date][symbol]);
+                                    }
+                                });
+                                
+                                return {
+                                    x: x,
+                                    y: y,
+                                    type: 'scatter',
+                                    mode: 'lines',
+                                    name: symbol
+                                };
+                            });
+                            
+                            const garchSeriesPlot = document.getElementById('garch-series-plot');
+                            Plotly.newPlot(garchSeriesPlot, garchPlotData, {
+                                title: 'Scaled for GARCH Series',
+                                xaxis: { title: 'Date' },
+                                yaxis: { title: 'Value' },
+                                legend: { orientation: 'h', y: -0.2 }
+                            });
+                            
+                            console.log("GARCH series plot created with", garchPlotData.length, "traces");
+                        }
+                    } else {
+                        console.log("No GARCH data available for plotting");
+                        document.getElementById('garch-series-plot').innerHTML = 
+                            '<div class="alert alert-warning">No scaled GARCH data available</div>';
+                    }
                     
                     // Update the raw data table with all symbols
                     updateRawDataTable(timeSeriesData, dates, symbols);
