@@ -179,27 +179,56 @@
     document.addEventListener('DOMContentLoaded', function() {
         // Try to get analysis results from sessionStorage
         const resultsJson = sessionStorage.getItem('analysisResults');
-        
+
         if (!resultsJson) {
             // No results found, show message
             document.getElementById('no-results').style.display = 'block';
             document.getElementById('results-container').style.display = 'none';
             return;
         }
-        
+
         // Parse results JSON
         const results = JSON.parse(resultsJson);
-        console.log("Results data:", results); // Debug: Log the results object structure
-        
+
+        // Add these console.log statements here
+        console.log("=== RAW API RESPONSE ===");
+        console.log("Full results object:", results);
+        console.log("Type of results:", typeof results);
+        console.log("Top-level keys:", Object.keys(results));
+
+        // Check for different potential data structures
+        if (results.data) {
+            console.log("'data' property exists:", results.data);
+            console.log("Type of data:", typeof results.data);
+            console.log("First few keys of data:", Object.keys(results.data).slice(0, 5));
+        } else {
+            console.log("'data' property not found");
+        }
+
+        if (results.original_data) {
+            console.log("'original_data' property exists:", results.original_data);
+            console.log("Type of original_data:", typeof results.original_data);
+            if (Array.isArray(results.original_data)) {
+                console.log("original_data is an array with length:", results.original_data.length);
+                console.log("First item sample:", results.original_data[0]);
+            }
+        }
+            
         // Show results container
         document.getElementById('no-results').style.display = 'none';
         document.getElementById('results-container').style.display = 'block';
         
         function transformAPIData(apiData) {
-            // If we don't have data or it's not an array, return an empty object
-            if (!apiData || !Array.isArray(apiData)) {
+            // If we have null or undefined, return an empty object
+            if (!apiData) {
                 console.error("Invalid API data format:", apiData);
                 return {};
+            }
+            
+            // Check if apiData is already in the expected format (dates as keys)
+            if (typeof apiData === 'object' && !Array.isArray(apiData)) {
+                console.log("Data is already in the correct format:", apiData);
+                return apiData;
             }
             
             console.log("Transforming data:", apiData);
@@ -207,43 +236,47 @@
             // Create the expected structure
             const transformed = {};
             
-            // Convert array format to the expected object format
-            apiData.forEach((item, index) => {
-                // Skip if the item is not properly formatted
-                if (!item || typeof item !== 'object') {
-                    console.warn(`Skipping invalid item at index ${index}:`, item);
-                    return;
-                }
-                
-                // Check for either 'index' or 'Date' field
-                const dateField = item.index || item.Date;
-                
-                // Handle case where date field might be missing
-                if (!dateField) {
-                    console.warn(`Item at index ${index} is missing date field:`, item);
-                    return;
-                }
-                
-                try {
-                    // Extract date from the date field (removing time part)
-                    const date = dateField.split('T')[0];
+            // If apiData is an array, convert it to date-keyed object
+            if (Array.isArray(apiData)) {
+                apiData.forEach((item, index) => {
+                    // Skip if the item is not properly formatted
+                    if (!item || typeof item !== 'object') {
+                        console.warn(`Skipping invalid item at index ${index}:`, item);
+                        return;
+                    }
                     
-                    // Create entry for this date
-                    transformed[date] = {};
+                    // Check for either 'index' or 'Date' or 'date' field
+                    const dateField = item.index || item.Date || item.date;
                     
-                    // Add all symbol values except the date field
-                    Object.keys(item).forEach(key => {
-                        if (key !== 'index' && key !== 'Date') {
-                            transformed[date][key] = item[key];
-                        }
-                    });
-                } catch (error) {
-                    console.error(`Error processing item at index ${index}:`, error, item);
-                }
-            });
+                    // Handle case where date field might be missing
+                    if (!dateField) {
+                        console.warn(`Item at index ${index} is missing date field:`, item);
+                        return;
+                    }
+                    
+                    try {
+                        // Extract date from the date field (removing time part if it exists)
+                        const date = String(dateField).split('T')[0];
+                        
+                        // Create entry for this date
+                        transformed[date] = {};
+                        
+                        // Add all symbol values except the date field
+                        Object.keys(item).forEach(key => {
+                            if (key !== 'index' && key !== 'Date' && key !== 'date') {
+                                transformed[date][key] = item[key];
+                            }
+                        });
+                    } catch (error) {
+                        console.error(`Error processing item at index ${index}:`, error, item);
+                    }
+                });
+                return transformed;
+            }
             
-            console.log("Transformed data:", transformed);
-            return transformed;
+            // If we reach here, we don't know how to handle the data format
+            console.error("Unhandled data format:", apiData);
+            return {};
         }
 
         // Extract time series data from the API response
