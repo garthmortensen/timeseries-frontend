@@ -260,380 +260,348 @@
 
 {% block extra_js %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Try to get analysis results from sessionStorage
-        const resultsJson = sessionStorage.getItem('analysisResults');
+document.addEventListener('DOMContentLoaded', function() {
+    // Try to get analysis results from sessionStorage
+    const resultsJson = sessionStorage.getItem('analysisResults');
+    
+    if (!resultsJson) {
+        // No results found, show message
+        document.getElementById('no-results').style.display = 'block';
+        document.getElementById('results-container').style.display = 'none';
+        return;
+    }
+    
+    // Parse results JSON
+    const results = JSON.parse(resultsJson);
+    console.log("Results data:", results);
+    
+    // Show results container
+    document.getElementById('no-results').style.display = 'none';
+    document.getElementById('results-container').style.display = 'block';
+    
+    // Helper function to transform array data into the format needed for plotting
+    function transformArrayToPlotData(dataArray, dateField = 'index') {
+        if (!dataArray || !Array.isArray(dataArray) || dataArray.length === 0) {
+            console.error("Invalid data array:", dataArray);
+            return null;
+        }
         
-        if (!resultsJson) {
-            // No results found, show message
-            document.getElementById('no-results').style.display = 'block';
-            document.getElementById('results-container').style.display = 'none';
+        // Get all symbols (exclude the date field)
+        const firstItem = dataArray[0];
+        const symbols = Object.keys(firstItem).filter(key => key !== dateField);
+        
+        if (symbols.length === 0) {
+            console.error("No symbols found in data");
+            return null;
+        }
+        
+        console.log("Found symbols:", symbols);
+        
+        // Create plot data for each symbol
+        const plotData = symbols.map(symbol => {
+            const x = [];
+            const y = [];
+            
+            // Collect data points for this symbol
+            dataArray.forEach(item => {
+                if (item[symbol] !== undefined) {
+                    // Get date from the date field (removing time part if present)
+                    const date = item[dateField].split('T')[0];
+                    x.push(date);
+                    y.push(item[symbol]);
+                }
+            });
+            
+            return {
+                x: x,
+                y: y,
+                type: 'scatter',
+                mode: 'lines',
+                name: symbol
+            };
+        });
+        
+        return plotData;
+    }
+    
+    // Plot the time series data
+    
+    // 1. Price Series (original_data)
+    if (results.original_data && Array.isArray(results.original_data) && results.original_data.length > 0) {
+        const priceSeriesPlotData = transformArrayToPlotData(results.original_data);
+        
+        if (priceSeriesPlotData) {
+            const priceSeriesPlot = document.getElementById('price-series-plot');
+            Plotly.newPlot(priceSeriesPlot, priceSeriesPlotData, {
+                title: 'Price Series',
+                xaxis: { title: 'Date' },
+                yaxis: { title: 'Price' },
+                legend: { orientation: 'h', y: -0.2 }
+            });
+            console.log("Price series plot created with", priceSeriesPlotData.length, "traces");
+        }
+    } else {
+        console.log("No original data available for plotting");
+        document.getElementById('price-series-plot').innerHTML = 
+            '<div class="alert alert-warning">No price data available</div>';
+    }
+    
+    // 2. Returns Series (returns_data)
+    if (results.returns_data && Array.isArray(results.returns_data) && results.returns_data.length > 0) {
+        const returnsPlotData = transformArrayToPlotData(results.returns_data);
+        
+        if (returnsPlotData) {
+            const returnsSeriesPlot = document.getElementById('returns-series-plot');
+            Plotly.newPlot(returnsSeriesPlot, returnsPlotData, {
+                title: 'Returns Series',
+                xaxis: { title: 'Date' },
+                yaxis: { title: 'Return' },
+                legend: { orientation: 'h', y: -0.2 }
+            });
+            console.log("Returns series plot created with", returnsPlotData.length, "traces");
+        }
+    } else {
+        console.log("No returns data available for plotting");
+        document.getElementById('returns-series-plot').innerHTML = 
+            '<div class="alert alert-warning">No returns data available</div>';
+    }
+    
+    // 3. GARCH Series (post_garch_data)
+    if (results.post_garch_data && Array.isArray(results.post_garch_data) && results.post_garch_data.length > 0) {
+        const garchPlotData = transformArrayToPlotData(results.post_garch_data);
+        
+        if (garchPlotData) {
+            const garchSeriesPlot = document.getElementById('garch-series-plot');
+            Plotly.newPlot(garchSeriesPlot, garchPlotData, {
+                title: 'Scaled for GARCH Series',
+                xaxis: { title: 'Date' },
+                yaxis: { title: 'Value' },
+                legend: { orientation: 'h', y: -0.2 }
+            });
+            console.log("GARCH series plot created with", garchPlotData.length, "traces");
+        }
+    } else {
+        console.log("No GARCH data available for plotting");
+        document.getElementById('garch-series-plot').innerHTML = 
+            '<div class="alert alert-warning">No scaled GARCH data available</div>';
+    }
+    
+    // Populate stationarity tab
+    if (results.stationarity_results) {
+        const stationarityResults = results.stationarity_results;
+        
+        document.getElementById('stationarity-interpretation').textContent = stationarityResults.interpretation;
+        document.getElementById('adf-statistic').textContent = stationarityResults.adf_statistic.toFixed(4);
+        document.getElementById('p-value').textContent = stationarityResults.p_value.toFixed(4);
+        document.getElementById('is-stationary').textContent = stationarityResults.is_stationary ? 'Yes' : 'No';
+        
+        // Set alert class based on stationarity
+        const stationarityAlert = document.getElementById('stationarity-alert');
+        stationarityAlert.className = stationarityResults.is_stationary ? 
+            'alert alert-success' : 'alert alert-warning';
+        
+        // Populate critical values table
+        const criticalValuesTable = document.getElementById('critical-values-table').getElementsByTagName('tbody')[0];
+        criticalValuesTable.innerHTML = ''; // Clear any existing rows
+        
+        for (const [level, value] of Object.entries(stationarityResults.critical_values)) {
+            const row = criticalValuesTable.insertRow();
+            const levelCell = row.insertCell(0);
+            const valueCell = row.insertCell(1);
+            
+            levelCell.textContent = level;
+            valueCell.textContent = value.toFixed(4);
+        }
+    } else {
+        console.error("No stationarity results found");
+        document.getElementById('stationarity-interpretation').textContent = "Stationarity test results not available";
+        const stationarityAlert = document.getElementById('stationarity-alert');
+        stationarityAlert.className = 'alert alert-warning';
+        stationarityAlert.innerHTML = '<strong>Error:</strong> Stationarity test results not available';
+    }
+    
+    // Populate ARIMA tab
+    if (results.arima_summary) {
+        document.getElementById('arima-summary').textContent = results.arima_summary;
+        
+        // Create ARIMA forecast plot if forecast data is available
+        if (results.arima_forecast && results.arima_forecast.length > 0) {
+            const arimaForecastPlot = document.getElementById('arima-forecast-plot');
+            Plotly.newPlot(arimaForecastPlot, [{
+                x: Array.from({ length: results.arima_forecast.length }, (_, i) => i + 1),
+                y: results.arima_forecast,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'ARIMA Forecast'
+            }], {
+                title: 'ARIMA Forecast',
+                xaxis: { title: 'Time Horizon (Days)' },
+                yaxis: { title: 'Value' }
+            });
+        } else {
+            document.getElementById('arima-forecast-plot').innerHTML = 
+                '<div class="alert alert-warning">No ARIMA forecast data available</div>';
+        }
+    } else {
+        console.error("No ARIMA summary found");
+        document.getElementById('arima-summary').textContent = "ARIMA model results not available";
+    }
+    
+    // Populate GARCH tab
+    if (results.garch_summary) {
+        document.getElementById('garch-summary').textContent = results.garch_summary;
+        
+        // Create GARCH forecast plot if forecast data is available
+        if (results.garch_forecast && results.garch_forecast.length > 0) {
+            const garchForecastPlot = document.getElementById('garch-forecast-plot');
+            Plotly.newPlot(garchForecastPlot, [{
+                x: Array.from({ length: results.garch_forecast.length }, (_, i) => i + 1),
+                y: results.garch_forecast,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'GARCH Forecast'
+            }], {
+                title: 'Volatility Forecast',
+                xaxis: { title: 'Time Horizon (Days)' },
+                yaxis: { title: 'Value' }
+            });
+        } else {
+            document.getElementById('garch-forecast-plot').innerHTML = 
+                '<div class="alert alert-warning">No GARCH forecast data available</div>';
+        }
+    } else {
+        console.error("No GARCH summary found");
+        document.getElementById('garch-summary').textContent = "GARCH model results not available";
+    }
+    
+    // Helper function to create data tables from array data
+    function updateDataTable(tableId, dataArray) {
+        const table = document.getElementById(tableId);
+        if (!table) {
+            console.error(`Table with ID ${tableId} not found`);
             return;
         }
         
-        // Parse results JSON
-        const results = JSON.parse(resultsJson);
-        console.log("Results data:", results); // Debug: Log the results object structure
+        const tableHead = table.getElementsByTagName('thead')[0];
+        const tableBody = table.getElementsByTagName('tbody')[0];
         
-        // Show results container
-        document.getElementById('no-results').style.display = 'none';
-        document.getElementById('results-container').style.display = 'block';
+        if (!tableHead || !tableBody) {
+            console.error("Table head or body not found");
+            return;
+        }
         
-        function transformAPIData(apiData) {
-            // If we don't have data or it's not an array, return an empty object
-            if (!apiData || !Array.isArray(apiData)) {
-                console.error("Invalid API data format:", apiData);
-                return {};
-            }
+        // Clear existing content
+        tableBody.innerHTML = '';
+        
+        // Get all symbols (exclude the date field)
+        const firstItem = dataArray[0];
+        const symbols = Object.keys(firstItem).filter(key => key !== 'index');
+        
+        // Update table header with symbol columns
+        let headerHTML = '<tr><th>Date</th>';
+        symbols.forEach(symbol => {
+            headerHTML += `<th>${symbol}</th>`;
+        });
+        headerHTML += '</tr>';
+        tableHead.innerHTML = headerHTML;
+        
+        // Add rows for each data point
+        dataArray.forEach(item => {
+            const row = tableBody.insertRow();
+            const dateCell = row.insertCell(0);
+            dateCell.textContent = item.index.split('T')[0]; // Remove time part
             
-            console.log("Transforming data:", apiData);
-            
-            // Create the expected structure
-            const transformed = {};
-            
-            // Convert array format to the expected object format
-            apiData.forEach((item, index) => {
-                // Skip if the item is not properly formatted
-                if (!item || typeof item !== 'object') {
-                    console.warn(`Skipping invalid item at index ${index}:`, item);
-                    return;
-                }
-                
-                // Check for either 'index' or 'Date' field
-                const dateField = item.index || item.Date;
-                
-                // Handle case where date field might be missing
-                if (!dateField) {
-                    console.warn(`Item at index ${index} is missing date field:`, item);
-                    return;
-                }
-                
-                try {
-                    // Extract date from the date field (removing time part)
-                    const date = dateField.split('T')[0];
-                    
-                    // Create entry for this date
-                    transformed[date] = {};
-                    
-                    // Add all symbol values except the date field
-                    Object.keys(item).forEach(key => {
-                        if (key !== 'index' && key !== 'Date') {
-                            transformed[date][key] = item[key];
-                        }
-                    });
-                } catch (error) {
-                    console.error(`Error processing item at index ${index}:`, error, item);
+            // Add values for each symbol
+            symbols.forEach((symbol, index) => {
+                const valueCell = row.insertCell(index + 1);
+                if (item[symbol] !== undefined) {
+                    const value = item[symbol];
+                    valueCell.textContent = typeof value === 'number' ? value.toFixed(4) : value;
+                } else {
+                    valueCell.textContent = 'N/A';
                 }
             });
-            
-            console.log("Transformed data:", transformed);
-            return transformed;
+        });
+    }
+    
+    // Update data tables in the Raw Data tab
+    if (results.original_data && Array.isArray(results.original_data)) {
+        updateDataTable('price-data-table', results.original_data);
+    }
+    
+    if (results.returns_data && Array.isArray(results.returns_data)) {
+        updateDataTable('returns-data-table', results.returns_data);
+    }
+    
+    if (results.post_garch_data && Array.isArray(results.post_garch_data)) {
+        updateDataTable('garch-data-table', results.post_garch_data);
+    }
+    
+    // Setup CSV export buttons
+    function setupExportButton(buttonId, dataArray, filename) {
+        const button = document.getElementById(buttonId);
+        if (!button) {
+            console.error(`Button with ID ${buttonId} not found`);
+            return;
         }
-
-        // Extract time series data from the API response
-        let timeSeriesData = null;
-
-        // Log the entire results object to see its structure
-        console.log("Full results object:", results);
-
-        // Check for different potential data structures from the API
-        if (results.data && typeof results.data === 'object') {
-            timeSeriesData = results.data;
-            console.log("Using 'data' property");
-        } else if (results.time_series_data && typeof results.time_series_data === 'object') {
-            timeSeriesData = results.time_series_data;
-            console.log("Using 'time_series_data' property");
-        } else if (results.historical_data && typeof results.historical_data === 'object') {
-            timeSeriesData = results.historical_data;
-            console.log("Using 'historical_data' property");
-        } else if (results.original_data && Array.isArray(results.original_data)) {
-            console.log("Using 'original_data' property:", results.original_data);
-            // Transform the array format to the expected object format
-            timeSeriesData = transformAPIData(results.original_data);
-        } else {
-            console.error("No valid data found in results");
-        }
-
-        console.log("Final timeSeriesData:", timeSeriesData);
-
-        if (timeSeriesData) {
-            // Get all available dates (sorted)
-            const dates = Object.keys(timeSeriesData).sort();
-            
-            if (dates.length > 0) {
-                // Get all symbols from the first date, excluding "Date"
-                const firstDate = dates[0];
-                const symbols = Object.keys(timeSeriesData[firstDate] || {})
-                    .filter(key => key !== "Date" && key !== "index");
-                
-                console.log("Found symbols:", symbols);
-                
-                if (symbols.length > 0) {
-                    // Create plot data for price series
-                    const plotData = symbols.map(symbol => {
-                        const x = [];
-                        const y = [];
-                        
-                        // Collect data points for this symbol
-                        dates.forEach(date => {
-                            if (timeSeriesData[date] && timeSeriesData[date][symbol] !== undefined) {
-                                x.push(date);
-                                y.push(timeSeriesData[date][symbol]);
-                            }
-                        });
-                        
-                        return {
-                            x: x,
-                            y: y,
-                            type: 'scatter',
-                            mode: 'lines',
-                            name: symbol
-                        };
-                    });
-                    
-                    // Create the price series plot
-                    const priceSeriesPlot = document.getElementById('price-series-plot');
-                    Plotly.newPlot(priceSeriesPlot, plotData, {
-                        title: 'Price Series',
-                        xaxis: { title: 'Date' },
-                        yaxis: { title: 'Price' },
-                        legend: { orientation: 'h', y: -0.2 }
-                    });
-                    
-                    console.log("Price series plot created with", plotData.length, "traces");
-                    
-                    // Create the returns series plot if available
-                    if (results.returns_data && Array.isArray(results.returns_data) && results.returns_data.length > 0) {
-                        // Transform returns data
-                        const returnsData = transformAPIData(results.returns_data);
-                        const returnsDates = Object.keys(returnsData).sort();
-                        
-                        if (returnsDates.length > 0) {
-                            const returnsSymbols = Object.keys(returnsData[returnsDates[0]] || {})
-                                .filter(key => key !== "Date" && key !== "index");
-                            
-                            // Create plot data for returns series
-                            const returnsPlotData = returnsSymbols.map(symbol => {
-                                const x = [];
-                                const y = [];
-                                
-                                // Collect data points for this symbol
-                                returnsDates.forEach(date => {
-                                    if (returnsData[date] && returnsData[date][symbol] !== undefined) {
-                                        x.push(date);
-                                        y.push(returnsData[date][symbol]);
-                                    }
-                                });
-                                
-                                return {
-                                    x: x,
-                                    y: y,
-                                    type: 'scatter',
-                                    mode: 'lines',
-                                    name: symbol
-                                };
-                            });
-                            
-                            const returnsSeriesPlot = document.getElementById('returns-series-plot');
-                            Plotly.newPlot(returnsSeriesPlot, returnsPlotData, {
-                                title: 'Returns Series',
-                                xaxis: { title: 'Date' },
-                                yaxis: { title: 'Return' },
-                                legend: { orientation: 'h', y: -0.2 }
-                            });
-                            
-                            console.log("Returns series plot created with", returnsPlotData.length, "traces");
-                        }
-                    } else {
-                        console.log("No returns data available for plotting");
-                        document.getElementById('returns-series-plot').innerHTML = 
-                            '<div class="alert alert-warning">No returns data available</div>';
-                    }
-                    
-                    // Create the GARCH series plot if available
-                    if (results.post_garch_data && Array.isArray(results.post_garch_data) && results.post_garch_data.length > 0) {
-                        // Transform GARCH data
-                        const garchData = transformAPIData(results.post_garch_data);
-                        const garchDates = Object.keys(garchData).sort();
-                        
-                        if (garchDates.length > 0) {
-                            const garchSymbols = Object.keys(garchData[garchDates[0]] || {})
-                                .filter(key => key !== "Date" && key !== "index");
-                            
-                            // Create plot data for GARCH series
-                            const garchPlotData = garchSymbols.map(symbol => {
-                                const x = [];
-                                const y = [];
-                                
-                                // Collect data points for this symbol
-                                garchDates.forEach(date => {
-                                    if (garchData[date] && garchData[date][symbol] !== undefined) {
-                                        x.push(date);
-                                        y.push(garchData[date][symbol]);
-                                    }
-                                });
-                                
-                                return {
-                                    x: x,
-                                    y: y,
-                                    type: 'scatter',
-                                    mode: 'lines',
-                                    name: symbol
-                                };
-                            });
-                            
-                            const garchSeriesPlot = document.getElementById('garch-series-plot');
-                            Plotly.newPlot(garchSeriesPlot, garchPlotData, {
-                                title: 'Scaled for GARCH Series',
-                                xaxis: { title: 'Date' },
-                                yaxis: { title: 'Value' },
-                                legend: { orientation: 'h', y: -0.2 }
-                            });
-                            
-                            console.log("GARCH series plot created with", garchPlotData.length, "traces");
-                        }
-                    } else {
-                        console.log("No GARCH data available for plotting");
-                        document.getElementById('garch-series-plot').innerHTML = 
-                            '<div class="alert alert-warning">No scaled GARCH data available</div>';
-                    }
-                    
-                    // Update the raw data table with all symbols
-                    updateRawDataTable(timeSeriesData, dates, symbols);
-                    
-                    // Hide the symbol selectors since we're showing all symbols
-                    const symbolSelector = document.getElementById('symbol-selector');
-                    const dataSymbolSelector = document.getElementById('data-symbol-selector');
-                    if (symbolSelector) symbolSelector.style.display = 'none';
-                    if (dataSymbolSelector) dataSymbolSelector.style.display = 'none';
-                } else {
-                    console.error("No valid symbols found in time series data");
-                }
-            } else {
-                console.error("No dates found in time series data");
-            }
-        } else {
-            console.error("No time series data found in results");
-        }
-
-        // Function to update raw data table
-        function updateRawDataTable(timeSeriesData, dates, symbols) {
-            const tableBody = document.getElementById('raw-data-table').getElementsByTagName('tbody')[0];
-            const tableHead = document.getElementById('raw-data-table').getElementsByTagName('thead')[0];
-            
-            // Clear existing content
-            tableBody.innerHTML = '';
-            
-            if (!tableHead || !tableBody) {
-                console.error("Table elements not found");
+        
+        button.addEventListener('click', function() {
+            if (!dataArray || !Array.isArray(dataArray) || dataArray.length === 0) {
+                alert('No data available for export');
                 return;
             }
             
-            // Update table header with symbol columns
-            let headerHTML = '<tr><th>Date</th>';
-            symbols.forEach(symbol => {
-                headerHTML += `<th>${symbol}</th>`;
-            });
-            headerHTML += '</tr>';
-            tableHead.innerHTML = headerHTML;
+            // Get headers
+            const headers = Object.keys(dataArray[0]);
             
-            // Add rows for each date
-            dates.forEach(date => {
-                const row = tableBody.insertRow();
-                const dateCell = row.insertCell(0);
-                dateCell.textContent = date;
-                
-                // Add values for each symbol
-                symbols.forEach((symbol, index) => {
-                    const valueCell = row.insertCell(index + 1);
-                    if (timeSeriesData[date] && timeSeriesData[date][symbol] !== undefined) {
-                        const value = timeSeriesData[date][symbol];
-                        valueCell.textContent = typeof value === 'number' ? value.toFixed(4) : value;
-                    } else {
-                        valueCell.textContent = 'N/A';
-                    }
+            // Create CSV content
+            let csvContent = headers.join(',') + '\n';
+            
+            dataArray.forEach(item => {
+                const row = headers.map(header => {
+                    const value = item[header];
+                    // Handle numbers, strings, nulls, etc.
+                    const formatted = (value === null || value === undefined) ? '' : 
+                                    (typeof value === 'number') ? value.toString() : `"${value}"`;
+                    return formatted;
                 });
+                csvContent += row.join(',') + '\n';
             });
-        }
-        
-        // Populate stationarity tab
-        if (results.stationarity_results) {
-            const stationarityResults = results.stationarity_results;
             
-            document.getElementById('stationarity-interpretation').textContent = stationarityResults.interpretation;
-            document.getElementById('adf-statistic').textContent = stationarityResults.adf_statistic.toFixed(4);
-            document.getElementById('p-value').textContent = stationarityResults.p_value.toFixed(4);
-            document.getElementById('is-stationary').textContent = stationarityResults.is_stationary ? 'Yes' : 'No';
-            
-            // Set alert class based on stationarity
-            const stationarityAlert = document.getElementById('stationarity-alert');
-            stationarityAlert.className = stationarityResults.is_stationary ? 
-                'alert alert-success' : 'alert alert-warning';
-            
-            // Populate critical values table
-            const criticalValuesTable = document.getElementById('critical-values-table').getElementsByTagName('tbody')[0];
-            criticalValuesTable.innerHTML = ''; // Clear any existing rows
-            
-            for (const [level, value] of Object.entries(stationarityResults.critical_values)) {
-                const row = criticalValuesTable.insertRow();
-                const levelCell = row.insertCell(0);
-                const valueCell = row.insertCell(1);
-                
-                levelCell.textContent = level;
-                valueCell.textContent = value.toFixed(4);
-            }
-        }
-        
-        // Populate ARIMA tab
-        if (results.arima_summary) {
-            document.getElementById('arima-summary').textContent = results.arima_summary;
-            
-            // Create ARIMA forecast plot if forecast data is available
-            if (results.arima_forecast && results.arima_forecast.length > 0) {
-                const arimaForecastPlot = document.getElementById('arima-forecast-plot');
-                Plotly.newPlot(arimaForecastPlot, [{
-                    x: Array.from({ length: results.arima_forecast.length }, (_, i) => i + 1),
-                    y: results.arima_forecast,
-                    type: 'scatter',
-                    mode: 'lines',
-                    name: 'ARIMA Forecast'
-                }], {
-                    title: 'ARIMA Forecast',
-                    xaxis: { title: 'Time Horizon (Days)' },
-                    yaxis: { title: 'Value' }
-                });
-            }
-        }
-        
-        // Populate GARCH tab
-        if (results.garch_summary) {
-            document.getElementById('garch-summary').textContent = results.garch_summary;
-            
-            // Create GARCH forecast plot if forecast data is available
-            if (results.garch_forecast && results.garch_forecast.length > 0) {
-                const garchForecastPlot = document.getElementById('garch-forecast-plot');
-                Plotly.newPlot(garchForecastPlot, [{
-                    x: Array.from({ length: results.garch_forecast.length }, (_, i) => i + 1),
-                    y: results.garch_forecast,
-                    type: 'scatter',
-                    mode: 'lines',
-                    name: 'GARCH Forecast'
-                }], {
-                    title: 'Volatility Forecast',
-                    xaxis: { title: 'Time Horizon (Days)' },
-                    yaxis: { title: 'Value' }
-                });
-            }
-        }
-        
-        // Resize plots when tabs are shown
-        const tabElements = document.querySelectorAll('button[data-bs-toggle="tab"]');
-        tabElements.forEach(tab => {
-            tab.addEventListener('shown.bs.tab', function() {
-                console.log("Tab changed, triggering resize"); // Debug: Log tab change
-                window.dispatchEvent(new Event('resize'));
-            });
+            // Create download link
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `${filename}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+    }
+    
+    // Setup export buttons
+    if (results.original_data) {
+        setupExportButton('export-price-csv', results.original_data, 'price_series');
+    }
+    
+    if (results.returns_data) {
+        setupExportButton('export-returns-csv', results.returns_data, 'returns_series');
+    }
+    
+    if (results.post_garch_data) {
+        setupExportButton('export-garch-csv', results.post_garch_data, 'garch_series');
+    }
+    
+    // Resize plots when tabs are shown
+    const tabElements = document.querySelectorAll('button[data-bs-toggle="tab"]');
+    tabElements.forEach(tab => {
+        tab.addEventListener('shown.bs.tab', function() {
+            console.log("Tab changed, triggering resize");
+            window.dispatchEvent(new Event('resize'));
         });
     });
+});
 </script>
 {% endblock %}
