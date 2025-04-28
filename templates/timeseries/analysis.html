@@ -203,7 +203,6 @@
                 syntheticParams.style.display = 'block';
             }
         });
-        
         // Handle form submission
         const form = document.getElementById('analysis-form');
         const loadingIndicator = document.getElementById('loading');
@@ -237,16 +236,13 @@
                 data.synthetic_anchor_prices = data.synthetic_anchor_prices.split(',').map(p => parseFloat(p.trim()));
             }
             
-            // If synthetic data is selected, adjust the structure
+            // If synthetic data is selected, update the symbols array
             if (data.source_actual_or_synthetic_data === 'synthetic') {
-                // Create a mapping of symbols to anchor prices
-                const syntheticAnchors = {};
-                data.synthetic_symbols.forEach((symbol, index) => {
-                    syntheticAnchors[symbol] = data.synthetic_anchor_prices[index] || 100;
-                });
+                // Use the synthetic symbols instead of the regular symbols
+                data.symbols = data.synthetic_symbols;
                 
-                // Include this in the payload
-                data.synthetic_anchor_prices = syntheticAnchors;
+                // Clean up unused fields
+                delete data.synthetic_symbols;
             }
             
             // Construct ARIMA and GARCH params objects
@@ -310,6 +306,7 @@
                 alert(`Error running analysis: ${error.message}`);
             });
         });
+
         // Toggle Spillover parameters
         const spilloverSwitch = document.getElementById('enable-spillover');
         const spilloverParams = document.getElementById('spillover-params');
