@@ -42,7 +42,7 @@
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="data-tab" data-bs-toggle="tab" data-bs-target="#data" 
                     type="button" role="tab" aria-controls="data" aria-selected="false">
-                Raw Data
+                Provenance
             </button>
         </li>
     </ul>
@@ -158,7 +158,7 @@
             </div>
         </div>
         
-        <!-- Raw Data Tab -->
+        <!-- Provenance Tab -->
         <div class="tab-pane fade" id="data" role="tabpanel" aria-labelledby="data-tab">
             <div class="card mb-4">
                 <div class="card-header">
@@ -524,7 +524,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Update data tables in the Raw Data tab
+    // Update data tables in the Provenance tab
     if (results.original_data && Array.isArray(results.original_data)) {
         updateDataTable('price-data-table', results.original_data);
     }
