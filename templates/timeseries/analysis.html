@@ -183,137 +183,192 @@
 
 {% block extra_js %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Toggle between market and synthetic data parameters
-        const actualRadio = document.getElementById('data-source-actual');
-        const syntheticRadio = document.getElementById('data-source-synthetic');
-        const marketParams = document.getElementById('market-params');
-        const syntheticParams = document.getElementById('synthetic-params');
+// Event handlers for form submission
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle between market and synthetic data parameters
+    const actualRadio = document.getElementById('data-source-actual');
+    const syntheticRadio = document.getElementById('data-source-synthetic');
+    const marketParams = document.getElementById('market-params');
+    const syntheticParams = document.getElementById('synthetic-params');
+    
+    actualRadio.addEventListener('change', function() {
+        if (this.checked) {
+            marketParams.style.display = 'block';
+            syntheticParams.style.display = 'none';
+        }
+    });
+    
+    syntheticRadio.addEventListener('change', function() {
+        if (this.checked) {
+            marketParams.style.display = 'none';
+            syntheticParams.style.display = 'block';
+        }
+    });
+    
+    // Handle form submission
+    const form = document.getElementById('analysis-form');
+    const loadingIndicator = document.getElementById('loading');
+    
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
         
-        actualRadio.addEventListener('change', function() {
-            if (this.checked) {
-                marketParams.style.display = 'block';
-                syntheticParams.style.display = 'none';
-            }
-        });
+        // Show loading indicator
+        loadingIndicator.style.display = 'block';
+        form.style.display = 'none';
         
-        syntheticRadio.addEventListener('change', function() {
-            if (this.checked) {
-                marketParams.style.display = 'none';
-                syntheticParams.style.display = 'block';
-            }
-        });
-        // Handle form submission
-        const form = document.getElementById('analysis-form');
-        const loadingIndicator = document.getElementById('loading');
+        // Prepare form data
+        const formData = new FormData(form);
+        const data = {};
         
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
+        // Convert FormData to a plain object
+        for (const [key, value] of formData.entries()) {
+            data[key] = value;
+        }
+        
+        // Special handling for symbols
+        if (data.symbols) {
+            data.symbols = data.symbols.split(',').map(s => s.trim());
+        }
+        
+        if (data.synthetic_symbols) {
+            data.synthetic_symbols = data.synthetic_symbols.split(',').map(s => s.trim());
+        }
+        
+        // Handle synthetic anchor prices
+        if (data.synthetic_anchor_prices) {
+            data.synthetic_anchor_prices = data.synthetic_anchor_prices.split(',').map(p => parseFloat(p.trim()));
+        }
+        
+        // If synthetic data is selected, update the symbols array
+        if (data.source_actual_or_synthetic_data === 'synthetic') {
+            // Use the synthetic symbols instead of the regular symbols
+            data.symbols = data.synthetic_symbols;
             
-            // Show loading indicator
-            loadingIndicator.style.display = 'block';
-            form.style.display = 'none';
-            
-            // Prepare form data
-            const formData = new FormData(form);
-            const data = {};
-            
-            // Convert FormData to a plain object
-            for (const [key, value] of formData.entries()) {
-                data[key] = value;
-            }
-            
-            // Special handling for symbols and synthetic_anchor_prices
-            if (data.symbols) {
-                data.symbols = data.symbols.split(',').map(s => s.trim());
-            }
-            
-            if (data.synthetic_symbols) {
-                data.synthetic_symbols = data.synthetic_symbols.split(',').map(s => s.trim());
-            }
-            
-            if (data.synthetic_anchor_prices) {
-                data.synthetic_anchor_prices = data.synthetic_anchor_prices.split(',').map(p => parseFloat(p.trim()));
-            }
-            
-            // If synthetic data is selected, update the symbols array
-            if (data.source_actual_or_synthetic_data === 'synthetic') {
-                // Use the synthetic symbols instead of the regular symbols
-                data.symbols = data.synthetic_symbols;
-                
-                // Clean up unused fields
-                delete data.synthetic_symbols;
-            }
-            
-            // Construct ARIMA and GARCH params objects
-            data.arima_params = {
-                p: parseInt(data.arima_p),
-                d: parseInt(data.arima_d),
-                q: parseInt(data.arima_q)
+            // Clean up unused fields
+            delete data.synthetic_symbols;
+        }
+        
+        // Construct ARIMA and GARCH params objects
+        data.arima_params = {
+            p: parseInt(data.arima_p),
+            d: parseInt(data.arima_d),
+            q: parseInt(data.arima_q)
+        };
+        
+        data.garch_params = {
+            p: parseInt(data.garch_p),
+            q: parseInt(data.garch_q),
+            dist: data.garch_dist
+        };
+        
+        // Handle spillover options
+        data.spillover_enabled = document.getElementById('enable-spillover').checked;
+        
+        if (data.spillover_enabled) {
+            data.spillover_params = {
+                forecast_horizon: parseInt(data.forecast_horizon),
+                method: "diebold_yilmaz"  // Default method
             };
+        }
+        
+        // Remove individual parameters that are now in objects
+        delete data.arima_p;
+        delete data.arima_d;
+        delete data.arima_q;
+        delete data.garch_p;
+        delete data.garch_q;
+        delete data.garch_dist;
+        delete data.forecast_horizon;
+        
+        console.log("Sending data to API:", data);
+        
+        // Send the AJAX request
+        fetch('/api/run_pipeline/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': data.csrfmiddlewaretoken
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => {
+                    throw new Error(`API Error: ${JSON.stringify(err)}`);
+                });
+            }
+            return response.json();
+        })
+        .then(responseData => {
+            // Log the response data
+            console.log("API Response received:", responseData);
             
-            data.garch_params = {
-                p: parseInt(data.garch_p),
-                q: parseInt(data.garch_q),
-                dist: data.garch_dist
-            };
-            
-            // Remove individual parameters that are now in objects
-            delete data.arima_p;
-            delete data.arima_d;
-            delete data.arima_q;
-            delete data.garch_p;
-            delete data.garch_q;
-            delete data.garch_dist;
-            
-            // Send the AJAX request
-            fetch('{% url "timeseries:run_pipeline" %}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': data.csrfmiddlewaretoken
-                },
-                body: JSON.stringify(data)
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(err => {
-                        throw new Error(`API Error: ${JSON.stringify(err)}`);
-                    });
+            try {
+                // Process original_data to ensure it has the correct structure
+                if (responseData.original_data && !Array.isArray(responseData.original_data)) {
+                    // Convert from nested object to array of objects if needed
+                    const tempArray = [];
+                    const dateField = 'Date';
+                    
+                    for (const dateStr in responseData.original_data) {
+                        if (responseData.original_data.hasOwnProperty(dateStr)) {
+                            const dataPoint = responseData.original_data[dateStr];
+                            dataPoint[dateField] = dateStr;
+                            tempArray.push(dataPoint);
+                        }
+                    }
+                    
+                    // Sort by date
+                    tempArray.sort((a, b) => new Date(a[dateField]) - new Date(b[dateField]));
+                    responseData.original_data = tempArray;
                 }
-                return response.json();
-            })
-            .then(data => {
-                // Log the response data
-                console.log("API Response received:", data);
                 
-                try {
-                    // Attempt to save to sessionStorage
-                    sessionStorage.setItem('analysisResults', JSON.stringify(data));
-                    console.log("Successfully saved to sessionStorage");
-                } catch (error) {
-                    console.error("Error saving to sessionStorage:", error);
-                }
+                // Similarly, check and process other data arrays if needed
+                ['returns_data', 'scaled_data', 'pre_garch_data', 'post_garch_data'].forEach(field => {
+                    if (responseData[field] && !Array.isArray(responseData[field])) {
+                        const tempArray = [];
+                        const dateField = 'Date';
+                        
+                        for (const dateStr in responseData[field]) {
+                            if (responseData[field].hasOwnProperty(dateStr)) {
+                                const dataPoint = responseData[field][dateStr];
+                                dataPoint[dateField] = dateStr;
+                                tempArray.push(dataPoint);
+                            }
+                        }
+                        
+                        // Sort by date
+                        tempArray.sort((a, b) => new Date(a[dateField]) - new Date(b[dateField]));
+                        responseData[field] = tempArray;
+                    }
+                });
                 
-                // Redirect to results page
-                window.location.href = '{% url "timeseries:results" %}';
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                // Show proper error message
-                loadingIndicator.style.display = 'none';
-                form.style.display = 'block';
-                alert(`Error running analysis: ${error.message}`);
-            });
-        });
-
-        // Toggle Spillover parameters
-        const spilloverSwitch = document.getElementById('enable-spillover');
-        const spilloverParams = document.getElementById('spillover-params');
-
-        spilloverSwitch.addEventListener('change', function() {
-            spilloverParams.style.display = this.checked ? 'block' : 'none';
+                // Attempt to save to sessionStorage
+                sessionStorage.setItem('analysisResults', JSON.stringify(responseData));
+                console.log("Successfully saved to sessionStorage");
+            } catch (error) {
+                console.error("Error processing data or saving to sessionStorage:", error);
+            }
+            
+            // Redirect to results page
+            window.location.href = '/results/';
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            // Show proper error message
+            loadingIndicator.style.display = 'none';
+            form.style.display = 'block';
+            alert(`Error running analysis: ${error.message}`);
         });
     });
+
+    // Toggle Spillover parameters
+    const spilloverSwitch = document.getElementById('enable-spillover');
+    const spilloverParams = document.getElementById('spillover-params');
+
+    spilloverSwitch.addEventListener('change', function() {
+        spilloverParams.style.display = this.checked ? 'block' : 'none';
+    });
+});
 </script>
 {% endblock %}

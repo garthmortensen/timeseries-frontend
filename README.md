@@ -35,6 +35,45 @@ Neon/lime green (#BFFF00) background elements and text fragments
 Pink/coral (#FF9E8F)
 Black background (#000000)
 
+synthetic data:
+```json
+{
+  "original_data": [
+    {
+      "index": "2023-01-02T00:00:00",
+      "SYM1": 150,
+      "SYM2": 200,
+      "SYM3": 15
+    },
+    {
+      "index": "2023-01-03T00:00:00",
+      "SYM1": 151.0703,
+      "SYM2": 201.1994,
+      "SYM3": 15.9227
+    },
+```
+
+fetched data:
+```json
+{
+  "original_data": [
+    {
+      "Date": "2023-01-03T00:00:00",
+      "AAPL": 123.63253,
+      "GOOGL": 88.695953,
+      "MSFT": 235.240036
+    },
+    {
+      "Date": "2023-01-04T00:00:00",
+      "AAPL": 124.907707,
+      "GOOGL": 87.660904,
+      "MSFT": 224.949875
+    },
+```
+
+
+
+
 ## Features (Planned)
 
 - User-friendly interface for time series analysis

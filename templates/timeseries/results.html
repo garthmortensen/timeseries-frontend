@@ -8,6 +8,10 @@
 {% block content %}
 <h1 class="mb-4">Analysis Results</h1>
 
+<div class="mt-4">
+    <button id="download-data-btn" class="btn btn-secondary">Download Raw Data</button>
+</div>
+
 <div id="no-results" class="alert alert-warning" style="display: none;">
     <p>No analysis results found. Please run an analysis first.</p>
     <a href="{% url 'timeseries:analysis' %}" class="btn btn-primary">Go to Analysis</a>
@@ -261,9 +265,12 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+
+    console.log("Raw results data:", JSON.parse(sessionStorage.getItem('analysisResults')));
+
     // Try to get analysis results from sessionStorage
     const resultsJson = sessionStorage.getItem('analysisResults');
-    
+
     if (!resultsJson) {
         // No results found, show message
         document.getElementById('no-results').style.display = 'block';
@@ -280,7 +287,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('results-container').style.display = 'block';
     
     // Helper function to transform array data into the format needed for plotting
-    function transformArrayToPlotData(dataArray, dateField = 'index') {
+    function transformArrayToPlotData(dataArray, dateField = 'Date') {
         if (!dataArray || !Array.isArray(dataArray) || dataArray.length === 0) {
             console.error("Invalid data array:", dataArray);
             return null;
@@ -475,7 +482,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Helper function to create data tables from array data
-    function updateDataTable(tableId, dataArray) {
+    function updateDataTable(tableId, dataArray, dateField = 'Date') {
         const table = document.getElementById(tableId);
         if (!table) {
             console.error(`Table with ID ${tableId} not found`);
@@ -495,7 +502,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Get all symbols (exclude the date field)
         const firstItem = dataArray[0];
-        const symbols = Object.keys(firstItem).filter(key => key !== 'index');
+        const symbols = Object.keys(firstItem).filter(key => key !== dateField);
         
         // Update table header with symbol columns
         let headerHTML = '<tr><th>Date</th>';
@@ -509,7 +516,11 @@ document.addEventListener('DOMContentLoaded', function() {
         dataArray.forEach(item => {
             const row = tableBody.insertRow();
             const dateCell = row.insertCell(0);
-            dateCell.textContent = item.index.split('T')[0]; // Remove time part
+            if (item[dateField]) {
+                dateCell.textContent = item[dateField].split('T')[0]; // Remove time part
+            } else {
+                dateCell.textContent = 'N/A';
+            }
             
             // Add values for each symbol
             symbols.forEach((symbol, index) => {
@@ -538,7 +549,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Setup CSV export buttons
-    function setupExportButton(buttonId, dataArray, filename) {
+    function setupExportButton(buttonId, dataArray, filename, dateField = 'Date') {
         const button = document.getElementById(buttonId);
         if (!button) {
             console.error(`Button with ID ${buttonId} not found`);
@@ -603,5 +614,33 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+document.getElementById('download-data-btn').addEventListener('click', function() {
+  const resultsJson = sessionStorage.getItem('analysisResults');
+  if (!resultsJson) {
+    alert('No analysis results found in session storage');
+    return;
+  }
+  
+  try {
+    const results = JSON.parse(resultsJson);
+    const dataStr = JSON.stringify(results, null, 2);
+    const dataUri = 'data:text/plain;charset=utf-8,' + encodeURIComponent(dataStr);
+    
+    const exportName = 'analysis_results_' + new Date().toISOString().slice(0, 19).replace(/:/g, '-') + '.txt';
+    
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportName);
+    linkElement.style.display = 'none';
+    document.body.appendChild(linkElement);
+    linkElement.click();
+    document.body.removeChild(linkElement);
+  } catch (error) {
+    console.error('Error exporting data:', error);
+    alert('Error exporting data: ' + error.message);
+  }
+});
+
 </script>
 {% endblock %}
