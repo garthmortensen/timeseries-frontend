@@ -46,7 +46,7 @@
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="data-tab" data-bs-toggle="tab" data-bs-target="#data" 
                     type="button" role="tab" aria-controls="data" aria-selected="false">
-                Provenance
+                Data Lineage
             </button>
         </li>
     </ul>
@@ -162,7 +162,7 @@
             </div>
         </div>
         
-        <!-- Provenance Tab -->
+        <!-- Data Lineage Tab -->
         <div class="tab-pane fade" id="data" role="tabpanel" aria-labelledby="data-tab">
             <div class="card mb-4">
                 <div class="card-header">
@@ -193,7 +193,7 @@
                         <div class="tab-pane fade show active" id="price-data" role="tabpanel" aria-labelledby="price-data-tab">
                             <div class="d-flex justify-content-end mb-3">
                                 <button class="btn btn-outline-primary" id="export-price-csv">
-                                    <i class="bi bi-download"></i> Export as CSV
+                                    <i class="bi bi-download"></i> export .csv
                                 </button>
                             </div>
                             <div class="table-responsive">
@@ -215,7 +215,7 @@
                         <div class="tab-pane fade" id="returns-data" role="tabpanel" aria-labelledby="returns-data-tab">
                             <div class="d-flex justify-content-end mb-3">
                                 <button class="btn btn-outline-primary" id="export-returns-csv">
-                                    <i class="bi bi-download"></i> Export as CSV
+                                    <i class="bi bi-download"></i> export .csv
                                 </button>
                             </div>
                             <div class="table-responsive">
@@ -237,7 +237,7 @@
                         <div class="tab-pane fade" id="garch-data" role="tabpanel" aria-labelledby="garch-data-tab">
                             <div class="d-flex justify-content-end mb-3">
                                 <button class="btn btn-outline-primary" id="export-garch-csv">
-                                    <i class="bi bi-download"></i> Export as CSV
+                                    <i class="bi bi-download"></i> export .csv
                                 </button>
                             </div>
                             <div class="table-responsive">
@@ -287,15 +287,32 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('results-container').style.display = 'block';
     
     // Helper function to transform array data into the format needed for plotting
-    function transformArrayToPlotData(dataArray, dateField = 'Date') {
+    function transformArrayToPlotData(dataArray, preferredDateField = 'Date') {
         if (!dataArray || !Array.isArray(dataArray) || dataArray.length === 0) {
             console.error("Invalid data array:", dataArray);
             return null;
         }
         
-        // Get all symbols (exclude the date field)
         const firstItem = dataArray[0];
-        const symbols = Object.keys(firstItem).filter(key => key !== dateField);
+        
+        // Determine which date field to use (Date or index)
+        let dateField = preferredDateField;
+        const alternateField = preferredDateField === 'Date' ? 'index' : 'Date';
+        
+        // If the preferred field doesn't exist but the alternate does, use the alternate
+        if (!(dateField in firstItem) && (alternateField in firstItem)) {
+            console.log(`Field '${dateField}' not found, using '${alternateField}' instead`);
+            dateField = alternateField;
+        }
+        
+        // If neither date field exists, log an error
+        if (!(dateField in firstItem)) {
+            console.error(`Neither '${preferredDateField}' nor '${alternateField}' fields found in data`);
+            return null;
+        }
+        
+        // Get all symbols (exclude the date field and alternate field)
+        const symbols = Object.keys(firstItem).filter(key => key !== 'Date' && key !== 'index');
         
         if (symbols.length === 0) {
             console.error("No symbols found in data");
@@ -303,6 +320,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         console.log("Found symbols:", symbols);
+        console.log("Using date field:", dateField);
         
         // Create plot data for each symbol
         const plotData = symbols.map(symbol => {
@@ -482,7 +500,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Helper function to create data tables from array data
-    function updateDataTable(tableId, dataArray, dateField = 'Date') {
+    function updateDataTable(tableId, dataArray, preferredDateField = 'Date') {
         const table = document.getElementById(tableId);
         if (!table) {
             console.error(`Table with ID ${tableId} not found`);
@@ -500,9 +518,27 @@ document.addEventListener('DOMContentLoaded', function() {
         // Clear existing content
         tableBody.innerHTML = '';
         
-        // Get all symbols (exclude the date field)
+        // Get the first data item
         const firstItem = dataArray[0];
-        const symbols = Object.keys(firstItem).filter(key => key !== dateField);
+        
+        // Determine which date field to use (Date or index)
+        let dateField = preferredDateField;
+        const alternateField = preferredDateField === 'Date' ? 'index' : 'Date';
+        
+        // If the preferred field doesn't exist but the alternate does, use the alternate
+        if (!(dateField in firstItem) && (alternateField in firstItem)) {
+            console.log(`Field '${dateField}' not found in table data, using '${alternateField}' instead`);
+            dateField = alternateField;
+        }
+        
+        // If neither date field exists, log an error
+        if (!(dateField in firstItem)) {
+            console.error(`Neither '${preferredDateField}' nor '${alternateField}' fields found in table data`);
+            return;
+        }
+        
+        // Get all symbols (exclude both possible date fields)
+        const symbols = Object.keys(firstItem).filter(key => key !== 'Date' && key !== 'index');
         
         // Update table header with symbol columns
         let headerHTML = '<tr><th>Date</th>';
@@ -535,7 +571,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Update data tables in the Provenance tab
+    // Update data tables in the Raw Data tab
     if (results.original_data && Array.isArray(results.original_data)) {
         updateDataTable('price-data-table', results.original_data);
     }
@@ -549,7 +585,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Setup CSV export buttons
-    function setupExportButton(buttonId, dataArray, filename, dateField = 'Date') {
+    function setupExportButton(buttonId, dataArray, filename, preferredDateField = 'Date') {
         const button = document.getElementById(buttonId);
         if (!button) {
             console.error(`Button with ID ${buttonId} not found`);
@@ -562,8 +598,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            // Get headers
-            const headers = Object.keys(dataArray[0]);
+            // Get headers - make sure to include the correct date field
+            let headers = Object.keys(dataArray[0]);
             
             // Create CSV content
             let csvContent = headers.join(',') + '\n';
@@ -616,31 +652,30 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 document.getElementById('download-data-btn').addEventListener('click', function() {
-  const resultsJson = sessionStorage.getItem('analysisResults');
-  if (!resultsJson) {
-    alert('No analysis results found in session storage');
-    return;
-  }
-  
-  try {
-    const results = JSON.parse(resultsJson);
-    const dataStr = JSON.stringify(results, null, 2);
-    const dataUri = 'data:text/plain;charset=utf-8,' + encodeURIComponent(dataStr);
+    const resultsJson = sessionStorage.getItem('analysisResults');
+    if (!resultsJson) {
+        alert('No analysis results found in session storage');
+        return;
+    }
     
-    const exportName = 'analysis_results_' + new Date().toISOString().slice(0, 19).replace(/:/g, '-') + '.txt';
-    
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportName);
-    linkElement.style.display = 'none';
-    document.body.appendChild(linkElement);
-    linkElement.click();
-    document.body.removeChild(linkElement);
-  } catch (error) {
-    console.error('Error exporting data:', error);
-    alert('Error exporting data: ' + error.message);
-  }
+    try {
+        const results = JSON.parse(resultsJson);
+        const dataStr = JSON.stringify(results, null, 2);
+        const dataUri = 'data:text/plain;charset=utf-8,' + encodeURIComponent(dataStr);
+        
+        const exportName = 'analysis_results_' + new Date().toISOString().slice(0, 19).replace(/:/g, '-') + '.txt';
+        
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', exportName);
+        linkElement.style.display = 'none';
+        document.body.appendChild(linkElement);
+        linkElement.click();
+        document.body.removeChild(linkElement);
+    } catch (error) {
+        console.error('Error exporting data:', error);
+        alert('Error exporting data: ' + error.message);
+    }
 });
-
 </script>
 {% endblock %}

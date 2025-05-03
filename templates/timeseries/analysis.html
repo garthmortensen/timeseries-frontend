@@ -31,43 +31,33 @@
 
 <form id="analysis-form" method="post" action="{% url 'timeseries:run_pipeline' %}">
     {% csrf_token %}
-    
-    <div class="form-section">
-        <h3 class="section-header">Data Source</h3>
-        <div class="form-check mb-3">
-            <input class="form-check-input" type="radio" name="source_actual_or_synthetic_data" id="data-source-actual" value="actual" checked>
-            <label class="form-check-label" for="data-source-actual">
-                Yahoo Finance Market Data
-            </label>
-        </div>
-        <div class="form-check mb-3">
-            <input class="form-check-input" type="radio" name="source_actual_or_synthetic_data" id="data-source-synthetic" value="synthetic">
-            <label class="form-check-label" for="data-source-synthetic">
-                Synthetic Data
-            </label>
-        </div>
         
-        <!-- Market Data Parameters -->
-        <div id="market-params">
+    <div class="form-check mb-3">
+        <input class="form-check-input" type="radio" name="source_actual_or_synthetic_data" id="data-source-synthetic" value="synthetic" checked>
+        <label class="form-check-label" for="data-source-synthetic">
+            Synthetic Data
+        </label>
+    </div>
+    <div class="form-check mb-3">
+        <input class="form-check-input" type="radio" name="source_actual_or_synthetic_data" id="data-source-actual" value="actual">
+        <label class="form-check-label" for="data-source-actual">
+            Yahoo Finance Market Data
+        </label>
+    </div>
+        
+        <!-- Update the indices for Yahoo Finance -->
+        <div id="market-params" style="display: none;">
             <div class="mb-3">
                 <label for="symbols" class="form-label">Symbols (comma-separated)</label>
-                <input type="text" class="form-control" id="symbols" name="symbols" value="AAPL,MSFT,GOOGL">
+                <input type="text" class="form-control" id="symbols" name="symbols" value="^DJI,^HSI,^FCHI">
             </div>
         </div>
         
-        <!-- Synthetic Data Parameters -->
-        <div id="synthetic-params" style="display: none;">
+        <!-- Update the indices for synthetic and make it visible by default -->
+        <div id="synthetic-params" style="display: block;">
             <div class="mb-3">
                 <label for="synthetic-symbols" class="form-label">Synthetic Symbols (comma-separated)</label>
-                <input type="text" class="form-control" id="synthetic-symbols" name="synthetic_symbols" value="SYM1,SYM2,SYM3">
-            </div>
-            <div class="mb-3">
-                <label for="synthetic-anchor-prices" class="form-label">Anchor Prices (comma-separated)</label>
-                <input type="text" class="form-control" id="synthetic-anchor-prices" name="synthetic_anchor_prices" value="150,200,15">
-            </div>
-            <div class="mb-3">
-                <label for="synthetic-random-seed" class="form-label">Random Seed</label>
-                <input type="number" class="form-control" id="synthetic-random-seed" name="synthetic_random_seed" value="1">
+                <input type="text" class="form-control" id="synthetic-symbols" name="synthetic_symbols" value="^DJI,^HSI,^FCHI">
             </div>
         </div>
         
@@ -190,6 +180,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const syntheticRadio = document.getElementById('data-source-synthetic');
     const marketParams = document.getElementById('market-params');
     const syntheticParams = document.getElementById('synthetic-params');
+    
+    // Initialize display based on which radio is checked
+    if (actualRadio.checked) {
+        marketParams.style.display = 'block';
+        syntheticParams.style.display = 'none';
+    } else if (syntheticRadio.checked) {
+        marketParams.style.display = 'none';
+        syntheticParams.style.display = 'block';
+    }
     
     actualRadio.addEventListener('change', function() {
         if (this.checked) {
