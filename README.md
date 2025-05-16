@@ -19,6 +19,10 @@
 
 A Django frontend for modeling time series.
 
+FIXME: actual data generation. might be api
+
+FIXME: spillover. might be api
+
 TODO: Add codecov
 
 TODO: Add pytests
@@ -28,8 +32,6 @@ TODO: Add multiple price series support.
 TODO: Add db container to About and integration overview
 
 TODO: restore time series analysis start - end dates to end date = previous business day, start date = 1 month prior. conform plotly x-axis. trading symbols.
-
-TODO: time series analysis synthetic data broken.
 
 Neon/lime green (#BFFF00) background elements and text fragments
 Pink/coral (#FF9E8F)
@@ -91,24 +93,34 @@ flowchart TB
     classDef person fill:#08427B,color:#fff,stroke:#052E56,stroke-width:1px
     classDef system fill:#1168BD,color:#fff,stroke:#0B4884,stroke-width:1px
     classDef external fill:#999999,color:#fff,stroke:#6B6B6B,stroke-width:1px
+    classDef database fill:#2E7C8F,color:#fff,stroke:#1D4E5E,stroke-width:1px
+    
     %% Actors and Systems
     User((User)):::person
+    
     %% Main Systems
-    TimeSeriesFrontend["Timeseries Frontend
+    TimeSeriesFrontend["Frontend App
     (Django)"]:::system
-    TimeSeriesPipeline["Timeseries Pipeline
+    TimeSeriesPipeline["RESTful Pipeline
     (FastAPI)"]:::system
-    TimeseriesCompute["Timeseries Compute
+    TimeseriesCompute["timeseries-compute
     (Python Package)"]:::system
+    
+    %% Database
+    TimeSeriesDB[("Database
+    (Postgres)")]:::database
+    
     %% External Systems
     ExternalDataSource[(Yahoo Finance)]:::external
+    
     %% Relationships
     User -- "Uses" --> TimeSeriesFrontend
     TimeSeriesFrontend -- "Makes API calls to" --> TimeSeriesPipeline
+    TimeSeriesPipeline -- "Writes executions to" --> TimeSeriesDB
     TimeSeriesPipeline -- "Pip installs from" --> TimeseriesCompute
-    User -- "Can use package directly" --> TimeseriesCompute  
+    User -- "Can pip install from" --> TimeseriesCompute
     ExternalDataSource -- "Provides time series data" --> TimeSeriesPipeline
-    TimeseriesCompute -- "Publishes to" --> PyPI/DockerHub/ReadTheDocs
+    TimeseriesCompute -- "Publishes to" --> Github/DockerHub/PyPI/ReadTheDocs
 ```
 
 ## Architecture
