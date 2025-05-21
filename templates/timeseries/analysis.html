@@ -39,9 +39,15 @@
         </label>
     </div>
     <div class="form-check mb-3">
-        <input class="form-check-input" type="radio" name="source_actual_or_synthetic_data" id="data-source-actual" value="actual">
-        <label class="form-check-label" for="data-source-actual">
+        <input class="form-check-input" type="radio" name="source_actual_or_synthetic_data" id="data-source-actual-yfinance" value="actual_yfinance">
+        <label class="form-check-label" for="data-source-actual-yfinance">
             Yahoo Finance Market Data
+        </label>
+    </div>
+    <div class="form-check mb-3">
+        <input class="form-check-input" type="radio" name="source_actual_or_synthetic_data" id="data-source-actual-stooq" value="actual_stooq">
+        <label class="form-check-label" for="data-source-actual-stooq">
+            Stooq Market Data
         </label>
     </div>
         
@@ -152,7 +158,7 @@
         <div id="spillover-params" style="display: none;">
             <div class="mb-3">
                 <label for="forecast-horizon" class="form-label">Forecast Horizon</label>
-                <input type="number" class="form-control" id="forecast-horizon" name="forecast_horizon" min="1" max="30" value="10">
+                <input type="number" class="form-control" id="forecast-horizon" name="forecast_horizon" min="1" max="5" value="3">
                 <div class="form-text">Number of periods for forecast variance decomposition</div>
             </div>
         </div>
@@ -176,33 +182,31 @@
 // Event handlers for form submission
 document.addEventListener('DOMContentLoaded', function() {
     // Toggle between market and synthetic data parameters
-    const actualRadio = document.getElementById('data-source-actual');
     const syntheticRadio = document.getElementById('data-source-synthetic');
+    const yfinanceRadio = document.getElementById('data-source-actual-yfinance');
+    const stooqRadio = document.getElementById('data-source-actual-stooq');
     const marketParams = document.getElementById('market-params');
     const syntheticParams = document.getElementById('synthetic-params');
     
     // Initialize display based on which radio is checked
-    if (actualRadio.checked) {
-        marketParams.style.display = 'block';
-        syntheticParams.style.display = 'none';
-    } else if (syntheticRadio.checked) {
-        marketParams.style.display = 'none';
-        syntheticParams.style.display = 'block';
-    }
-    
-    actualRadio.addEventListener('change', function() {
-        if (this.checked) {
+    function updateDisplays() {
+        if (syntheticRadio.checked) {
+            marketParams.style.display = 'none';
+            syntheticParams.style.display = 'block';
+        } else {
+            // For both actual data sources (Yahoo Finance and Stooq)
             marketParams.style.display = 'block';
             syntheticParams.style.display = 'none';
         }
-    });
+    }
     
-    syntheticRadio.addEventListener('change', function() {
-        if (this.checked) {
-            marketParams.style.display = 'none';
-            syntheticParams.style.display = 'block';
-        }
-    });
+    // Set initial state
+    updateDisplays();
+    
+    // Add event listeners for radio buttons
+    syntheticRadio.addEventListener('change', updateDisplays);
+    yfinanceRadio.addEventListener('change', updateDisplays);
+    stooqRadio.addEventListener('change', updateDisplays);
     
     // Handle form submission
     const form = document.getElementById('analysis-form');

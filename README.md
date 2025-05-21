@@ -19,9 +19,14 @@
 
 A Django frontend for modeling time series.
 
-FIXME: actual data generation. might be api
-
 FIXME: spillover. might be api
+
+
+
+
+
+
+
 
 TODO: Add codecov
 
