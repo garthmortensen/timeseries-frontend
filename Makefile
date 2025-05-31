@@ -1,3 +1,11 @@
+#
+# === FILE META OPENING ===
+# file: ./timeseries-frontend/Makefile
+# role: config
+# desc: build automation and Docker management commands for the frontend Django application
+# === FILE META CLOSING ===
+#
+
 # ./Makefile
 # Makefile for Timeseries Frontend Project
 

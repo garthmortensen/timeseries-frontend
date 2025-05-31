@@ -1,4 +1,10 @@
-<!-- templates/timeseries/index.html -->
+<!--
+# === FILE META OPENING ===
+# file: ./timeseries-frontend/templates/timeseries/index.html
+# role: frontend
+# desc: home page template with project overview and navigation to analysis features
+# === FILE META CLOSING ===
+-->
 
 {% extends 'base.html' %}
 
@@ -7,9 +13,7 @@
 {% block content %}
 <div class="jumbotron p-5 mb-4 bg-light rounded-3">
     <h1 class="display-4">Timeseries Modeling</h1>
-    <p class="lead">Frontend UI for visualizing time series analysis results.</p>
-    <hr class="my-4">
-    <p>This app analyzes financial time series data using ARIMA and GARCH models.</p>
+    <p class="lead">Analyze financial time series data with advanced statistical models and interactive visualizations.</p>
     <a class="btn btn-primary btn-lg" href="{% url 'timeseries:analysis' %}" role="button">Start Analysis</a>
 </div>
 
@@ -20,7 +24,7 @@
                 <h4>Data Sources</h4>
             </div>
             <div class="card-body">
-                <p>Choose between fetched Yahoo Finance market data or synthetic data generation.</p>
+                <p>Choose between generating synthetic data or pulling real market data.</p>
             </div>
         </div>
     </div>
@@ -30,14 +34,14 @@
                 <h4>Statistical Models</h4>
             </div>
             <div class="card-body">
-                <p>Apply ARIMA models for trend analysis and GARCH models for volatility forecasting.</p>
+                <p>Apply ARIMA models for trend analysis, GARCH models for volatility forecasting and calculate spillovers to uncover relationships.</p>
             </div>
         </div>
     </div>
     <div class="col-md-4">
         <div class="card mb-4">
             <div class="card-header">
-                <h4>Visualization</h4>
+                <h4>Visualizations</h4>
             </div>
             <div class="card-body">
                 <p>Interactive charts to explore and interpret analysis results.</p>

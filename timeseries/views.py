@@ -1,6 +1,14 @@
 #!/usr/bin/env python3
 # timeseries/views.py
 
+#
+# === FILE META OPENING ===
+# file: ./timeseries-frontend/timeseries/views.py
+# role: frontend
+# desc: Django views that handle user requests and communicate with the timeseries API backend
+# === FILE META CLOSING ===
+#
+
 """
 Views for the timeseries app.
 """
@@ -34,6 +42,7 @@ def about(request):
     About page with project information and repository links.
     """
     return render(request, 'timeseries/about.html')
+
 def results(request):
     """
     Results page displaying analysis output and visualizations.

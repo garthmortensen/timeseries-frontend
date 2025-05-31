@@ -1,4 +1,10 @@
-<!-- templates/timeseries/analysis.html -->
+<!--
+# === FILE META OPENING ===
+# file: ./timeseries-frontend/templates/timeseries/analysis.html
+# role: frontend
+# desc: analysis configuration form template with ARIMA, GARCH, and spillover parameter inputs
+# === FILE META CLOSING ===
+-->
 
 {% extends 'base.html' %}
 {% load static %}
@@ -19,55 +25,1083 @@
         padding-bottom: 0.5rem;
         border-bottom: 1px solid #dee2e6;
     }
+    
+    .guide-text {
+        /* background-color: #e3f2fd; */
+        border-left: 4px solid #2196f3;
+        padding: 0.75rem 1rem;
+        margin-bottom: 1rem;
+        border-radius: 0 0.25rem 0.25rem 0;
+        font-style: italic;
+        color: #1565c0;
+        font-size: 0.95em;
+        line-height: 1.4;
+    }
+    
+    .parameter-help {
+        /* background-color: #f0f4f8; */
+        /* border: 1px solid #c5d2dc; */
+        padding: 0.5rem 0.75rem;
+        margin-top: 0.25rem;
+        border-radius: 0.25rem;
+        font-size: 0.875em;
+        color: #495057;
+    }
+    
+    .parameter-help strong {
+        color: #2c3e50;
+        display: block;
+        margin-bottom: 0.25rem;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <h1 class="mb-4">Time Series Analysis</h1>
 
-<div class="alert alert-info" role="alert">
-    Configure your analysis parameters below and click "Run Analysis" to generate results.
-</div>
-
 <form id="analysis-form" method="post" action="{% url 'timeseries:run_pipeline' %}">
     {% csrf_token %}
         
-    <div class="form-check mb-3">
-        <input class="form-check-input" type="radio" name="source_actual_or_synthetic_data" id="data-source-synthetic" value="synthetic" checked>
-        <label class="form-check-label" for="data-source-synthetic">
-            Synthetic Data
-        </label>
-    </div>
-    <div class="form-check mb-3">
-        <input class="form-check-input" type="radio" name="source_actual_or_synthetic_data" id="data-source-actual-yfinance" value="actual_yfinance">
-        <label class="form-check-label" for="data-source-actual-yfinance">
-            Yahoo Finance Market Data
-        </label>
-    </div>
-    <div class="form-check mb-3">
-        <input class="form-check-input" type="radio" name="source_actual_or_synthetic_data" id="data-source-actual-stooq" value="actual_stooq">
-        <label class="form-check-label" for="data-source-actual-stooq">
-            Stooq Market Data
-        </label>
-    </div>
-        
-        <!-- Update the indices for Yahoo Finance -->
-        <div id="market-params" style="display: none;">
-            <div class="mb-3">
-                <label for="symbols" class="form-label">Symbols (comma-separated)</label>
-                <input type="text" class="form-control" id="symbols" name="symbols" value="^DJI,^HSI,^FCHI">
-            </div>
+    <div class="form-section">
+        <h3 class="section-header">Define Data Source</h3>
+        <div class="guide-text">
+            Use synthetic data for testing or actual market data.
         </div>
         
-        <!-- Update the indices for synthetic and make it visible by default -->
-        <div id="synthetic-params" style="display: block;">
-            <div class="mb-3">
-                <label for="synthetic-symbols" class="form-label">Synthetic Symbols (comma-separated)</label>
-                <input type="text" class="form-control" id="synthetic-symbols" name="synthetic_symbols" value="^DJI,^HSI,^FCHI">
-            </div>
+        <div class="form-check mb-3">
+            <input class="form-check-input" type="radio" name="source_actual_or_synthetic_data" id="data-source-synthetic" value="synthetic" checked>
+            <label class="form-check-label" for="data-source-synthetic">
+                <strong>Synthetic Data</strong><br>
+                <small class="text-muted">Generate artificial time series data for testing</small>
+            </label>
+        </div>
+        <div class="form-check mb-3">
+            <input class="form-check-input" type="radio" name="source_actual_or_synthetic_data" id="data-source-actual-yfinance" value="actual_yfinance">
+            <label class="form-check-label" for="data-source-actual-yfinance">
+                <strong>Yahoo Finance Market Data</strong><br>
+                <small class="text-muted">Real market data from <a href="https://finance.yahoo.com/" target="_blank" rel="noopener noreferrer">Yahoo Finance API</a>. Low API limits apply!</small>
+            </label>
+        </div>
+        <div class="form-check mb-3">
+            <input class="form-check-input" type="radio" name="source_actual_or_synthetic_data" id="data-source-actual-stooq" value="actual_stooq">
+            <label class="form-check-label" for="data-source-actual-stooq">
+                <strong>Stooq Market Data</strong><br>
+                <small class="text-muted">Real market data from <a href="https://stooq.com/" target="_blank" rel="noopener noreferrer">Stooq data provider</a></small>
+            </label>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <h3 class="section-header">Select Symbols</h3>
+        <div class="guide-text">
+            Define which financial instruments to analyze. Choose your preferred method for selecting symbols.
         </div>
         
-        <!-- Date Range (common to both) -->
+        <!-- Symbol Selection Method -->
+        <div class="mb-4">
+            <h5>Selection Method</h5>
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="radio" name="symbol_selection_method" id="symbol-method-manual" value="manual" checked>
+                <label class="form-check-label" for="symbol-method-manual">
+                    <strong>Enter Symbols Manually</strong><br>
+                    <small class="text-muted">Type in specific stock symbols, ETFs, or indices</small>
+                </label>
+            </div>
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="radio" name="symbol_selection_method" id="symbol-method-predefined" value="predefined">
+                <label class="form-check-label" for="symbol-method-predefined">
+                    <strong>Select from Predefined Lists</strong><br>
+                    <small class="text-muted">Choose from organized industry sectors and investment categories</small>
+                </label>
+            </div>
+        </div>
+
+        <!-- Manual Symbol Entry -->
+        <div id="manual-symbol-entry" style="display: block;">
+            <h5>Manual Symbol Entry</h5>
+            
+            <div id="market-params" style="display: none;">
+                <div class="mb-3">
+                    <label for="symbols" class="form-label">Symbols (comma-separated)</label>
+                    <input type="text" class="form-control" id="symbols" name="symbols" value="^DJI,^HSI,^FCHI" placeholder="Enter symbols like AAPL,MSFT,GOOGL">
+                    <div class="parameter-help">
+                        ^DJI,^HSI,^FCHI
+                    </div>
+                </div>
+            </div>
+            
+            <div id="synthetic-params" style="display: block;">
+                <div class="mb-3">
+                    <label for="synthetic-symbols" class="form-label">Synthetic Symbols (comma-separated)</label>
+                    <input type="text" class="form-control" id="synthetic-symbols" name="synthetic_symbols" value="^DJI,^HSI,^FCHI" placeholder="Enter symbols like SYM1,SYM2,SYM3">
+                    <div class="parameter-help">
+                        ^DJI,^HSI,^FCHI (artificial symbol names)
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="synthetic-anchor-prices" class="form-label">Anchor Prices (comma-separated)</label>
+                    <input type="text" class="form-control" id="synthetic-anchor-prices" name="synthetic_anchor_prices" value="150.0,200.0,15.0" placeholder="Enter prices like 100.0,200.0,50.0">
+                    <div class="parameter-help">
+                        150.0,200.0,15.0 (corresponding to symbols above)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Predefined Lists Selection -->
+        <div id="predefined-symbol-selection" style="display: none;">
+            <h5>Select from Predefined Lists</h5>
+            
+            <!-- Most Traded Stocks in the USA -->
+            <div class="mb-3">
+                <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#mostTradedStocks" aria-expanded="false" aria-controls="mostTradedStocks">
+                    <i class="bi bi-chevron-down"></i> Highest Volume US Stocks
+                </button>
+                <div class="collapse mt-2" id="mostTradedStocks">
+                    <div class="card card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-muted mb-2">Technology</h6>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="AAPL" id="stock-aapl" data-name="Apple Inc.">
+                                    <label class="form-check-label" for="stock-aapl">
+                                        <strong>AAPL</strong> - Apple<br>
+                                        <small class="text-muted">Technology hardware & equipment</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="NVDA" id="stock-nvda" data-name="NVIDIA Corporation">
+                                    <label class="form-check-label" for="stock-nvda">
+                                        <strong>NVDA</strong> - NVIDIA<br>
+                                        <small class="text-muted">Semiconductors & AI</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="MSFT" id="stock-msft" data-name="Microsoft Corporation">
+                                    <label class="form-check-label" for="stock-msft">
+                                        <strong>MSFT</strong> - Microsoft<br>
+                                        <small class="text-muted">Software & cloud services</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="TSM" id="stock-tsm" data-name="Taiwan Semiconductor">
+                                    <label class="form-check-label" for="stock-tsm">
+                                        <strong>TSM</strong> - Taiwan Semiconductor<br>
+                                        <small class="text-muted">Semiconductor manufacturing</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="AMD" id="stock-amd" data-name="Advanced Micro Devices">
+                                    <label class="form-check-label" for="stock-amd">
+                                        <strong>AMD</strong> - AMD<br>
+                                        <small class="text-muted">Semiconductors & processors</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="PLTR" id="stock-pltr" data-name="Palantir Technologies">
+                                    <label class="form-check-label" for="stock-pltr">
+                                        <strong>PLTR</strong> - Palantir<br>
+                                        <small class="text-muted">Data analytics & software</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="INTC" id="stock-intc" data-name="Intel Corporation">
+                                    <label class="form-check-label" for="stock-intc">
+                                        <strong>INTC</strong> - Intel<br>
+                                        <small class="text-muted">Semiconductors & processors</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="CSCO" id="stock-csco" data-name="Cisco Systems">
+                                    <label class="form-check-label" for="stock-csco">
+                                        <strong>CSCO</strong> - Cisco<br>
+                                        <small class="text-muted">Networking equipment</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="ORCL" id="stock-orcl" data-name="Oracle Corporation">
+                                    <label class="form-check-label" for="stock-orcl">
+                                        <strong>ORCL</strong> - Oracle<br>
+                                        <small class="text-muted">Database software & cloud</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="CRM" id="stock-crm" data-name="Salesforce Inc.">
+                                    <label class="form-check-label" for="stock-crm">
+                                        <strong>CRM</strong> - Salesforce<br>
+                                        <small class="text-muted">CRM software & cloud</small>
+                                    </label>
+                                </div>
+                                
+                                <h6 class="text-muted mb-2 mt-3">Consumer Discretionary</h6>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="AMZN" id="stock-amzn" data-name="Amazon.com Inc.">
+                                    <label class="form-check-label" for="stock-amzn">
+                                        <strong>AMZN</strong> - Amazon<br>
+                                        <small class="text-muted">E-commerce & cloud services</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="TSLA" id="stock-tsla" data-name="Tesla Inc.">
+                                    <label class="form-check-label" for="stock-tsla">
+                                        <strong>TSLA</strong> - Tesla<br>
+                                        <small class="text-muted">Electric vehicles & energy</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="MCD" id="stock-mcd" data-name="McDonald's Corporation">
+                                    <label class="form-check-label" for="stock-mcd">
+                                        <strong>MCD</strong> - McDonald's<br>
+                                        <small class="text-muted">Fast food restaurants</small>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-muted mb-2">Communication Services</h6>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="GOOGL" id="stock-googl" data-name="Alphabet Inc.">
+                                    <label class="form-check-label" for="stock-googl">
+                                        <strong>GOOGL</strong> - Alphabet<br>
+                                        <small class="text-muted">Search & digital advertising</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="META" id="stock-meta" data-name="Meta Platforms Inc.">
+                                    <label class="form-check-label" for="stock-meta">
+                                        <strong>META</strong> - Meta<br>
+                                        <small class="text-muted">Social media & metaverse</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="NFLX" id="stock-nflx" data-name="Netflix Inc.">
+                                    <label class="form-check-label" for="stock-nflx">
+                                        <strong>NFLX</strong> - Netflix<br>
+                                        <small class="text-muted">Streaming entertainment</small>
+                                    </label>
+                                </div>
+                                
+                                <h6 class="text-muted mb-2 mt-3">Financials</h6>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="BRK.B" id="stock-brkb" data-name="Berkshire Hathaway Inc.">
+                                    <label class="form-check-label" for="stock-brkb">
+                                        <strong>BRK.B</strong> - Berkshire Hathaway<br>
+                                        <small class="text-muted">Diversified holding company</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="PYPL" id="stock-pypl" data-name="PayPal Holdings Inc.">
+                                    <label class="form-check-label" for="stock-pypl">
+                                        <strong>PYPL</strong> - PayPal<br>
+                                        <small class="text-muted">Digital payments</small>
+                                    </label>
+                                </div>
+                                
+                                <h6 class="text-muted mb-2 mt-3">Consumer Staples</h6>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="KO" id="stock-ko" data-name="The Coca-Cola Company">
+                                    <label class="form-check-label" for="stock-ko">
+                                        <strong>KO</strong> - Coca-Cola<br>
+                                        <small class="text-muted">Beverages</small>
+                                    </label>
+                                </div>
+                                
+                                <h6 class="text-muted mb-2 mt-3">Healthcare</h6>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="JNJ" id="stock-jnj" data-name="Johnson & Johnson">
+                                    <label class="form-check-label" for="stock-jnj">
+                                        <strong>JNJ</strong> - Johnson & Johnson<br>
+                                        <small class="text-muted">Pharmaceuticals & medical devices</small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sector ETFs -->
+            <div class="mb-3">
+                <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#sectorETFs" aria-expanded="false" aria-controls="sectorETFs">
+                    <i class="bi bi-chevron-down"></i> Sector ETFs
+                </button>
+                <div class="collapse mt-2" id="sectorETFs">
+                    <div class="card card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="XLK" id="sector-xlk" data-name="Technology Select Sector SPDR">
+                                    <label class="form-check-label" for="sector-xlk">
+                                        <strong>XLK</strong> - Technology<br>
+                                        <small class="text-muted">Software, hardware, semiconductors</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="XLV" id="sector-xlv" data-name="Health Care Select Sector SPDR">
+                                    <label class="form-check-label" for="sector-xlv">
+                                        <strong>XLV</strong> - Healthcare<br>
+                                        <small class="text-muted">Pharmaceuticals, biotech, equipment</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="XLF" id="sector-xlf" data-name="Financial Select Sector SPDR">
+                                    <label class="form-check-label" for="sector-xlf">
+                                        <strong>XLF</strong> - Financials<br>
+                                        <small class="text-muted">Banks, insurance, investment companies</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="XLY" id="sector-xly" data-name="Consumer Discretionary Select Sector SPDR">
+                                    <label class="form-check-label" for="sector-xly">
+                                        <strong>XLY</strong> - Consumer Discretionary<br>
+                                        <small class="text-muted">Retail, automotive, entertainment</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="XLP" id="sector-xlp" data-name="Consumer Staples Select Sector SPDR">
+                                    <label class="form-check-label" for="sector-xlp">
+                                        <strong>XLP</strong> - Consumer Staples<br>
+                                        <small class="text-muted">Food, beverages, household products</small>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="XLE" id="sector-xle" data-name="Energy Select Sector SPDR">
+                                    <label class="form-check-label" for="sector-xle">
+                                        <strong>XLE</strong> - Energy<br>
+                                        <small class="text-muted">Oil, gas, renewable energy</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="XLI" id="sector-xli" data-name="Industrial Select Sector SPDR">
+                                    <label class="form-check-label" for="sector-xli">
+                                        <strong>XLI</strong> - Industrials<br>
+                                        <small class="text-muted">Aerospace, defense, manufacturing</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="XLU" id="sector-xlu" data-name="Utilities Select Sector SPDR">
+                                    <label class="form-check-label" for="sector-xlu">
+                                        <strong>XLU</strong> - Utilities<br>
+                                        <small class="text-muted">Electric, gas, water utilities</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="XLB" id="sector-xlb" data-name="Materials Select Sector SPDR">
+                                    <label class="form-check-label" for="sector-xlb">
+                                        <strong>XLB</strong> - Materials<br>
+                                        <small class="text-muted">Chemicals, metals, mining</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="XLRE" id="sector-xlre" data-name="Real Estate Select Sector SPDR">
+                                    <label class="form-check-label" for="sector-xlre">
+                                        <strong>XLRE</strong> - Real Estate<br>
+                                        <small class="text-muted">REITs, real estate companies</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="XLC" id="sector-xlc" data-name="Communication Services Select Sector SPDR">
+                                    <label class="form-check-label" for="sector-xlc">
+                                        <strong>XLC</strong> - Communication Services<br>
+                                        <small class="text-muted">Telecom, media, internet</small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Investment Categories -->
+            <div class="mb-3">
+                <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#categoryETFs" aria-expanded="false" aria-controls="categoryETFs">
+                    <i class="bi bi-chevron-down"></i> Investment Categories
+                </button>
+                <div class="collapse mt-2" id="categoryETFs">
+                    <div class="card card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="IWM" id="category-iwm" data-name="iShares Russell 2000 ETF">
+                                    <label class="form-check-label" for="category-iwm">
+                                        <strong>IWM</strong> - Small Cap<br>
+                                        <small class="text-muted">Small-cap U.S. stocks</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="IWN" id="category-iwn" data-name="iShares Russell 2000 Value ETF">
+                                    <label class="form-check-label" for="category-iwn">
+                                        <strong>IWN</strong> - Small Cap Value<br>
+                                        <small class="text-muted">Small-cap value stocks</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="EEM" id="category-eem" data-name="iShares MSCI Emerging Markets ETF">
+                                    <label class="form-check-label" for="category-eem">
+                                        <strong>EEM</strong> - Emerging Markets<br>
+                                        <small class="text-muted">Developing market equities</small>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="EFA" id="category-efa" data-name="iShares MSCI EAFE ETF">
+                                    <label class="form-check-label" for="category-efa">
+                                        <strong>EFA</strong> - International Developed<br>
+                                        <small class="text-muted">Europe, Australasia, Far East</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="IYW" id="category-iyw" data-name="iShares U.S. Technology ETF">
+                                    <label class="form-check-label" for="category-iyw">
+                                        <strong>IYW</strong> - Technology<br>
+                                        <small class="text-muted">U.S. tech companies</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="IYH" id="category-iyh" data-name="iShares U.S. Healthcare ETF">
+                                    <label class="form-check-label" for="category-iyh">
+                                        <strong>IYH</strong> - Healthcare<br>
+                                        <small class="text-muted">U.S. healthcare</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="IYF" id="category-iyf" data-name="iShares U.S. Financials ETF">
+                                    <label class="form-check-label" for="category-iyf">
+                                        <strong>IYF</strong> - Financials<br>
+                                        <small class="text-muted">U.S. financial services</small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Regional & Country Indices -->
+            <div class="mb-3">
+                <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#regionalETFs" aria-expanded="false" aria-controls="regionalETFs">
+                    <i class="bi bi-chevron-down"></i> Regional & Country Indices
+                </button>
+                <div class="collapse mt-2" id="regionalETFs">
+                    <div class="card card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="VGK" id="regional-vgk" data-name="Vanguard FTSE Europe ETF">
+                                    <label class="form-check-label" for="regional-vgk">
+                                        <strong>VGK</strong> - Europe<br>
+                                        <small class="text-muted">European markets</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="EWJ" id="regional-ewj" data-name="iShares MSCI Japan ETF">
+                                    <label class="form-check-label" for="regional-ewj">
+                                        <strong>EWJ</strong> - Japan<br>
+                                        <small class="text-muted">Japanese equity market</small>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="FXI" id="regional-fxi" data-name="iShares China Large-Cap ETF">
+                                    <label class="form-check-label" for="regional-fxi">
+                                        <strong>FXI</strong> - China<br>
+                                        <small class="text-muted">Chinese large-cap stocks</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="INDA" id="regional-inda" data-name="iShares MSCI India ETF">
+                                    <label class="form-check-label" for="regional-inda">
+                                        <strong>INDA</strong> - India<br>
+                                        <small class="text-muted">Indian equity market</small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Individual Country ETFs - Developed Markets -->
+            <div class="mb-3">
+                <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#developedCountryETFs" aria-expanded="false" aria-controls="developedCountryETFs">
+                    <i class="bi bi-chevron-down"></i> Individual Country ETFs - Developed Markets
+                </button>
+                <div class="collapse mt-2" id="developedCountryETFs">
+                    <div class="card card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-muted mb-2">Europe</h6>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="EWU" id="country-ewu" data-name="iShares MSCI United Kingdom ETF">
+                                    <label class="form-check-label" for="country-ewu">
+                                        <strong>EWU</strong> - United Kingdom<br>
+                                        <small class="text-muted">UK equity market</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="EWG" id="country-ewg" data-name="iShares MSCI Germany ETF">
+                                    <label class="form-check-label" for="country-ewg">
+                                        <strong>EWG</strong> - Germany<br>
+                                        <small class="text-muted">German equity market</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="EWQ" id="country-ewq" data-name="iShares MSCI France ETF">
+                                    <label class="form-check-label" for="country-ewq">
+                                        <strong>EWQ</strong> - France<br>
+                                        <small class="text-muted">French equity market</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="EWI" id="country-ewi" data-name="iShares MSCI Italy Capped ETF">
+                                    <label class="form-check-label" for="country-ewi">
+                                        <strong>EWI</strong> - Italy<br>
+                                        <small class="text-muted">Italian equity market</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="EWP" id="country-ewp" data-name="iShares MSCI Spain Capped ETF">
+                                    <label class="form-check-label" for="country-ewp">
+                                        <strong>EWP</strong> - Spain<br>
+                                        <small class="text-muted">Spanish equity market</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="EWL" id="country-ewl" data-name="iShares MSCI Switzerland Capped ETF">
+                                    <label class="form-check-label" for="country-ewl">
+                                        <strong>EWL</strong> - Switzerland<br>
+                                        <small class="text-muted">Swiss equity market</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="EWN" id="country-ewn" data-name="iShares MSCI Netherlands ETF">
+                                    <label class="form-check-label" for="country-ewn">
+                                        <strong>EWN</strong> - Netherlands<br>
+                                        <small class="text-muted">Dutch equity market</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="EWK" id="country-ewk" data-name="iShares MSCI Belgium Capped ETF">
+                                    <label class="form-check-label" for="country-ewk">
+                                        <strong>EWK</strong> - Belgium<br>
+                                        <small class="text-muted">Belgian equity market</small>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="EWO" id="country-ewo" data-name="iShares MSCI Austria Capped ETF">
+                                    <label class="form-check-label" for="country-ewo">
+                                        <strong>EWO</strong> - Austria<br>
+                                        <small class="text-muted">Austrian equity market</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="EWD" id="country-ewd" data-name="iShares MSCI Sweden ETF">
+                                    <label class="form-check-label" for="country-ewd">
+                                        <strong>EWD</strong> - Sweden<br>
+                                        <small class="text-muted">Swedish equity market</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="EDEN" id="country-eden" data-name="iShares MSCI Denmark Capped ETF">
+                                    <label class="form-check-label" for="country-eden">
+                                        <strong>EDEN</strong> - Denmark<br>
+                                        <small class="text-muted">Danish equity market</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="NORW" id="country-norw" data-name="Global X FTSE Norway 30 ETF">
+                                    <label class="form-check-label" for="country-norw">
+                                        <strong>NORW</strong> - Norway<br>
+                                        <small class="text-muted">Norwegian equity market</small>
+                                    </label>
+                                </div>
+                                
+                                <h6 class="text-muted mb-2 mt-3">Asia-Pacific</h6>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="EWA" id="country-ewa" data-name="iShares MSCI Australia ETF">
+                                    <label class="form-check-label" for="country-ewa">
+                                        <strong>EWA</strong> - Australia<br>
+                                        <small class="text-muted">Australian equity market</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="EWY" id="country-ewy" data-name="iShares MSCI South Korea ETF">
+                                    <label class="form-check-label" for="country-ewy">
+                                        <strong>EWY</strong> - South Korea<br>
+                                        <small class="text-muted">South Korean equity market</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="EWS" id="country-ews" data-name="iShares MSCI Singapore ETF">
+                                    <label class="form-check-label" for="country-ews">
+                                        <strong>EWS</strong> - Singapore<br>
+                                        <small class="text-muted">Singapore equity market</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="EWH" id="country-ewh" data-name="iShares MSCI Hong Kong ETF">
+                                    <label class="form-check-label" for="country-ewh">
+                                        <strong>EWH</strong> - Hong Kong<br>
+                                        <small class="text-muted">Hong Kong equity market</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="EIS" id="country-eis" data-name="iShares MSCI Israel Capped ETF">
+                                    <label class="form-check-label" for="country-eis">
+                                        <strong>EIS</strong> - Israel<br>
+                                        <small class="text-muted">Israeli equity market</small>
+                                    </label>
+                                </div>
+                                
+                                <h6 class="text-muted mb-2 mt-3">North America</h6>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="EWC" id="country-ewc" data-name="iShares MSCI Canada ETF">
+                                    <label class="form-check-label" for="country-ewc">
+                                        <strong>EWC</strong> - Canada<br>
+                                        <small class="text-muted">Canadian equity market</small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Individual Country ETFs - Emerging Markets -->
+            <div class="mb-3">
+                <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#emergingCountryETFs" aria-expanded="false" aria-controls="emergingCountryETFs">
+                    <i class="bi bi-chevron-down"></i> Individual Country ETFs - Emerging Markets
+                </button>
+                <div class="collapse mt-2" id="emergingCountryETFs">
+                    <div class="card card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-muted mb-2">Asia</h6>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="FXI" id="emerging-fxi" data-name="iShares China Large-Cap ETF">
+                                    <label class="form-check-label" for="emerging-fxi">
+                                        <strong>FXI</strong> - China<br>
+                                        <small class="text-muted">Chinese large-cap stocks</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="MCHI" id="emerging-mchi" data-name="iShares MSCI China ETF">
+                                    <label class="form-check-label" for="emerging-mchi">
+                                        <strong>MCHI</strong> - China (Broad)<br>
+                                        <small class="text-muted">Broad Chinese equity market</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="KWEB" id="emerging-kweb" data-name="KraneShares CSI China Internet ETF">
+                                    <label class="form-check-label" for="emerging-kweb">
+                                        <strong>KWEB</strong> - China Internet<br>
+                                        <small class="text-muted">Chinese internet companies</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="INDA" id="emerging-inda" data-name="iShares MSCI India ETF">
+                                    <label class="form-check-label" for="emerging-inda">
+                                        <strong>INDA</strong> - India<br>
+                                        <small class="text-muted">Indian equity market</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="EWT" id="emerging-ewt" data-name="iShares MSCI Taiwan ETF">
+                                    <label class="form-check-label" for="emerging-ewt">
+                                        <strong>EWT</strong> - Taiwan<br>
+                                        <small class="text-muted">Taiwanese equity market</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="EWM" id="emerging-ewm" data-name="iShares MSCI Malaysia ETF">
+                                    <label class="form-check-label" for="emerging-ewm">
+                                        <strong>EWM</strong> - Malaysia<br>
+                                        <small class="text-muted">Malaysian equity market</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="EPHE" id="emerging-ephe" data-name="iShares MSCI Philippines ETF">
+                                    <label class="form-check-label" for="emerging-ephe">
+                                        <strong>EPHE</strong> - Philippines<br>
+                                        <small class="text-muted">Philippine equity market</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="IDX" id="emerging-idx" data-name="VanEck Indonesia ETF">
+                                    <label class="form-check-label" for="emerging-idx">
+                                        <strong>IDX</strong> - Indonesia<br>
+                                        <small class="text-muted">Indonesian equity market</small>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-muted mb-2">Latin America</h6>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="EWZ" id="emerging-ewz" data-name="iShares MSCI Brazil ETF">
+                                    <label class="form-check-label" for="emerging-ewz">
+                                        <strong>EWZ</strong> - Brazil<br>
+                                        <small class="text-muted">Brazilian equity market</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="EWW" id="emerging-eww" data-name="iShares MSCI Mexico ETF">
+                                    <label class="form-check-label" for="emerging-eww">
+                                        <strong>EWW</strong> - Mexico<br>
+                                        <small class="text-muted">Mexican equity market</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="ECH" id="emerging-ech" data-name="iShares MSCI Chile ETF">
+                                    <label class="form-check-label" for="emerging-ech">
+                                        <strong>ECH</strong> - Chile<br>
+                                        <small class="text-muted">Chilean equity market</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="ICOL" id="emerging-icol" data-name="iShares MSCI Colombia ETF">
+                                    <label class="form-check-label" for="emerging-icol">
+                                        <strong>ICOL</strong> - Colombia<br>
+                                        <small class="text-muted">Colombian equity market</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="ILF" id="emerging-ilf" data-name="iShares Latin America 40 ETF">
+                                    <label class="form-check-label" for="emerging-ilf">
+                                        <strong>ILF</strong> - Latin America Broad<br>
+                                        <small class="text-muted">Broad Latin American markets</small>
+                                    </label>
+                                </div>
+                                
+                                <h6 class="text-muted mb-2 mt-3">Other Emerging</h6>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="EZA" id="emerging-eza" data-name="iShares MSCI South Africa ETF">
+                                    <label class="form-check-label" for="emerging-eza">
+                                        <strong>EZA</strong> - South Africa<br>
+                                        <small class="text-muted">South African equity market</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="TUR" id="emerging-tur" data-name="iShares MSCI Turkey ETF">
+                                    <label class="form-check-label" for="emerging-tur">
+                                        <strong>TUR</strong> - Turkey<br>
+                                        <small class="text-muted">Turkish equity market</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="QAT" id="emerging-qat" data-name="iShares MSCI Qatar ETF">
+                                    <label class="form-check-label" for="emerging-qat">
+                                        <strong>QAT</strong> - Qatar<br>
+                                        <small class="text-muted">Qatari equity market</small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Real Estate -->
+            <div class="mb-3">
+                <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#realEstateETFs" aria-expanded="false" aria-controls="realEstateETFs">
+                    <i class="bi bi-chevron-down"></i> Real Estate
+                </button>
+                <div class="collapse mt-2" id="realEstateETFs">
+                    <div class="card card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="VNQ" id="realestate-vnq" data-name="Vanguard Real Estate ETF">
+                                    <label class="form-check-label" for="realestate-vnq">
+                                        <strong>VNQ</strong> - US REITs<br>
+                                        <small class="text-muted">US REIT index fund</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="VNQI" id="realestate-vnqi" data-name="Vanguard Global ex-US Real Estate ETF">
+                                    <label class="form-check-label" for="realestate-vnqi">
+                                        <strong>VNQI</strong> - Global ex-US REITs<br>
+                                        <small class="text-muted">International REITs excluding US</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="RWX" id="realestate-rwx" data-name="SPDR DJ International Real Estate ETF">
+                                    <label class="form-check-label" for="realestate-rwx">
+                                        <strong>RWX</strong> - International REITs<br>
+                                        <small class="text-muted">SPDR DJ International Real Estate</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="IFEU" id="realestate-ifeu" data-name="iShares FTSE EPRA/NAREIT Europe ETF">
+                                    <label class="form-check-label" for="realestate-ifeu">
+                                        <strong>IFEU</strong> - Europe REITs<br>
+                                        <small class="text-muted">iShares FTSE EPRA/NAREIT Europe</small>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="IFAS" id="realestate-ifas" data-name="iShares FTSE EPRA/NAREIT Asia ETF">
+                                    <label class="form-check-label" for="realestate-ifas">
+                                        <strong>IFAS</strong> - Asia REITs<br>
+                                        <small class="text-muted">iShares FTSE EPRA/NAREIT Asia</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="TAO" id="realestate-tao" data-name="Guggenheim China Real Estate ETF">
+                                    <label class="form-check-label" for="realestate-tao">
+                                        <strong>TAO</strong> - China REITs<br>
+                                        <small class="text-muted">Guggenheim China Real Estate</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="RWO" id="realestate-rwo" data-name="SPDR DJ Global Real Estate ETF">
+                                    <label class="form-check-label" for="realestate-rwo">
+                                        <strong>RWO</strong> - Global REITs<br>
+                                        <small class="text-muted">SPDR DJ Global Real Estate</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="GRI" id="realestate-gri" data-name="Cohen & Steers Global Realty Majors ETF">
+                                    <label class="form-check-label" for="realestate-gri">
+                                        <strong>GRI</strong> - Global Majors<br>
+                                        <small class="text-muted">Cohen & Steers Global Realty Majors</small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Oil & Gas / Energy -->
+            <div class="mb-3">
+                <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#energyETFs" aria-expanded="false" aria-controls="energyETFs">
+                    <i class="bi bi-chevron-down"></i> Oil & Gas / Energy
+                </button>
+                <div class="collapse mt-2" id="energyETFs">
+                    <div class="card card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="XLE" id="energy-xle" data-name="Energy Select Sector SPDR">
+                                    <label class="form-check-label" for="energy-xle">
+                                        <strong>XLE</strong> - US Energy<br>
+                                        <small class="text-muted">Energy Select Sector SPDR (largest)</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="XOP" id="energy-xop" data-name="SPDR S&P Oil & Gas Exploration & Production ETF">
+                                    <label class="form-check-label" for="energy-xop">
+                                        <strong>XOP</strong> - US Oil & Gas E&P<br>
+                                        <small class="text-muted">SPDR S&P Oil & Gas Exploration & Production</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="IEO" id="energy-ieo" data-name="iShares US Oil & Gas Exploration & Production ETF">
+                                    <label class="form-check-label" for="energy-ieo">
+                                        <strong>IEO</strong> - US Oil & Gas E&P<br>
+                                        <small class="text-muted">iShares US Oil & Gas Exploration & Production</small>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="PXE" id="energy-pxe" data-name="Invesco Dynamic Energy Exploration & Production ETF">
+                                    <label class="form-check-label" for="energy-pxe">
+                                        <strong>PXE</strong> - US Energy E&P<br>
+                                        <small class="text-muted">Invesco Dynamic Energy Exploration & Production</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="ICLN" id="energy-icln" data-name="iShares Global Clean Energy ETF">
+                                    <label class="form-check-label" for="energy-icln">
+                                        <strong>ICLN</strong> - Global Clean Energy<br>
+                                        <small class="text-muted">iShares Global Clean Energy</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="VDE" id="energy-vde" data-name="Vanguard Energy ETF">
+                                    <label class="form-check-label" for="energy-vde">
+                                        <strong>VDE</strong> - US Energy<br>
+                                        <small class="text-muted">Vanguard Energy ETF</small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Regional Broad Market -->
+            <div class="mb-3">
+                <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#regionalBroadETFs" aria-expanded="false" aria-controls="regionalBroadETFs">
+                    <i class="bi bi-chevron-down"></i> Regional Broad Market
+                </button>
+                <div class="collapse mt-2" id="regionalBroadETFs">
+                    <div class="card card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="VGK" id="regionalbroad-vgk" data-name="Vanguard FTSE Europe ETF">
+                                    <label class="form-check-label" for="regionalbroad-vgk">
+                                        <strong>VGK</strong> - Europe<br>
+                                        <small class="text-muted">Vanguard FTSE Europe ETF</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="EWJ" id="regionalbroad-ewj" data-name="iShares MSCI Japan ETF">
+                                    <label class="form-check-label" for="regionalbroad-ewj">
+                                        <strong>EWJ</strong> - Japan<br>
+                                        <small class="text-muted">iShares MSCI Japan ETF</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="FXI" id="regionalbroad-fxi" data-name="iShares China Large-Cap ETF">
+                                    <label class="form-check-label" for="regionalbroad-fxi">
+                                        <strong>FXI</strong> - China<br>
+                                        <small class="text-muted">iShares China Large-Cap ETF</small>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="EEM" id="regionalbroad-eem" data-name="iShares MSCI Emerging Markets ETF">
+                                    <label class="form-check-label" for="regionalbroad-eem">
+                                        <strong>EEM</strong> - Emerging Markets<br>
+                                        <small class="text-muted">iShares MSCI Emerging Markets</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="VEA" id="regionalbroad-vea" data-name="Vanguard FTSE Developed Markets ETF">
+                                    <label class="form-check-label" for="regionalbroad-vea">
+                                        <strong>VEA</strong> - Developed ex-US<br>
+                                        <small class="text-muted">Vanguard FTSE Developed Markets</small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Technology -->
+            <div class="mb-3">
+                <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#technologyETFs" aria-expanded="false" aria-controls="technologyETFs">
+                    <i class="bi bi-chevron-down"></i> Technology
+                </button>
+                <div class="collapse mt-2" id="technologyETFs">
+                    <div class="card card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="XLK" id="tech-xlk" data-name="Technology Select Sector SPDR">
+                                    <label class="form-check-label" for="tech-xlk">
+                                        <strong>XLK</strong> - US Technology<br>
+                                        <small class="text-muted">Technology Select Sector SPDR</small>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="VGT" id="tech-vgt" data-name="Vanguard Information Technology ETF">
+                                    <label class="form-check-label" for="tech-vgt">
+                                        <strong>VGT</strong> - US Technology<br>
+                                        <small class="text-muted">Vanguard Information Technology ETF</small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Financials -->
+            <div class="mb-3">
+                <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#financialsETFs" aria-expanded="false" aria-controls="financialsETFs">
+                    <i class="bi bi-chevron-down"></i> Financials
+                </button>
+                <div class="collapse mt-2" id="financialsETFs">
+                    <div class="card card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="XLF" id="financials-xlf" data-name="Financial Select Sector SPDR">
+                                    <label class="form-check-label" for="financials-xlf">
+                                        <strong>XLF</strong> - US Financials<br>
+                                        <small class="text-muted">Financial Select Sector SPDR</small>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="VFH" id="financials-vfh" data-name="Vanguard Financials ETF">
+                                    <label class="form-check-label" for="financials-vfh">
+                                        <strong>VFH</strong> - US Financials<br>
+                                        <small class="text-muted">Vanguard Financials ETF</small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Healthcare -->
+            <div class="mb-3">
+                <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#healthcareETFs" aria-expanded="false" aria-controls="healthcareETFs">
+                    <i class="bi bi-chevron-down"></i> Healthcare
+                </button>
+                <div class="collapse mt-2" id="healthcareETFs">
+                    <div class="card card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="XLV" id="healthcare-xlv" data-name="Health Care Select Sector SPDR">
+                                    <label class="form-check-label" for="healthcare-xlv">
+                                        <strong>XLV</strong> - US Healthcare<br>
+                                        <small class="text-muted">Health Care Select Sector SPDR</small>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input industry-checkbox" type="checkbox" value="VHT" id="healthcare-vht" data-name="Vanguard Health Care ETF">
+                                    <label class="form-check-label" for="healthcare-vht">
+                                        <strong>VHT</strong> - US Healthcare<br>
+                                        <small class="text-muted">Vanguard Health Care ETF</small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Selected Symbols Display -->
+            <div class="mt-3">
+                <label class="form-label">Selected Symbols:</label>
+                <div class="border rounded p-2 bg-light" id="selected-symbols-display" style="min-height: 40px;">
+                    <small class="text-muted">No symbols selected from industry groups</small>
+                </div>
+                <div class="form-text">
+                    <button type="button" class="btn btn-sm btn-outline-danger" id="clear-industry-selections">Clear All</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="switch-to-manual">Use These Symbols</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="form-section">
+        <h3 class="section-header">Date Range</h3>
+        <div class="guide-text">
+            Specify the time period to analyze.
+        </div>
+        
         <div class="row">
             <div class="col-md-6">
                 <div class="mb-3">
@@ -86,53 +1120,85 @@
     
     <div class="form-section">
         <h3 class="section-header">Data Preprocessing</h3>
+        <div class="guide-text">
+            Prepare your data for analysis by normalizing values across different price ranges. This ensures that high-priced stocks don't dominate the analysis.
+        </div>
+        
         <div class="mb-3">
             <label for="scaling-method" class="form-label">Scaling Method</label>
             <select class="form-select" id="scaling-method" name="scaling_method">
-                <option value="standardize">Standardize (Z-score)</option>
+                <option value="standardize" selected>Standardize (Z-score)</option>
                 <option value="minmax">Min-Max Scaling</option>
                 <option value="none">No Scaling</option>
             </select>
+            <div class="parameter-help">
+                <strong>Standardize:</strong> Centers data around zero with unit variance. Best for most analyses as it preserves relative relationships while making different assets comparable.<br>
+                <strong>Min-Max:</strong> Scales to 0-1 range. Use when you need bounded values or when extreme outliers are important.<br>
+                <strong>No Scaling:</strong> Keeps original prices. Only recommended when analyzing assets with similar price ranges or when absolute price levels matter.
+            </div>
         </div>
     </div>
     
     <div class="form-section">
-        <h3 class="section-header">ARIMA Model Parameters</h3>
+        <h3 class="section-header">ARIMA Parameters</h3>
+        <div class="guide-text">
+            ARIMA models help predict future prices by analyzing patterns in historical data. The model looks at past price movements, trends, and random fluctuations to forecast where prices might go next.
+        </div>
+        
         <div class="row">
             <div class="col-md-4">
                 <div class="mb-3">
-                    <label for="arima-p" class="form-label">p (AR Order)</label>
+                    <label for="arima-p" class="form-label">p: Auto-Regressive Component</label>
                     <input type="number" class="form-control" id="arima-p" name="arima_p" min="0" max="10" value="2">
+                    <div class="parameter-help">
+                        The AR component assumes today's price depends on recent past prices. Think of it as "momentum" - if a stock has been rising for several days, AR captures the tendency for that trend to continue. Higher p values (3-5) capture longer-term momentum patterns but risk overfitting to noise. Start with p=1-2 for most financial series, increase if you see strong persistence in price movements.
+                    </div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="mb-3">
-                    <label for="arima-d" class="form-label">d (Differencing)</label>
-                    <input type="number" class="form-control" id="arima-d" name="arima_d" min="0" max="2" value="1">
+                    <label for="arima-d" class="form-label">d: Integration Component</label>
+                    <input type="number" class="form-control" id="arima-d" name="arima_d" min="0" max="2" value="0">
+                    <div class="parameter-help">
+                        Differencing removes trends to make the data stationary (constant mean/variance over time). Most financial prices are "integrated" - they wander randomly and don't revert to a mean. d=1 means taking first differences (today's price minus yesterday's), which usually converts trending price data into stationary returns. Use d=0 for already-stationary data like volatility indices, d=2 rarely needed except for highly trending series. This analysis pipeline automatically differences prices to returns, so this is default to 0.
+                    </div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="mb-3">
-                    <label for="arima-q" class="form-label">q (MA Order)</label>
+                    <label for="arima-q" class="form-label">q: Moving Average Component</label>
                     <input type="number" class="form-control" id="arima-q" name="arima_q" min="0" max="10" value="4">
+                    <div class="parameter-help">
+                        The MA component captures how today's price reacts to recent random shocks or surprises. Unlike AR which uses actual past prices, MA uses past forecast errors. This helps model temporary market overreactions or corrections. Higher q values (3-6) are useful for financial data since markets often show clustered volatility and mean reversion after shocks.
+                    </div>
                 </div>
             </div>
         </div>
     </div>
     
     <div class="form-section">
-        <h3 class="section-header">GARCH Model Parameters</h3>
+        <h3 class="section-header">GARCH Parameters</h3>
+        <div class="guide-text">
+            GARCH models analyze market volatility - how much prices swing up and down over time. This helps identify periods of high uncertainty (like during market crashes) versus stable periods, which is crucial for risk management.
+        </div>
+        
         <div class="row">
             <div class="col-md-4">
                 <div class="mb-3">
-                    <label for="garch-p" class="form-label">p (ARCH Order)</label>
+                    <label for="garch-p" class="form-label">p: ARCH</label>
                     <input type="number" class="form-control" id="garch-p" name="garch_p" min="0" max="5" value="1">
+                    <div class="parameter-help">
+                        ARCH captures how today's volatility depends on recent large price movements. If yesterday had a big price swing, today's volatility will likely be elevated. p=1 is usually sufficient since volatility shocks decay quickly. Higher values (2-3) may help with extremely volatile assets like crypto or emerging market currencies.
+                    </div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="mb-3">
-                    <label for="garch-q" class="form-label">q (GARCH Order)</label>
+                    <label for="garch-q" class="form-label">q: Generalized ARCH</label>
                     <input type="number" class="form-control" id="garch-q" name="garch_q" min="0" max="5" value="1">
+                    <div class="parameter-help">
+                        GARCH adds persistence to volatility clustering - the tendency for volatile periods to persist over time. This captures the "volatility of volatility" phenomenon where market stress tends to continue for weeks or months. q=1 handles most cases; q=2 for assets with very persistent volatility clustering like VIX or commodity futures.
+                    </div>
                 </div>
             </div>
             <div class="col-md-4">
@@ -143,6 +1209,10 @@
                         <option value="t" selected>Student's t</option>
                         <option value="skewt">Skewed t</option>
                     </select>
+                    <div class="parameter-help">
+                        <strong>Default: Student's t (handles heavy tails)</strong>
+                        Financial returns exhibit "fat tails" - extreme movements occur more frequently than normal distribution predicts. Student's t-distribution accommodates this reality, providing better risk estimates during market stress. Use normal distribution only for very stable, low-volatility assets. Consider skewed-t for assets with asymmetric return patterns.
+                    </div>
                 </div>
             </div>
         </div>
@@ -150,16 +1220,36 @@
 
     <div class="form-section">
         <h3 class="section-header">Spillover Analysis</h3>
-        <div class="form-check form-switch mb-3">
-            <input class="form-check-input" type="checkbox" id="enable-spillover" name="enable_spillover">
-            <label class="form-check-label" for="enable-spillover">Enable Spillover Analysis</label>
+        <div class="guide-text">
+            Spillover analysis reveals how shocks in one market or asset spread to others. For example, if the US stock market crashes, how much does it affect European or Asian markets? This helps understand global market interconnectedness and contagion risks.
         </div>
         
-        <div id="spillover-params" style="display: none;">
+        <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="enable-spillover" name="enable_spillover" checked>
+            <label class="form-check-label" for="enable-spillover">Enable Spillover Analysis</label>
+            <div class="parameter-help">
+                Quantifies how much variance in each asset comes from shocks to other assets versus its own innovations. Essential for portfolio risk management and understanding correlation breakdown during crises. Disable only when analyzing single assets in isolation or when computational resources are limited.
+            </div>
+        </div>
+        
+        <div id="spillover-params" style="display: block;">
             <div class="mb-3">
                 <label for="forecast-horizon" class="form-label">Forecast Horizon</label>
                 <input type="number" class="form-control" id="forecast-horizon" name="forecast_horizon" min="1" max="5" value="3">
-                <div class="form-text">Number of periods for forecast variance decomposition</div>
+                <div class="parameter-help">
+                    Determines how far into the future to measure spillover effects. Short horizons (1-3 periods) capture immediate contagion, longer horizons (5-10) reveal persistent interconnections. Use 1-day for high-frequency trading, 1-week for tactical allocation, 1-month for strategic portfolio decisions.
+                </div>
+            </div>
+            <div class="mb-3">
+                <label for="spillover-method" class="form-label">Spillover Method</label>
+                <select class="form-select" id="spillover-method" name="spillover_method">
+                    <option value="diebold_yilmaz" selected>Diebold-Yilmaz</option>
+                    <option value="garch_spillover">GARCH-based</option>
+                </select>
+                <div class="parameter-help">
+                    Diebold-Yilmaz: looks at how much price returns in one asset explain returns in another. It's fast and easy—only uses return series and a VAR model, so great for quick or exploratory analysis. <br>
+                    GARCH-based: fits a GARCH model to each asset's volatility first, then measures how those volatility “shocks” spread. It's slower because of that extra modeling step, but it captures risk/volatility contagion over calm vs crisis periods. It also requires more observations.
+                </div>
             </div>
         </div>
     </div>
@@ -181,6 +1271,28 @@
 <script>
 // Event handlers for form submission
 document.addEventListener('DOMContentLoaded', function() {
+    // Symbol selection method toggle
+    const manualRadio = document.getElementById('symbol-method-manual');
+    const predefinedRadio = document.getElementById('symbol-method-predefined');
+    const manualSection = document.getElementById('manual-symbol-entry');
+    const predefinedSection = document.getElementById('predefined-symbol-selection');
+    
+    function updateSymbolSelectionDisplay() {
+        if (manualRadio.checked) {
+            manualSection.style.display = 'block';
+            predefinedSection.style.display = 'none';
+        } else {
+            manualSection.style.display = 'none';
+            predefinedSection.style.display = 'block';
+        }
+    }
+    
+    manualRadio.addEventListener('change', updateSymbolSelectionDisplay);
+    predefinedRadio.addEventListener('change', updateSymbolSelectionDisplay);
+    
+    // Set initial state
+    updateSymbolSelectionDisplay();
+
     // Toggle between market and synthetic data parameters
     const syntheticRadio = document.getElementById('data-source-synthetic');
     const yfinanceRadio = document.getElementById('data-source-actual-yfinance');
@@ -206,7 +1318,90 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add event listeners for radio buttons
     syntheticRadio.addEventListener('change', updateDisplays);
     yfinanceRadio.addEventListener('change', updateDisplays);
-    stooqRadio.addEventListener('change', updateDisplays);
+       stooqRadio.addEventListener('change', updateDisplays);
+
+    // Industry selection functionality
+    const industryCheckboxes = document.querySelectorAll('.industry-checkbox');
+    const selectedDisplay = document.getElementById('selected-symbols-display');
+    const clearButton = document.getElementById('clear-industry-selections');
+    const switchToManualButton = document.getElementById('switch-to-manual');
+    
+    let selectedSymbols = new Set();
+    
+    // Update selected symbols display
+    function updateSelectedDisplay() {
+        if (selectedSymbols.size === 0) {
+            selectedDisplay.innerHTML = '<small class="text-muted">No symbols selected from industry groups</small>';
+        } else {
+            const symbolsArray = Array.from(selectedSymbols);
+            selectedDisplay.innerHTML = symbolsArray.map(symbol => 
+                `<span class="badge bg-primary me-1">${symbol}</span>`
+            ).join('');
+        }
+    }
+    
+    // Handle checkbox changes
+    industryCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            if (this.checked) {
+                selectedSymbols.add(this.value);
+            } else {
+                selectedSymbols.delete(this.value);
+            }
+            updateSelectedDisplay();
+        });
+    });
+    
+    // Clear all selections
+    clearButton.addEventListener('click', function() {
+        industryCheckboxes.forEach(checkbox => {
+            checkbox.checked = false;
+        });
+        selectedSymbols.clear();
+        updateSelectedDisplay();
+    });
+    
+    // Switch to manual entry with selected symbols
+    switchToManualButton.addEventListener('click', function() {
+        if (selectedSymbols.size === 0) {
+            alert('No symbols selected to use.');
+            return;
+        }
+        
+        const symbolsArray = Array.from(selectedSymbols);
+        const symbolsString = symbolsArray.join(',');
+        
+        // Switch to manual mode
+        manualRadio.checked = true;
+        updateSymbolSelectionDisplay();
+        
+        // Also trigger the data source display updates
+        updateDisplays();
+        
+        // Populate the appropriate field based on data source selection
+        if (syntheticRadio.checked) {
+            const syntheticSymbolsField = document.getElementById('synthetic-symbols');
+            syntheticSymbolsField.value = symbolsString;
+        } else {
+            const symbolsField = document.getElementById('symbols');
+            symbolsField.value = symbolsString;
+        }
+        
+        // Clear the industry selections after switching
+        clearButton.click();
+        
+        // Show success message
+        const originalText = switchToManualButton.textContent;
+        switchToManualButton.textContent = 'Switched!';
+        switchToManualButton.classList.remove('btn-outline-primary');
+        switchToManualButton.classList.add('btn-success');
+        
+        setTimeout(() => {
+            switchToManualButton.textContent = originalText;
+            switchToManualButton.classList.remove('btn-success');
+            switchToManualButton.classList.add('btn-outline-primary');
+        }, 1500);
+    });
     
     // Handle form submission
     const form = document.getElementById('analysis-form');
@@ -228,49 +1423,80 @@ document.addEventListener('DOMContentLoaded', function() {
             data[key] = value;
         }
         
-        // Special handling for symbols
+        // Helper function to safely split and trim comma-separated values
+        function parseCommaSeparated(value, defaultArray = []) {
+            if (!value || value.trim() === '') {
+                return defaultArray;
+            }
+            return value.split(',').map(s => s.trim()).filter(s => s.length > 0);
+        }
+        
+        // Helper function to safely parse comma-separated numbers
+        function parseCommaSeparatedNumbers(value, defaultArray = []) {
+            if (!value || value.trim() === '') {
+                return defaultArray;
+            }
+            return value.split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
+        }
+        
+        // Special handling for symbols with defaults
         if (data.symbols) {
-            data.symbols = data.symbols.split(',').map(s => s.trim());
+            data.symbols = parseCommaSeparated(data.symbols, ['^DJI', '^HSI']);
         }
         
         if (data.synthetic_symbols) {
-            data.synthetic_symbols = data.synthetic_symbols.split(',').map(s => s.trim());
+            data.synthetic_symbols = parseCommaSeparated(data.synthetic_symbols, ['GME', 'BYND', 'BP']);
         }
         
-        // Handle synthetic anchor prices
+        // Handle synthetic anchor prices with defaults
         if (data.synthetic_anchor_prices) {
-            data.synthetic_anchor_prices = data.synthetic_anchor_prices.split(',').map(p => parseFloat(p.trim()));
+            data.synthetic_anchor_prices = parseCommaSeparatedNumbers(data.synthetic_anchor_prices, [150.0, 200.0, 15.0]);
         }
         
         // If synthetic data is selected, update the symbols array
         if (data.source_actual_or_synthetic_data === 'synthetic') {
             // Use the synthetic symbols instead of the regular symbols
-            data.symbols = data.synthetic_symbols;
+            data.symbols = data.synthetic_symbols || ['GME', 'BYND', 'BP'];
+            
+            // Ensure anchor prices array matches symbols length
+            if (!data.synthetic_anchor_prices || data.synthetic_anchor_prices.length !== data.symbols.length) {
+                data.synthetic_anchor_prices = [150.0, 200.0, 15.0].slice(0, data.symbols.length);
+            }
             
             // Clean up unused fields
             delete data.synthetic_symbols;
+        } else {
+            // For actual data, ensure we have default symbols if none provided
+            if (!data.symbols || data.symbols.length === 0) {
+                data.symbols = ['^DJI', '^HSI'];
+            }
         }
         
-        // Construct ARIMA and GARCH params objects
+        // Construct ARIMA and GARCH params objects with defaults
         data.arima_params = {
-            p: parseInt(data.arima_p),
-            d: parseInt(data.arima_d),
-            q: parseInt(data.arima_q)
+            p: parseInt(data.arima_p) || 2,
+            d: parseInt(data.arima_d) || 1,
+            q: parseInt(data.arima_q) || 4
         };
         
         data.garch_params = {
-            p: parseInt(data.garch_p),
-            q: parseInt(data.garch_q),
-            dist: data.garch_dist
+            p: parseInt(data.garch_p) || 1,
+            q: parseInt(data.garch_q) || 1,
+            dist: data.garch_dist || 't'
         };
         
-        // Handle spillover options
+        // Handle spillover options with defaults
         data.spillover_enabled = document.getElementById('enable-spillover').checked;
         
+        // --- SPILLOVER METHOD LOGIC ---
+        // The backend will use returns for Diebold-Yilmaz (DY) spillover, but GARCH-based spillover requires
+        // the GARCH conditional volatility series. This distinction is required for correct results.
+        // Using the wrong input will give meaningless spillover metrics.
         if (data.spillover_enabled) {
+            const spilloverMethod = document.getElementById('spillover-method').value;
             data.spillover_params = {
-                forecast_horizon: parseInt(data.forecast_horizon),
-                method: "diebold_yilmaz"  // Default method
+                forecast_horizon: parseInt(data.forecast_horizon) || 5,
+                method: spilloverMethod
             };
         }
         
@@ -305,6 +1531,39 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(responseData => {
             // Log the response data
             console.log("API Response received:", responseData);
+            
+            // Transform spillover data for better frontend display
+            if (responseData.spillover_results) {
+                console.log("=== SPILLOVER DATA TRANSFORMATION ===");
+                
+                // Transform pairwise spillover data for table display
+                if (responseData.spillover_results.pairwise_spillover) {
+                    const pairwiseData = [];
+                    Object.entries(responseData.spillover_results.pairwise_spillover).forEach(([pair, data]) => {
+                        const [from, to] = pair.split('_to_');
+                        pairwiseData.push({
+                            from: from,
+                            to: to,
+                            relationship: pair,
+                            r_squared: data.r_squared,
+                            r_squared_percent: (data.r_squared * 100).toFixed(2),
+                            significant_lags: data.significant_lags,
+                            significant_lags_text: data.significant_lags.length > 0 ? data.significant_lags.join(', ') : 'None',
+                            strength: data.r_squared > 0.25 ? 'Strong' : data.r_squared > 0.10 ? 'Moderate' : 'Weak'
+                        });
+                    });
+                    
+                    // Sort by R² value (strongest first)
+                    pairwiseData.sort((a, b) => b.r_squared - a.r_squared);
+                    
+                    // Add transformed data to spillover results
+                    responseData.spillover_results.pairwise_spillover_table = pairwiseData;
+                    
+                    console.log("Transformed pairwise spillover data:", pairwiseData);
+                }
+                
+                console.log("=== END SPILLOVER DATA TRANSFORMATION ===");
+            }
             
             try {
                 // Process original_data to ensure it has the correct structure
@@ -372,6 +1631,9 @@ document.addEventListener('DOMContentLoaded', function() {
     spilloverSwitch.addEventListener('change', function() {
         spilloverParams.style.display = this.checked ? 'block' : 'none';
     });
+    
+    // Set initial spillover display state
+    spilloverParams.style.display = spilloverSwitch.checked ? 'block' : 'none';
 });
 </script>
 {% endblock %}

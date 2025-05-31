@@ -19,68 +19,6 @@
 
 A Django frontend for modeling time series.
 
-FIXME: spillover. might be api
-
-
-
-
-
-
-
-
-TODO: Add codecov
-
-TODO: Add pytests
-
-TODO: Add multiple price series support.
-
-TODO: Add db container to About and integration overview
-
-TODO: restore time series analysis start - end dates to end date = previous business day, start date = 1 month prior. conform plotly x-axis. trading symbols.
-
-Neon/lime green (#BFFF00) background elements and text fragments
-Pink/coral (#FF9E8F)
-Black background (#000000)
-
-synthetic data:
-```json
-{
-  "original_data": [
-    {
-      "index": "2023-01-02T00:00:00",
-      "SYM1": 150,
-      "SYM2": 200,
-      "SYM3": 15
-    },
-    {
-      "index": "2023-01-03T00:00:00",
-      "SYM1": 151.0703,
-      "SYM2": 201.1994,
-      "SYM3": 15.9227
-    },
-```
-
-fetched data:
-```json
-{
-  "original_data": [
-    {
-      "Date": "2023-01-03T00:00:00",
-      "AAPL": 123.63253,
-      "GOOGL": 88.695953,
-      "MSFT": 235.240036
-    },
-    {
-      "Date": "2023-01-04T00:00:00",
-      "AAPL": 124.907707,
-      "GOOGL": 87.660904,
-      "MSFT": 224.949875
-    },
-```
-
-
-
-
 ## Features (Planned)
 
 - User-friendly interface for time series analysis
@@ -113,17 +51,17 @@ flowchart TB
     
     %% Database
     TimeSeriesDB[("Database
-    (Postgres)")]:::database
+    (SQLite)")]:::database
     
     %% External Systems
-    ExternalDataSource[(Yahoo Finance)]:::external
+    ExternalDataSource[(Yahoo Finance / Stooq)]:::external
     
     %% Relationships
     User -- "Uses" --> TimeSeriesFrontend
-    TimeSeriesFrontend -- "Makes API calls to" --> TimeSeriesPipeline
-    TimeSeriesPipeline -- "Writes executions to" --> TimeSeriesDB
-    TimeSeriesPipeline -- "Pip installs from" --> TimeseriesCompute
-    User -- "Can pip install from" --> TimeseriesCompute
+    TimeSeriesFrontend -- "Will make API calls to" --> TimeSeriesPipeline
+    TimeSeriesPipeline -- "Stores pipeline results in" --> TimeSeriesDB
+    TimeSeriesPipeline -- "Uses" --> TimeseriesCompute
+    User -- "Can pip install" --> TimeseriesCompute
     ExternalDataSource -- "Provides time series data" --> TimeSeriesPipeline
     TimeseriesCompute -- "Publishes to" --> Github/DockerHub/PyPI/ReadTheDocs
 ```

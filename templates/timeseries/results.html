@@ -1,4 +1,10 @@
-<!-- templates/timeseries/results.html -->
+<!--
+# === FILE META OPENING ===
+# file: ./timeseries-frontend/templates/timeseries/results.html
+# role: frontend
+# desc: main results page template that displays interactive charts and analysis results with tabbed navigation
+# === FILE META CLOSING ===
+-->
 
 {% extends 'base.html' %}
 {% load static %}
@@ -6,10 +12,40 @@
 {% block title %}Results - Timeseries Pipeline{% endblock %}
 
 {% block content %}
-<h1 class="mb-4">Analysis Results</h1>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">Analysis Results</h1>
+    <div class="btn-group" role="group">
+        <button id="download-api-response-btn" class="btn btn-outline-primary">
+            <i class="bi bi-download"></i> Download Full API Response
+        </button>
+        <button id="view-api-response-btn" class="btn btn-outline-secondary">
+            <i class="bi bi-eye"></i> View Raw JSON
+        </button>
+    </div>
+</div>
 
-<div class="mt-4">
-    <button id="download-data-btn" class="btn btn-secondary">Download Raw Data</button>
+<!-- view JSON payload -->
+<div class="modal fade" id="jsonModal" tabindex="-1" aria-labelledby="jsonModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="jsonModalLabel">Raw API Response</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <small class="text-muted">
+                        This is the complete JSON response from the API.
+                    </small>
+                </div>
+                <pre id="json-content" style="max-height: 60vh; overflow: auto; background-color: #f8f9fa; padding: 1rem; border-radius: 0.375rem; font-size: 0.875rem;"></pre>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="copy-json-btn">Copy to Clipboard</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div id="no-results" class="alert alert-warning" style="display: none;">
@@ -41,6 +77,12 @@
             <button class="nav-link" id="garch-tab" data-bs-toggle="tab" data-bs-target="#garch" 
                     type="button" role="tab" aria-controls="garch" aria-selected="false">
                 GARCH
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="spillover-tab" data-bs-toggle="tab" data-bs-target="#spillover" 
+                    type="button" role="tab" aria-controls="spillover" aria-selected="false">
+                Spillover Analysis
             </button>
         </li>
         <li class="nav-item" role="presentation">
@@ -96,36 +138,16 @@
                         <strong>Interpretation:</strong> <span id="stationarity-interpretation"></span>
                     </div>
                     
-                    <h6>ADF Test Results</h6>
-                    <table class="table table-bordered">
-                        <tbody>
-                            <tr>
-                                <th>ADF Statistic</th>
-                                <td id="adf-statistic"></td>
-                            </tr>
-                            <tr>
-                                <th>p-value</th>
-                                <td id="p-value"></td>
-                            </tr>
-                            <tr>
-                                <th>Is Stationary</th>
-                                <td id="is-stationary"></td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <!-- Combined ADF, p-value, stationarity, and critical values table -->
+                    <div id="combined-stationarity-table-container">
+                        <!-- Will be filled dynamically -->
+                    </div>
                     
-                    <h6>Critical Values</h6>
-                    <table class="table table-bordered" id="critical-values-table">
-                        <thead>
-                            <tr>
-                                <th>Significance Level</th>
-                                <th>Critical Value</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Will be filled dynamically -->
-                        </tbody>
-                    </table>
+                    <!-- Series Statistics -->
+                    <div id="series-stats-container">
+                        <h6 class="mt-4">Series Statistics</h6>
+                        <!-- Will be filled dynamically -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -137,6 +159,11 @@
                     <h5 class="card-title mb-0">ARIMA Model Results</h5>
                 </div>
                 <div class="card-body">
+                    <!-- ARIMA Interpretation -->
+                    <div class="alert alert-info mb-4" id="arima-interpretation">
+                        <strong>Interpretation:</strong> <span id="arima-interpretation-text"></span>
+                    </div>
+                    
                     <h6>Model Summary</h6>
                     <pre id="arima-summary" class="p-3 bg-light rounded"></pre>
                     
@@ -153,11 +180,40 @@
                     <h5 class="card-title mb-0">GARCH Model Results</h5>
                 </div>
                 <div class="card-body">
+                    <!-- GARCH Interpretation -->
+                    <div class="alert alert-info mb-4" id="garch-interpretation">
+                        <strong>Interpretation:</strong> <span id="garch-interpretation-text"></span>
+                    </div>
+                    
                     <h6>Model Summary</h6>
                     <pre id="garch-summary" class="p-3 bg-light rounded"></pre>
                     
                     <h6>Volatility Forecast</h6>
                     <div id="garch-forecast-plot" style="height: 400px;"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Spillover Analysis Tab -->
+        <div class="tab-pane fade" id="spillover" role="tabpanel" aria-labelledby="spillover-tab">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Spillover Analysis Results</h5>
+                </div>
+                <div class="card-body">
+                    <div id="spillover-container">
+                        
+                        <!-- Will be filled dynamically if spillover analysis was enabled -->
+                        <div id="spillover-results-container">
+                            <div class="alert alert-info">Loading spillover results...</div>
+                        </div>
+                        
+                        <!-- Granger Causality Results -->
+                        <h5 class="mt-4">Granger Causality Tests</h5>
+                        <div id="granger-causality-container">
+                            <div class="alert alert-info">Loading Granger causality results...</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -264,12 +320,126 @@
 
 {% block extra_js %}
 <script>
+
+// Download API Response Button
+document.getElementById('download-api-response-btn').addEventListener('click', function() {
+    const resultsJson = sessionStorage.getItem('analysisResults');
+    if (!resultsJson) {
+        alert('No analysis results found in session storage. Please run an analysis first.');
+        return;
+    }
+    
+    try {
+        // Parse and re-stringify to ensure valid JSON with nice formatting
+        const results = JSON.parse(resultsJson);
+        const dataStr = JSON.stringify(results, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+        
+        const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+        const exportName = `api_response_${timestamp}.json`;
+        
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', exportName);
+        linkElement.style.display = 'none';
+        document.body.appendChild(linkElement);
+        linkElement.click();
+        document.body.removeChild(linkElement);
+        
+        console.log('API response downloaded:', exportName);
+        
+        // Show success message
+        const button = document.getElementById('download-api-response-btn');
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="bi bi-check"></i> Downloaded!';
+        button.classList.remove('btn-outline-primary');
+        button.classList.add('btn-success');
+        
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.classList.remove('btn-success');
+            button.classList.add('btn-outline-primary');
+        }, 2000);
+        
+    } catch (error) {
+        console.error('Error downloading API response:', error);
+        alert('Error downloading API response: ' + error.message);
+    }
+});
+
+// View API Response Button
+document.getElementById('view-api-response-btn').addEventListener('click', function() {
+    const resultsJson = sessionStorage.getItem('analysisResults');
+    if (!resultsJson) {
+        alert('No analysis results found in session storage. Please run an analysis first.');
+        return;
+    }
+    
+    try {
+        // Parse and re-stringify to ensure nice formatting
+        const results = JSON.parse(resultsJson);
+        const formattedJson = JSON.stringify(results, null, 2);
+        
+        // Add syntax highlighting for better readability
+        const highlightedJson = formattedJson
+            .replace(/("series_stats"[^:]*:)/g, '<mark style="background-color: #fff3cd; padding: 2px 4px; border-radius: 3px;">$1</mark>')
+            .replace(/("stationarity_results"[^:]*:)/g, '<mark style="background-color: #d1ecf1; padding: 2px 4px; border-radius: 3px;">$1</mark>')
+            .replace(/("arima_[^"]*"[^:]*:)/g, '<mark style="background-color: #d4edda; padding: 2px 4px; border-radius: 3px;">$1</mark>')
+            .replace(/("garch_[^"]*"[^:]*:)/g, '<mark style="background-color: #f8d7da; padding: 2px 4px; border-radius: 3px;">$1</mark>');
+        
+        document.getElementById('json-content').innerHTML = highlightedJson;
+        
+        // Show the modal
+        const modal = new bootstrap.Modal(document.getElementById('jsonModal'));
+        modal.show();
+        
+        console.log('API response keys:', Object.keys(results));
+        
+    } catch (error) {
+        console.error('Error displaying API response:', error);
+        alert('Error displaying API response: ' + error.message);
+    }
+});
+
+// Copy JSON to Clipboard Button
+document.getElementById('copy-json-btn').addEventListener('click', function() {
+    const jsonContent = document.getElementById('json-content').textContent;
+    
+    navigator.clipboard.writeText(jsonContent).then(function() {
+        const button = document.getElementById('copy-json-btn');
+        const originalText = button.innerHTML;
+        button.innerHTML = 'Copied!';
+        button.classList.remove('btn-primary');
+        button.classList.add('btn-success');
+        
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.classList.remove('btn-success');
+            button.classList.add('btn-primary');
+        }, 2000);
+        
+    }).catch(function(err) {
+        console.error('Error copying to clipboard:', err);
+        alert('Error copying to clipboard. Please select and copy manually.');
+    });
+});
+
+
 document.addEventListener('DOMContentLoaded', function() {
-
-    console.log("Raw results data:", JSON.parse(sessionStorage.getItem('analysisResults')));
-
     // Try to get analysis results from sessionStorage
     const resultsJson = sessionStorage.getItem('analysisResults');
+    
+    // Debug log only if data exists
+    if (resultsJson) {
+        try {
+            const parsedData = JSON.parse(resultsJson);
+            console.log("Raw results data:", parsedData);
+        } catch (e) {
+            console.error("Error parsing results data:", e);
+        }
+    } else {
+        console.log("No analysis results found in sessionStorage");
+    }
 
     if (!resultsJson) {
         // No results found, show message
@@ -279,8 +449,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Parse results JSON
-    const results = JSON.parse(resultsJson);
-    console.log("Results data:", results);
+    let results;
+    try {
+        results = JSON.parse(resultsJson);
+        console.log("Results data:", results);
+    } catch (error) {
+        console.error("Error parsing JSON:", error);
+        document.getElementById('no-results').style.display = 'block';
+        document.getElementById('results-container').style.display = 'none';
+        return;
+    }
     
     // Show results container
     document.getElementById('no-results').style.display = 'none';
@@ -361,7 +539,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 title: 'Price Series',
                 xaxis: { title: 'Date' },
                 yaxis: { title: 'Price' },
-                legend: { orientation: 'h', y: -0.2 }
+                legend: { orientation: 'h', y: -0.2 },
+                autosize: true,
+                margin: { l: 50, r: 50, b: 50, t: 80, pad: 4 }
+            }, {
+                responsive: true
             });
             console.log("Price series plot created with", priceSeriesPlotData.length, "traces");
         }
@@ -381,7 +563,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 title: 'Returns Series',
                 xaxis: { title: 'Date' },
                 yaxis: { title: 'Return' },
-                legend: { orientation: 'h', y: -0.2 }
+                legend: { orientation: 'h', y: -0.2 },
+                autosize: true,
+                margin: { l: 50, r: 50, b: 50, t: 80, pad: 4 }
+            }, {
+                responsive: true
             });
             console.log("Returns series plot created with", returnsPlotData.length, "traces");
         }
@@ -401,7 +587,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 title: 'Scaled for GARCH Series',
                 xaxis: { title: 'Date' },
                 yaxis: { title: 'Value' },
-                legend: { orientation: 'h', y: -0.2 }
+                legend: { orientation: 'h', y: -0.2 },
+                autosize: true,
+                margin: { l: 50, r: 50, b: 50, t: 80, pad: 4 }
+            }, {
+                responsive: true
             });
             console.log("GARCH series plot created with", garchPlotData.length, "traces");
         }
@@ -412,30 +602,293 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Populate stationarity tab
-    if (results.stationarity_results) {
+    if (results.stationarity_results && results.stationarity_results.all_symbols_stationarity) {
         const stationarityResults = results.stationarity_results;
-        
-        document.getElementById('stationarity-interpretation').textContent = stationarityResults.interpretation;
-        document.getElementById('adf-statistic').textContent = stationarityResults.adf_statistic.toFixed(4);
-        document.getElementById('p-value').textContent = stationarityResults.p_value.toFixed(4);
-        document.getElementById('is-stationary').textContent = stationarityResults.is_stationary ? 'Yes' : 'No';
-        
-        // Set alert class based on stationarity
-        const stationarityAlert = document.getElementById('stationarity-alert');
-        stationarityAlert.className = stationarityResults.is_stationary ? 
-            'alert alert-success' : 'alert alert-warning';
-        
-        // Populate critical values table
-        const criticalValuesTable = document.getElementById('critical-values-table').getElementsByTagName('tbody')[0];
-        criticalValuesTable.innerHTML = ''; // Clear any existing rows
-        
-        for (const [level, value] of Object.entries(stationarityResults.critical_values)) {
-            const row = criticalValuesTable.insertRow();
-            const levelCell = row.insertCell(0);
-            const valueCell = row.insertCell(1);
+        const stationarityContainer = document.querySelector('#stationarity .card-body');
+        let stationarityHTML = '';
+                
+        // First: Display each symbol's interpretation and table
+        for (const [symbol, symbolResult] of Object.entries(stationarityResults.all_symbols_stationarity)) {
+            // Get critical values and ADF statistic for sorting
+            const criticalValue1 = symbolResult.critical_values['1%'];
+            const criticalValue5 = symbolResult.critical_values['5%'];
+            const adfStatistic = symbolResult.adf_statistic;
             
-            levelCell.textContent = level;
-            valueCell.textContent = value.toFixed(4);
+            // Create array of values for sorting (ascending order)
+            const valuesToSort = [
+                { label: 'Critical Value (1%)', value: criticalValue1 },
+                { label: 'Critical Value (5%)', value: criticalValue5 },
+                { label: 'ADF Statistic', value: adfStatistic }
+            ].sort((a, b) => a.value - b.value);
+            
+            stationarityHTML += `
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">${symbol}</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <strong>Interpretation:</strong> ${symbolResult.interpretation}
+                        </div>
+                        
+                        <table class="table table-bordered table-sm">
+                            <tbody>
+                                <tr>
+                                    <th>Is Stationary</th>
+                                    <td>${symbolResult.is_stationary ? 'Yes' : 'No'}</td>
+                                </tr>
+                                <tr>
+                                    <th>p-value</th>
+                                    <td>${symbolResult.p_value.toFixed(4)}</td>
+                                </tr>`;
+            
+            // Add the sorted critical values and ADF statistic with color coding
+            valuesToSort.forEach(item => {
+                let cellClass = '';
+                let cellValue = item.value !== undefined ? item.value.toFixed(4) : 'N/A';
+                
+                // Color code critical values based on whether ADF statistic passes them
+                if (item.label.includes('Critical Value')) {
+                    // For ADF test, stationarity is indicated when ADF statistic is MORE NEGATIVE than critical values
+                    // So if adfStatistic < criticalValue (more negative), then the test passes that threshold
+                    if (adfStatistic < item.value) {
+                        cellClass = 'text-success fw-bold'; // Green for passed critical values
+                        cellValue = `<span class="text-success fw-bold">${cellValue}</span>`;
+                    } else {
+                        cellClass = 'text-danger'; // Red for failed critical values
+                        cellValue = `<span class="text-danger">${cellValue}</span>`;
+                    }
+                }
+                
+                stationarityHTML += `
+                                <tr>
+                                    <th>${item.label}</th>
+                                    <td>${cellValue}</td>
+                                </tr>`;
+            });
+            
+            stationarityHTML += `
+                            </tbody>
+                        </table>
+                    </div>
+                </div>`;
+        }
+        
+        // Second: Add Rolling Statistics interpretation and all plots
+        stationarityHTML += `
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h6 class="mb-0">Rolling Statistics (Visual Stationarity Check)</h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-secondary mb-3">
+                        <strong>How to Read These Charts:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li><strong>Rolling Mean (Blue Line):</strong> Shows the average return over a moving window. For stationary series, this should fluctuate around a consistent level without persistent upward or downward trends.</li>
+                            <li><strong>Rolling Standard Deviation (Red Line):</strong> Shows volatility over time. For stationary series, this should remain relatively stable, though some variation is normal.</li>
+                            <li><strong>Stationarity Indicators:</strong> Look for the blue line hovering around zero (for returns) and the red line staying within a reasonable range without dramatic long-term increases or decreases.</li>
+                            <li><strong>Warning Signs:</strong> Persistent trends in either line, dramatic spikes that don't return to normal levels, or gradual drift over time may indicate non-stationarity.</li>
+                        </ul>
+                    </div>`;
+        
+        // Add all rolling statistics plots
+        for (const [symbol] of Object.entries(stationarityResults.all_symbols_stationarity)) {
+            stationarityHTML += `
+                <div class="mb-3">
+                    <h6 class="text-primary">${symbol}</h6>
+                    <div id="rolling-stats-${symbol}" style="height: 400px; margin-bottom: 20px;"></div>
+                </div>`;
+        }
+        
+        stationarityHTML += `
+                </div>
+            </div>`;
+        
+        // Third: Add Statistical Interpretation section
+        stationarityHTML += `
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h6 class="mb-0">Statistical Interpretation</h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <ul class="mb-0">
+                            <li><strong>Count (n):</strong> Number of observations in the time series</li>
+                            <li><strong>Mean:</strong> Average return value (positive = upward trend, negative = downward trend)</li>
+                            <li><strong>Median:</strong> Middle value when returns are sorted (less affected by outliers than mean)</li>
+                            <li><strong>Min/Max:</strong> Largest negative and positive return movements observed</li>
+                            <li><strong>Std Dev:</strong> Standard deviation measuring day-to-day volatility</li>
+                            <li><strong>Skewness:</strong> Asymmetry of returns (0 = symmetric, positive = more extreme positive returns, negative = more extreme negative returns)</li>
+                            <li><strong>Kurtosis:</strong> Tail heaviness vs normal distribution (0 = normal, positive = more extreme movements, negative = fewer extreme movements)</li>
+                            <li><strong>Annualized Vol:</strong> Volatility scaled to annual terms for comparison across different time periods</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>`;
+        
+        // Fourth: Add the series stats container
+        stationarityHTML += '<div id="series-stats-container"></div>';
+        
+        stationarityContainer.innerHTML = stationarityHTML;
+        
+        // Create rolling statistics for each symbol
+        for (const [symbol, symbolResult] of Object.entries(stationarityResults.all_symbols_stationarity)) {
+            // Rolling Statistics Visual
+            const rollingStatsDiv = document.getElementById(`rolling-stats-${symbol}`);
+            if (rollingStatsDiv && results.returns_data) {
+                // Calculate rolling statistics from returns data
+                const symbolData = results.returns_data
+                    .map(item => ({ date: item.Date || item.index, value: item[symbol] }))
+                    .filter(item => item.value !== undefined && item.value !== null);
+                
+                if (symbolData.length > 0) {
+                    const window = Math.min(30, Math.floor(symbolData.length / 4)); // 30-day window or 1/4 of data
+                    
+                    const rollingMean = [];
+                    const rollingStd = [];
+                    const dates = [];
+                    
+                    for (let i = window - 1; i < symbolData.length; i++) {
+                        const windowData = symbolData.slice(i - window + 1, i + 1).map(d => d.value);
+                        
+                        // Calculate mean
+                        const mean = windowData.reduce((sum, val) => sum + val, 0) / windowData.length;
+                        rollingMean.push(mean);
+                        
+                        // Calculate standard deviation
+                        const variance = windowData.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / windowData.length;
+                        const std = Math.sqrt(variance);
+                        rollingStd.push(std);
+                        
+                        dates.push(symbolData[i].date.split('T')[0]);
+                    }
+                    
+                    const rollingTraces = [
+                        {
+                            x: dates,
+                            y: rollingMean,
+                            type: 'scatter',
+                            mode: 'lines',
+                            name: `Rolling Mean (${window}d)`,
+                            line: { color: 'blue' }
+                        },
+                        {
+                            x: dates,
+                            y: rollingStd,
+                            type: 'scatter',
+                            mode: 'lines',
+                            name: `Rolling Std Dev (${window}d)`,
+                            line: { color: 'red' },
+                            yaxis: 'y2'
+                        }
+                    ];
+                    
+                    const rollingLayout = {
+                        title: `Rolling Statistics - ${symbol} (${window}-day window)`,
+                        xaxis: { title: 'Date' },
+                        yaxis: { 
+                            title: 'Rolling Mean (Return)',
+                            side: 'left'
+                        },
+                        yaxis2: {
+                            title: 'Rolling Standard Deviation (Volatility)',
+                            side: 'right',
+                            overlaying: 'y'
+                        },
+                        legend: { orientation: 'h', y: -0.2 },
+                        autosize: true,
+                        margin: { l: 50, r: 50, b: 50, t: 80, pad: 4 }
+                    };
+                    
+                    Plotly.newPlot(rollingStatsDiv, rollingTraces, rollingLayout, {
+                        responsive: true
+                    });
+                } else {
+                    rollingStatsDiv.innerHTML = '<div class="alert alert-warning">Insufficient data for rolling statistics</div>';
+                }
+            }
+        }
+        
+        // Populate series statistics if available
+        if (results.series_stats) {
+            const statsContainer = document.getElementById('series-stats-container');
+            let statsHTML = '<div class="card mb-3">';
+            statsHTML += '<div class="card-header"><h6 class="mb-0">Series Statistics</h6></div>';
+            statsHTML += '<div class="card-body">';
+            
+            // Add Statistical Interpretation section first
+            statsHTML += `
+                <div class="alert alert-info mb-4">
+                    <h6 class="mb-3">Statistical Interpretation</h6>
+                    <ul class="mb-0">
+                        <li><strong>Count (n):</strong> Number of observations in the time series</li>
+                        <li><strong>Mean:</strong> Average return value (positive = upward trend, negative = downward trend)</li>
+                        <li><strong>Median:</strong> Middle value when returns are sorted (less affected by outliers than mean)</li>
+                        <li><strong>Min/Max:</strong> Largest negative and positive return movements observed</li>
+                        <li><strong>Std Dev:</strong> Standard deviation measuring day-to-day volatility</li>
+                        <li><strong>Skewness:</strong> Asymmetry of returns (0 = symmetric, positive = more extreme positive returns, negative = more extreme negative returns)</li>
+                        <li><strong>Kurtosis:</strong> Tail heaviness vs normal distribution (0 = normal, positive = more extreme movements, negative = fewer extreme movements)</li>
+                        <li><strong>Annualized Vol:</strong> Volatility scaled to annual terms for comparison across different time periods</li>
+                    </ul>
+                </div>
+            `;
+            
+            // Create comprehensive statistics table with all metrics
+            statsHTML += `
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Symbol</th>
+                                <th>Count (n)</th>
+                                <th>Mean</th>
+                                <th>Median</th>
+                                <th>Min</th>
+                                <th>Max</th>
+                                <th>Std Dev</th>
+                                <th>Skewness</th>
+                                <th>Kurtosis</th>
+                                <th>Annualized Vol</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            for (const [symbol, stats] of Object.entries(results.series_stats)) {
+                // Helper function to safely format numbers
+                const formatStat = (value, decimals = 6) => {
+                    if (value === null || value === undefined || isNaN(value)) return 'N/A';
+                    return typeof value === 'number' ? value.toFixed(decimals) : value;
+                };
+                
+                statsHTML += `
+                    <tr>
+                        <td><strong>${symbol}</strong></td>
+                        <td>${stats.n || 'N/A'}</td>
+                        <td>${formatStat(stats.mean, 6)}</td>
+                        <td>${formatStat(stats.median, 6)}</td>
+                        <td>${formatStat(stats.min, 6)}</td>
+                        <td>${formatStat(stats.max, 6)}</td>
+                        <td>${formatStat(stats.std, 6)}</td>
+                        <td>${formatStat(stats.skew, 4)}</td>
+                        <td>${formatStat(stats.kurt, 4)}</td>
+                        <td>${formatStat(stats.annualized_vol, 4)}</td>
+                    </tr>
+                `;
+            }
+            
+            statsHTML += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            statsHTML += '</div></div>';
+            
+            statsContainer.innerHTML = statsHTML;
+        } else {
+            document.getElementById('series-stats-container').innerHTML = 
+                '<div class="alert alert-warning">No series statistics available</div>';
         }
     } else {
         console.error("No stationarity results found");
@@ -446,57 +899,304 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Populate ARIMA tab
-    if (results.arima_summary) {
-        document.getElementById('arima-summary').textContent = results.arima_summary;
+    if (results.arima_results && results.arima_results.all_symbols_arima) {
+        const arimaResults = results.arima_results;
+        const arimaContainer = document.querySelector('#arima .card-body');
+        let arimaHTML = '';
         
-        // Create ARIMA forecast plot if forecast data is available
-        if (results.arima_forecast && results.arima_forecast.length > 0) {
-            const arimaForecastPlot = document.getElementById('arima-forecast-plot');
-            Plotly.newPlot(arimaForecastPlot, [{
-                x: Array.from({ length: results.arima_forecast.length }, (_, i) => i + 1),
-                y: results.arima_forecast,
-                type: 'scatter',
-                mode: 'lines+markers',
-                name: 'ARIMA Forecast'
-            }], {
-                title: 'ARIMA Forecast',
-                xaxis: { title: 'Time Horizon (Days)' },
-                yaxis: { title: 'Value' }
-            });
-        } else {
-            document.getElementById('arima-forecast-plot').innerHTML = 
-                '<div class="alert alert-warning">No ARIMA forecast data available</div>';
+        for (const [symbol, symbolResult] of Object.entries(arimaResults.all_symbols_arima)) {
+            arimaHTML += `
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">${symbol}</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info mb-4">
+                            <strong>Interpretation:</strong> ${symbolResult.interpretation}
+                        </div>
+                        
+                        <h6>Model Summary</h6>
+                        <pre class="p-3 bg-light rounded">${symbolResult.summary}</pre>
+                        
+                        <h6>Forecast</h6>
+                        <div id="arima-forecast-plot-${symbol}" style="height: 400px;"></div>
+                    </div>
+                </div>`;
+        }
+        
+        arimaContainer.innerHTML = arimaHTML;
+        
+        // Create forecast plots for each symbol
+        for (const [symbol, symbolResult] of Object.entries(arimaResults.all_symbols_arima)) {
+            if (symbolResult.forecast && symbolResult.forecast.length > 0) {
+                const plotDiv = document.getElementById(`arima-forecast-plot-${symbol}`);
+                Plotly.newPlot(plotDiv, [{
+                    x: Array.from({ length: symbolResult.forecast.length }, (_, i) => i + 1),
+                    y: symbolResult.forecast,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: `${symbol} ARIMA Forecast`
+                }], {
+                    title: `ARIMA Forecast - ${symbol}`,
+                    xaxis: { title: 'Time Horizon (Days)' },
+                    yaxis: { title: 'Value' },
+                    autosize: true,
+                    margin: { l: 50, r: 50, b: 50, t: 80, pad: 4 }
+                }, {
+                    responsive: true
+                });
+            } else {
+                document.getElementById(`arima-forecast-plot-${symbol}`).innerHTML = 
+                    '<div class="alert alert-warning">No ARIMA forecast data available</div>';
+            }
         }
     } else {
-        console.error("No ARIMA summary found");
-        document.getElementById('arima-summary').textContent = "ARIMA model results not available";
+        console.error("No ARIMA results found");
+        const arimaContainer = document.querySelector('#arima .card-body');
+        arimaContainer.innerHTML = '<div class="alert alert-warning">ARIMA model results not available</div>';
     }
     
     // Populate GARCH tab
-    if (results.garch_summary) {
-        document.getElementById('garch-summary').textContent = results.garch_summary;
+    if (results.garch_results && results.garch_results.all_symbols_garch) {
+        const garchResults = results.garch_results;
+        const garchContainer = document.querySelector('#garch .card-body');
+        let garchHTML = '';
         
-        // Create GARCH forecast plot if forecast data is available
-        if (results.garch_forecast && results.garch_forecast.length > 0) {
-            const garchForecastPlot = document.getElementById('garch-forecast-plot');
-            Plotly.newPlot(garchForecastPlot, [{
-                x: Array.from({ length: results.garch_forecast.length }, (_, i) => i + 1),
-                y: results.garch_forecast,
-                type: 'scatter',
-                mode: 'lines+markers',
-                name: 'GARCH Forecast'
-            }], {
-                title: 'Volatility Forecast',
-                xaxis: { title: 'Time Horizon (Days)' },
-                yaxis: { title: 'Value' }
-            });
-        } else {
-            document.getElementById('garch-forecast-plot').innerHTML = 
-                '<div class="alert alert-warning">No GARCH forecast data available</div>';
+        // Results for each symbol
+        for (const [symbol, symbolResult] of Object.entries(garchResults.all_symbols_garch)) {
+            garchHTML += `
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6 class="mb-0">${symbol}</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info mb-4">
+                            <strong>Interpretation:</strong> ${symbolResult.interpretation}
+                        </div>
+                        
+                        <h6>Model Summary</h6>
+                        <pre class="p-3 bg-light rounded">${symbolResult.summary}</pre>
+                        
+                        <h6>Volatility Forecast</h6>
+                        <div id="garch-forecast-plot-${symbol}" style="height: 400px;"></div>
+                    </div>
+                </div>`;
+        }
+        
+        garchContainer.innerHTML = garchHTML;
+        
+        // Create forecast plots for each symbol
+        for (const [symbol, symbolResult] of Object.entries(garchResults.all_symbols_garch)) {
+            if (symbolResult.forecast && symbolResult.forecast.length > 0) {
+                const plotDiv = document.getElementById(`garch-forecast-plot-${symbol}`);
+                Plotly.newPlot(plotDiv, [{
+                    x: Array.from({ length: symbolResult.forecast.length }, (_, i) => i + 1),
+                    y: symbolResult.forecast,
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    name: `${symbol} GARCH Forecast`
+                }], {
+                    title: `Volatility Forecast - ${symbol}`,
+                    xaxis: { title: 'Time Horizon (Days)' },
+                    yaxis: { title: 'Value' },
+                    autosize: true,
+                    margin: { l: 50, r: 50, b: 50, t: 80, pad: 4 }
+                }, {
+                    responsive: true
+                });
+            } else {
+                document.getElementById(`garch-forecast-plot-${symbol}`).innerHTML = 
+                    '<div class="alert alert-warning">No GARCH forecast data available</div>';
+            }
         }
     } else {
-        console.error("No GARCH summary found");
-        document.getElementById('garch-summary').textContent = "GARCH model results not available";
+        console.error("No GARCH results found");
+        const garchContainer = document.querySelector('#garch .card-body');
+        garchContainer.innerHTML = '<div class="alert alert-warning">GARCH model results not available</div>';
+    }
+    
+    // Populate Spillover Analysis tab
+    if (results.spillover_results) {
+        const spilloverContainer = document.getElementById('spillover-results-container');
+        let spilloverHTML = '';
+        
+        // Add main spillover interpretation at the very top
+        spilloverHTML += '<div class="alert alert-info mt-2 mb-4">';
+        if (results.spillover_results.interpretation) {
+            spilloverHTML += `<p><strong>Interpretation:</strong> ${results.spillover_results.interpretation}</p>`;
+        }
+        spilloverHTML += '</div>';
+        
+        // Pairwise spillover matrix (after interpretation)
+        if (results.spillover_results.pairwise_spillover) {
+            spilloverHTML += '<h5 class="mt-2">Pairwise Spillover Matrix</h5>';
+            spilloverHTML += '<p>Values show the percentage of forecast error variance of row i coming from innovations to column j.</p>';
+            
+            // Extract symbols from pairwise spillover data
+            const symbols = Object.keys(results.spillover_results.pairwise_spillover);
+            
+            if (symbols.length > 0) {
+                spilloverHTML += '<table class="table table-bordered table-sm">';
+                spilloverHTML += '<thead><tr><th>From/To</th>';
+                
+                // Header row with symbols
+                symbols.forEach(symbol => {
+                    spilloverHTML += `<th>${symbol}</th>`;
+                });
+                
+                spilloverHTML += '</tr></thead><tbody>';
+                
+                // Data rows
+                symbols.forEach(fromSymbol => {
+                    spilloverHTML += `<tr><th>${fromSymbol}</th>`;
+                    
+                    symbols.forEach(toSymbol => {
+                        const value = results.spillover_results.pairwise_spillover[fromSymbol][toSymbol] * 100 || 0;
+                        const isHighlighted = fromSymbol !== toSymbol && value > 10; // Highlight significant spillovers
+                        
+                        spilloverHTML += `<td class="${isHighlighted ? 'table-warning' : ''}">${value.toFixed(2)}%</td>`;
+                    });
+                    
+                    spilloverHTML += '</tr>';
+                });
+                
+                spilloverHTML += '</tbody></table>';
+            }
+        }
+        
+        // Pairwise Spillover Relationships Table (R² and Significant Lags)
+        if (results.spillover_results.pairwise_spillover_table || results.spillover_results.pairwise_spillover) {
+            spilloverHTML += '<h5 class="mt-4">Pairwise Spillover Relationships</h5>';
+            
+            // Add interpretation before the relationships table
+            spilloverHTML += '<div class="alert alert-info mt-3 mb-3">';
+            spilloverHTML += '<ul class="mb-0">';
+            spilloverHTML += '<li><strong>R² Value:</strong> Measures the strength of the relationship (0 = no relationship, 1 = perfect relationship)</li>';
+            spilloverHTML += '<li><strong>Strength:</strong> Strong (>25%), Moderate (10-25%), Weak (<10%)</li>';
+            spilloverHTML += '<li><strong>Significant Lags:</strong> Time periods where spillover effects are statistically significant</li>';
+            spilloverHTML += '<li><strong>Color Coding:</strong> Green = Strong relationships, Yellow = Moderate relationships</li>';
+            spilloverHTML += '</ul>';
+            spilloverHTML += '</div>';
+            
+            spilloverHTML += '<p>This table shows the strength of relationships (R²) and significant time lags between each pair of markets.</p>';
+            
+            let pairwiseTableData = results.spillover_results.pairwise_spillover_table;
+            
+            // If transformed data isn't available, create it now
+            if (!pairwiseTableData && results.spillover_results.pairwise_spillover) {
+                pairwiseTableData = [];
+                Object.entries(results.spillover_results.pairwise_spillover).forEach(([pair, data]) => {
+                    const [from, to] = pair.split('_to_');
+                    pairwiseTableData.push({
+                        from: from,
+                        to: to,
+                        relationship: pair,
+                        r_squared: data.r_squared,
+                        r_squared_percent: (data.r_squared * 100).toFixed(2),
+                        significant_lags: data.significant_lags,
+                        significant_lags_text: data.significant_lags.length > 0 ? data.significant_lags.join(', ') : 'None',
+                        strength: data.r_squared > 0.25 ? 'Strong' : data.r_squared > 0.10 ? 'Moderate' : 'Weak'
+                    });
+                });
+                
+                // Sort by R² value (strongest first)
+                pairwiseTableData.sort((a, b) => b.r_squared - a.r_squared);
+            }
+            
+            if (pairwiseTableData && pairwiseTableData.length > 0) {
+                spilloverHTML += '<div class="table-responsive">';
+                spilloverHTML += '<table class="table table-bordered table-striped table-hover">';
+                spilloverHTML += `
+                    <thead class="table-dark">
+                        <tr>
+                            <th>From</th>
+                            <th>To</th>
+                            <th>R² Value</th>
+                            <th>R² Percentage</th>
+                            <th>Strength</th>
+                            <th>Significant Lags</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                `;
+                
+                pairwiseTableData.forEach(row => {
+                    const strengthClass = row.strength === 'Strong' ? 'text-success fw-bold' : 
+                                        row.strength === 'Moderate' ? 'text-warning fw-bold' : 'text-muted';
+                    const r2Class = row.r_squared > 0.25 ? 'table-success' : 
+                                  row.r_squared > 0.10 ? 'table-warning' : '';
+                    
+                    spilloverHTML += `
+                        <tr class="${r2Class}">
+                            <td><strong>${row.from}</strong></td>
+                            <td><strong>${row.to}</strong></td>
+                            <td>${row.r_squared.toFixed(4)}</td>
+                            <td>${row.r_squared_percent}%</td>
+                            <td class="${strengthClass}">${row.strength}</td>
+                            <td>${row.significant_lags_text}</td>
+                        </tr>
+                    `;
+                });
+                
+                spilloverHTML += '</tbody></table>';
+                spilloverHTML += '</div>';
+            }
+        }
+        
+        spilloverContainer.innerHTML = spilloverHTML;
+    } else {
+        document.getElementById('spillover-results-container').innerHTML = 
+            '<div class="alert alert-warning">No spillover analysis results available. Make sure to enable spillover analysis in the parameters.</div>';
+    }
+    
+    // Populate Granger Causality results
+    if (results.granger_causality_results) {
+        const grangerContainer = document.getElementById('granger-causality-container');
+        let grangerHTML = '';
+        
+        if (results.granger_causality_results.interpretations) {
+            grangerHTML += '<div class="alert alert-info mb-4">';
+            grangerHTML += '<p>Granger causality tests whether changes in one variable help predict future changes in another variable.</p>';
+            grangerHTML += '</div>';
+            
+            grangerHTML += '<table class="table table-bordered table-sm">';
+            grangerHTML += '<thead><tr><th>Relationship</th><th>Result</th><th>Interpretation</th></tr></thead><tbody>';
+            
+            for (const [relationship, interpretation] of Object.entries(results.granger_causality_results.interpretations)) {
+                const [source, target] = relationship.split('->');
+                const result = results.granger_causality_results.causality_results[relationship];
+                const causalityExists = result && result.causality;
+                
+                grangerHTML += `<tr>
+                    <td>${source} → ${target}</td>
+                    <td class="${causalityExists ? 'text-success' : 'text-danger'}">${causalityExists ? 'Yes' : 'No'}</td>
+                    <td>${interpretation}</td>
+                </tr>`;
+            }
+            
+            grangerHTML += '</tbody></table>';
+        } else if (results.granger_causality_results.causality_results) {
+            // Basic results display without interpretations
+            grangerHTML += '<table class="table table-bordered table-sm">';
+            grangerHTML += '<thead><tr><th>Relationship</th><th>Causality Exists</th><th>p-value</th></tr></thead><tbody>';
+            
+            for (const [relationship, result] of Object.entries(results.granger_causality_results.causality_results)) {
+                grangerHTML += `<tr>
+                    <td>${relationship}</td>
+                    <td class="${result.causality ? 'text-success' : 'text-danger'}">${result.causality ? 'Yes' : 'No'}</td>
+                    <td>${result.p_value?.toFixed(4) || 'N/A'}</td>
+                </tr>`;
+            }
+            
+            grangerHTML += '</tbody></table>';
+        } else {
+            grangerHTML = '<div class="alert alert-warning">No detailed Granger causality results available.</div>';
+        }
+        
+        grangerContainer.innerHTML = grangerHTML;
+    } else {
+        document.getElementById('granger-causality-container').innerHTML = 
+            '<div class="alert alert-warning">No Granger causality results available.</div>';
     }
     
     // Helper function to create data tables from array data
@@ -649,33 +1349,6 @@ document.addEventListener('DOMContentLoaded', function() {
             window.dispatchEvent(new Event('resize'));
         });
     });
-});
-
-document.getElementById('download-data-btn').addEventListener('click', function() {
-    const resultsJson = sessionStorage.getItem('analysisResults');
-    if (!resultsJson) {
-        alert('No analysis results found in session storage');
-        return;
-    }
-    
-    try {
-        const results = JSON.parse(resultsJson);
-        const dataStr = JSON.stringify(results, null, 2);
-        const dataUri = 'data:text/plain;charset=utf-8,' + encodeURIComponent(dataStr);
-        
-        const exportName = 'analysis_results_' + new Date().toISOString().slice(0, 19).replace(/:/g, '-') + '.txt';
-        
-        const linkElement = document.createElement('a');
-        linkElement.setAttribute('href', dataUri);
-        linkElement.setAttribute('download', exportName);
-        linkElement.style.display = 'none';
-        document.body.appendChild(linkElement);
-        linkElement.click();
-        document.body.removeChild(linkElement);
-    } catch (error) {
-        console.error('Error exporting data:', error);
-        alert('Error exporting data: ' + error.message);
-    }
 });
 </script>
 {% endblock %}

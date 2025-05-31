@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
-# config/settings/base.py
+
+#
+# === FILE META OPENING ===
+# file: ./timeseries-frontend/config/settings/base.py
+# role: config
+# desc: Django base settings configuration including database, logging, and security configurations
+# === FILE META CLOSING ===
+#
 
 """
 Base settings for the Timeseries Frontend project.

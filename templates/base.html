@@ -1,4 +1,10 @@
-<!-- templates/base.html -->
+<!--
+# === FILE META OPENING ===
+# file: ./timeseries-frontend/templates/base.html
+# role: frontend
+# desc: base template providing common HTML structure, navigation, and styling for all pages
+# === FILE META CLOSING ===
+-->
 
 {% load static %}
 <!DOCTYPE html>
@@ -88,9 +94,9 @@
     <!-- Footer -->
     <footer class="footer bg-light mt-5" aria-label="Footer">
         <div class="container py-3">
-            <p class="text-center mb-0">Timeseries Modeling &copy; {% now "Y" %} | A statistical forecasting tool</p>
+            <p class="text-center mb-0">Timeseries Modeling &copy; {% now "Y" %} | forecasting tool </p>
             <!-- Hidden message for screen readers -->
-            <p class="sr-only" aria-hidden="false">This tool provides time series analysis with ARIMA and GARCH models. If you need assistance with accessibility, please contact us.</p>
+            <p class="sr-only" aria-hidden="false">This tool provides time series analysis with ARIMA and GARCH models. If you need assistance with accessibility, please contact me.</p>
         </div>
     </footer>
 
@@ -98,9 +104,6 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js" 
             integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq" 
             crossorigin="anonymous"></script>
-
-    
-
 
     <!-- Custom JS -->
     <script src="{% static 'js/main.js' %}"></script>
