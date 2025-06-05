@@ -11,11 +11,15 @@ RUN groupadd -g ${GROUP_ID} djangoapp && \
 WORKDIR /app
 RUN mkdir -p /app && chown djangoapp:djangoapp /app
 
+# Create required directories
+RUN mkdir -p /app/logs /app/staticfiles /app/media
+RUN chown -R djangoapp:djangoapp /app
+
 # Switch to non-root user
 USER djangoapp
 
 # Copy requirements file (as the user)
-COPY --chown=djangoapp:djangoapp requirements-minimal.txt ./requirements.txt
+COPY --chown=djangoapp:djangoapp requirements.txt ./requirements.txt
 
 # Install dependencies
 RUN pip install --no-cache-dir --user -r requirements.txt

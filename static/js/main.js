@@ -1,3 +1,11 @@
+/**
+// === FILE META OPENING ===
+// file: ./timeseries-frontend/static/js/main.js
+// role: frontend
+// desc: main JavaScript file handling UI interactions, tooltips, and navigation for the web interface
+// === FILE META CLOSING ===
+ */
+
 // static/js/main.js
 
 /**

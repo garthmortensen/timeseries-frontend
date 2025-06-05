@@ -1,4 +1,4 @@
-# Timeseries Pipeline Frontend
+# Timeseries Frontend
 
 ## Overview
 
@@ -17,31 +17,7 @@
      ╚═╝     ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝   ╚═╝   ╚══════╝╚═╝  ╚═══╝╚═════╝
 ```
 
-TODO: Add codecov
-
-TODO: Add docker
-
-TODO: Add pytests
-
-TODO: Netsec add CSP policies and such. Look at other projects. Maybe git log oneline pretty summarize django improvements for historical inspiration on this.
-
-TODO: Add multiple price series support.
-
-TODO: Add API best practice/methodological comments into HTML front end
-
-TODO: Add into base.html keywords, accessibility, etc
-
-TODO: add database container
-
-TODO: containerize
-
-TODO: darkmode, improve style, bootstrap, color palletes. It seems "brat" is the hip new thing cool kids do.
-
-Neon/lime green (#BFFF00) background elements and text fragments
-Pink/coral (#FF9E8F)
-Black background (#000000)
-
-A Django-based frontend for visualizing time series analysis results.
+A Django frontend for modeling time series.
 
 ## Features (Planned)
 
@@ -60,24 +36,34 @@ flowchart TB
     classDef person fill:#08427B,color:#fff,stroke:#052E56,stroke-width:1px
     classDef system fill:#1168BD,color:#fff,stroke:#0B4884,stroke-width:1px
     classDef external fill:#999999,color:#fff,stroke:#6B6B6B,stroke-width:1px
+    classDef database fill:#2E7C8F,color:#fff,stroke:#1D4E5E,stroke-width:1px
+    
     %% Actors and Systems
     User((User)):::person
+    
     %% Main Systems
-    TimeSeriesFrontend["Timeseries Frontend
+    TimeSeriesFrontend["Frontend App
     (Django)"]:::system
-    TimeSeriesPipeline["Timeseries Pipeline
+    TimeSeriesPipeline["RESTful Pipeline
     (FastAPI)"]:::system
-    TimeseriesCompute["Timeseries Compute
+    TimeseriesCompute["timeseries-compute
     (Python Package)"]:::system
+    
+    %% Database
+    TimeSeriesDB[("Database
+    (SQLite)")]:::database
+    
     %% External Systems
-    ExternalDataSource[(Yahoo Finance)]:::external
+    ExternalDataSource[(Yahoo Finance / Stooq)]:::external
+    
     %% Relationships
     User -- "Uses" --> TimeSeriesFrontend
-    TimeSeriesFrontend -- "Makes API calls to" --> TimeSeriesPipeline
-    TimeSeriesPipeline -- "Pip installs from" --> TimeseriesCompute
-    User -- "Can use package directly" --> TimeseriesCompute  
+    TimeSeriesFrontend -- "Will make API calls to" --> TimeSeriesPipeline
+    TimeSeriesPipeline -- "Stores pipeline results in" --> TimeSeriesDB
+    TimeSeriesPipeline -- "Uses" --> TimeseriesCompute
+    User -- "Can pip install" --> TimeseriesCompute
     ExternalDataSource -- "Provides time series data" --> TimeSeriesPipeline
-    TimeseriesCompute -- "Publishes to" --> PyPI/DockerHub/ReadTheDocs
+    TimeseriesCompute -- "Publishes to" --> Github/DockerHub/PyPI/ReadTheDocs
 ```
 
 ## Architecture
@@ -120,8 +106,8 @@ flowchart TB
 
 ```bash
 # Clone the repository
-git clone https://github.com/garthmortensen/timeseries-pipeline-frontend.git
-cd timeseries-pipeline-frontend
+git https://github.com/garthmortensen/timeseries-frontend
+cd timeseries-frontend
 
 # Create a virtual environment
 python -m venv venv

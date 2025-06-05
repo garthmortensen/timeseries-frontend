@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
-# config/settings/base.py
+
+#
+# === FILE META OPENING ===
+# file: ./timeseries-frontend/config/settings/base.py
+# role: config
+# desc: Django base settings configuration including database, logging, and security configurations
+# === FILE META CLOSING ===
+#
 
 """
 Base settings for the Timeseries Frontend project.
@@ -7,6 +14,7 @@ Base settings for the Timeseries Frontend project.
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+from .security_settings import *
 
 # Load environment variables from .env file
 load_dotenv()
@@ -34,7 +42,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
+    'django.middleware.security.SecurityMiddleware',  # Keep this first
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -42,7 +50,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'csp.middleware.CSPMiddleware',
+    'csp.middleware.CSPMiddleware',  # CSP middleware
     'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 

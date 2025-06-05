@@ -3,7 +3,6 @@
 
 from django.apps import AppConfig
 
-
 class TimeseriesConfig(AppConfig):
     """
     Configuration for the timeseries application.
