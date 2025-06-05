@@ -1,0 +1,113 @@
+<!--
+# === FILE META OPENING ===
+# file: ./timeseries-frontend/templates/base.html
+# role: frontend
+# desc: base template providing common HTML structure, navigation, and styling for all pages
+# === FILE META CLOSING ===
+-->
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>{% block title %}Timeseries Modeling{% endblock %}</title>
+    
+    <!-- SEO Metadata -->
+    <meta name="description" content="Interactive time series analysis tool for financial and econometric modeling with ARIMA and GARCH capabilities">
+    <meta name="keywords" content="time series analysis, ARIMA, GARCH, econometrics, financial modeling, forecasting, volatility">
+    
+    <!-- Open Graph / Social Media -->
+    <meta property="og:title" content="Timeseries Modeling">
+    <meta property="og:description" content="Interactive time series analysis tool for financial and econometric modeling">
+    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    <meta property="og:type" content="website">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Timeseries Modeling">
+    <meta name="twitter:description" content="Interactive time series analysis tool for financial and econometric modeling">
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon/favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicon/favicon-16x16.png' %}">
+    <link rel="manifest" href="{% static 'favicon/site.webmanifest' %}">
+    <meta name="msapplication-TileColor" content="#2b5797">
+    <meta name="theme-color" content="#ffffff">
+
+    <!-- Fonts Preloading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap CSS with integrity -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" 
+        rel="stylesheet" 
+        integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7" 
+        crossorigin="anonymous">
+
+    <!-- Plotly.js -->
+    <script src="https://cdn.plot.ly/plotly-3.0.1.min.js"
+        charset="utf-8"
+        crossorigin="anonymous"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+        
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary" aria-label="Main Navigation">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'timeseries:index' %}">Timeseries Modeling</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'timeseries:index' %}" aria-label="Home">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'timeseries:analysis' %}" aria-label="Analysis">Analysis</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'timeseries:results' %}" aria-label="Results">Results</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'timeseries:about' %}" aria-label="About">About</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Content -->
+    <main class="container mt-4" aria-label="Main Content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer bg-light mt-5" aria-label="Footer">
+        <div class="container py-3">
+            <p class="text-center mb-0">Timeseries Modeling &copy; {% now "Y" %} | forecasting tool </p>
+            <!-- Hidden message for screen readers -->
+            <p class="sr-only" aria-hidden="false">This tool provides time series analysis with ARIMA and GARCH models. If you need assistance with accessibility, please contact me.</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS Bundle with integrity -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js" 
+            integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq" 
+            crossorigin="anonymous"></script>
+
+    <!-- Custom JS -->
+    <script src="{% static 'js/main.js' %}"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
