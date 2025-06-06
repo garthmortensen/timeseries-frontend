@@ -43,4 +43,6 @@ ENV API_URL="http://timeseries-api:8080"
 RUN python manage.py collectstatic --noinput
 
 # Run Django with gunicorn in production, using PORT env var for Cloud Run compatibility
-CMD gunicorn --bind 0.0.0.0:${PORT} config.wsgi:application
+# CMD gunicorn --bind 0.0.0.0:${PORT} config.wsgi:application
+
+CMD python manage.py runserver 0.0.0.0:${PORT}
