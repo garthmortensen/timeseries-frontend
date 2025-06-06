@@ -704,28 +704,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             </div>`;
         
-        // Third: Add Statistical Interpretation section
-        stationarityHTML += `
-            <div class="card mb-3">
-                <div class="card-header">
-                    <h6 class="mb-0">Statistical Interpretation</h6>
-                </div>
-                <div class="card-body">
-                    <div class="alert alert-info">
-                        <ul class="mb-0">
-                            <li><strong>Count (n):</strong> Number of observations in the time series</li>
-                            <li><strong>Mean:</strong> Average return value (positive = upward trend, negative = downward trend)</li>
-                            <li><strong>Median:</strong> Middle value when returns are sorted (less affected by outliers than mean)</li>
-                            <li><strong>Min/Max:</strong> Largest negative and positive return movements observed</li>
-                            <li><strong>Std Dev:</strong> Standard deviation measuring day-to-day volatility</li>
-                            <li><strong>Skewness:</strong> Asymmetry of returns (0 = symmetric, positive = more extreme positive returns, negative = more extreme negative returns)</li>
-                            <li><strong>Kurtosis:</strong> Tail heaviness vs normal distribution (0 = normal, positive = more extreme movements, negative = fewer extreme movements)</li>
-                            <li><strong>Annualized Vol:</strong> Volatility scaled to annual terms for comparison across different time periods</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>`;
-        
         // Fourth: Add the series stats container
         stationarityHTML += '<div id="series-stats-container"></div>';
         

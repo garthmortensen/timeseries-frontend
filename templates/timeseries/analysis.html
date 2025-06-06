@@ -59,6 +59,13 @@
 {% block content %}
 <h1 class="mb-4">Time Series Analysis</h1>
 
+<div class="d-flex justify-content-end align-items-center mt-3 mb-2" style="gap: 0.5rem;">
+    <a href="http://localhost:8001/v1/graphql" class="btn btn-outline-secondary btn-sm" target="_blank">GraphQL Playground</a>
+    <a href="http://localhost:8001/docs" class="btn btn-outline-secondary btn-sm" target="_blank">Swagger</a>
+    <a href="http://localhost:8001/redoc" class="btn btn-outline-secondary btn-sm" target="_blank">ReDoc</a>
+    <a href="http://localhost:8001/api/openapi.json" class="btn btn-outline-secondary btn-sm" target="_blank">OpenAPI Spec</a>
+</div>
+
 <form id="analysis-form" method="post" action="{% url 'timeseries:run_pipeline' %}">
     {% csrf_token %}
         
@@ -902,7 +909,7 @@
                                     </label>
                                 </div>
                                 <div class="form-check">
-                                    <input class="form-check-input industry-checkbox" type="checkbox" value="IEO" id="energy-ieo" data-name="iShares US Oil & Gas Exploration & Production ETF">
+                                    <input class="form-check-input" type="checkbox" value="IEO" id="energy-ieo" data-name="iShares US Oil & Gas Exploration & Production ETF">
                                     <label class="form-check-label" for="energy-ieo">
                                         <strong>IEO</strong> - US Oil & Gas E&P<br>
                                         <small class="text-muted">iShares US Oil & Gas Exploration & Production</small>

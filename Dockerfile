@@ -24,19 +24,26 @@ COPY --chown=djangoapp:djangoapp requirements.txt ./requirements.txt
 # Install dependencies
 RUN pip install --no-cache-dir --user -r requirements.txt
 
+# Install gunicorn for production
+RUN pip install --no-cache-dir --user gunicorn
+
 # Add .local/bin to PATH to ensure installed executables are found
 ENV PATH="/home/djangoapp/.local/bin:${PATH}"
 
 # Copy application files (as the user)
 COPY --chown=djangoapp:djangoapp ./ /app
 
-# Collect static files
-RUN python manage.py collectstatic --noinput
-
+# Expose port 8000 for Django
 EXPOSE 8000
 
-# Command to run the Django development server
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Set environment variable for API URL (example, adjust as needed)
+ENV API_URL="http://timeseries-api:8000"
+
+# Collect static files (already present)
+RUN python manage.py collectstatic --noinput
+
+# Run Django with gunicorn in production
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "config.wsgi:application"]
 
 # Production deployment should use gunicorn:
 # CMD ["gunicorn", "--bind", "0.0.0.0:8000", "config.wsgi:application"]
