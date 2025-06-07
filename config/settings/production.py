@@ -18,8 +18,10 @@ DEBUG = False
 # Get allowed hosts from environment variable
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',')
 
-# Check if we're running on Google Cloud Run
-if os.environ.get('GOOGLE_CLOUD_RUN', False):
+# Auto-detect Google Cloud Run environment
+# Cloud Run sets K_SERVICE environment variable
+is_cloud_run = bool(os.environ.get('K_SERVICE'))  # this checks if the K_SERVICE environment variable is set, which is typical for Cloud Run
+if is_cloud_run or os.environ.get('GOOGLE_CLOUD_RUN', False):
     # Running on Google Cloud Run
     ALLOWED_HOSTS.append('.run.app')
 
