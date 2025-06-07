@@ -29,7 +29,10 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-8ci+rj+q+9ff_j-0_&3=8
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG", "True").lower() in ("1", "true", "yes")
 
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "*").split(",")
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+APP_HOST = os.environ.get("APP_HOST")
+if APP_HOST:
+    ALLOWED_HOSTS.append(APP_HOST)
 
 
 # Application definition
@@ -128,3 +131,9 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 API_URL = os.environ.get("API_URL", "http://localhost:8001")
+
+# Settings for running behind a reverse proxy like Google Cloud Run
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+SESSION_COOKIE_SECURE = not DEBUG # True in production
+CSRF_COOKIE_SECURE = not DEBUG # True in production
+SECURE_SSL_REDIRECT = not DEBUG # True in production, ensure your health checks use HTTP or are configured for HTTPS
