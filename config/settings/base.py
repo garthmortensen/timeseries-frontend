@@ -117,7 +117,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Timeseries API settings
-TIMESERIES_API_URL = os.environ.get('TIMESERIES_API_URL', 'http://localhost:8001')
+TIMESERIES_API_URL = os.environ.get('API_URL', 'http://localhost:8001')  # Changed to use API_URL
 
 # Logging configuration
 # Logging configuration
