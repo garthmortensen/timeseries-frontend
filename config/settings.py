@@ -33,6 +33,10 @@ ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(","
 APP_HOST = os.environ.get("APP_HOST")
 if APP_HOST:
     ALLOWED_HOSTS.append(APP_HOST)
+    # Add the Cloud Run URL to CSRF_TRUSTED_ORIGINS
+    CSRF_TRUSTED_ORIGINS = [f"https://{APP_HOST}"]
+else:
+    CSRF_TRUSTED_ORIGINS = []
 
 
 # Application definition
@@ -136,4 +140,6 @@ API_URL = os.environ.get("API_URL", "http://localhost:8001")
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SESSION_COOKIE_SECURE = not DEBUG # True in production
 CSRF_COOKIE_SECURE = not DEBUG # True in production
-SECURE_SSL_REDIRECT = not DEBUG # True in production, ensure your health checks use HTTP or are configured for HTTPS
+# SECURE_SSL_REDIRECT = not DEBUG # True in production, ensure your health checks use HTTP or are configured for HTTPS
+# Set SECURE_SSL_REDIRECT to False because Cloud Run handles SSL termination.
+SECURE_SSL_REDIRECT = False
