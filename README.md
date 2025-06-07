@@ -412,7 +412,7 @@ timeseries-frontend/.................
 ├── logs/............................
 │   └── app.log                     # Application logs (rotating)
 └── stub.github/workflows/...........
-            └── cicd.yml            # CI/CD pipeline configuration
+    └── cicd.yml            # CI/CD pipeline configuration
 ```
 
 ## Development Roadmap
@@ -482,7 +482,8 @@ Frontend communicates with the backend API via:
 
 - Clean, intuitive user interface
 - Mobile-responsive design
-- Accessible visualization options
 - Clear presentation of model setup and results
 - Simple English guide to model setup and interpretation
+- Accessible visualization options
 - Efficient API usage to minimize transfers
+- Architected using microservices 
