@@ -60,10 +60,10 @@
 <h1 class="mb-4">Time Series Analysis</h1>
 
 <div class="d-flex justify-content-end align-items-center mt-3 mb-2" style="gap: 0.5rem;">
-    <a href="http://localhost:8001/v1/graphql" class="btn btn-outline-secondary btn-sm" target="_blank">GraphQL Playground</a>
-    <a href="http://localhost:8001/docs" class="btn btn-outline-secondary btn-sm" target="_blank">Swagger</a>
-    <a href="http://localhost:8001/redoc" class="btn btn-outline-secondary btn-sm" target="_blank">ReDoc</a>
-    <a href="http://localhost:8001/api/openapi.json" class="btn btn-outline-secondary btn-sm" target="_blank">OpenAPI Spec</a>
+    <a href="{{ TIMESERIES_API_URL }}/v1/graphql" class="btn btn-outline-secondary btn-sm" target="_blank">GraphQL Playground</a>
+    <a href="{{ TIMESERIES_API_URL }}/docs" class="btn btn-outline-secondary btn-sm" target="_blank">Swagger</a>
+    <a href="{{ TIMESERIES_API_URL }}/redoc" class="btn btn-outline-secondary btn-sm" target="_blank">ReDoc</a>
+    <a href="{{ TIMESERIES_API_URL }}/api/openapi.json" class="btn btn-outline-secondary btn-sm" target="_blank">OpenAPI Spec</a>
 </div>
 
 <form id="analysis-form" method="post" action="{% url 'timeseries:run_pipeline' %}">
