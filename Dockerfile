@@ -1,5 +1,11 @@
 # Use the official Python image
-FROM python:3.13-slim
+FROM python:3.13
+
+# Install only essential system dependencies
+RUN apt-get update && apt-get install -y \
+    libpq5 \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
 
 # Create a non-root user
 ARG USER_ID=1000
@@ -21,11 +27,9 @@ USER djangoapp
 # Copy requirements file (as the user)
 COPY --chown=djangoapp:djangoapp requirements.txt ./requirements.txt
 
-# Install dependencies
-RUN pip install --no-cache-dir --user -r requirements.txt
-
-# Install gunicorn for production
-RUN pip install --no-cache-dir --user gunicorn
+# Install dependencies with optimizations - prefer binary wheels
+RUN pip install --no-cache-dir --user --upgrade pip && \
+    pip install --no-cache-dir --user --prefer-binary -r requirements.txt
 
 # Add .local/bin to PATH to ensure installed executables are found
 ENV PATH="/home/djangoapp/.local/bin:${PATH}"
@@ -42,7 +46,5 @@ ENV API_URL="http://timeseries-api:8080"
 # Collect static files (already present)
 RUN python manage.py collectstatic --noinput
 
-# Run Django with gunicorn in production, using PORT env var for Cloud Run compatibility
-# CMD gunicorn --bind 0.0.0.0:${PORT} config.wsgi:application
-
-CMD python manage.py runserver 0.0.0.0:${PORT}
+# Use gunicorn for production instead of runserver
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "2", "config.wsgi:application"]
