@@ -13,22 +13,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>{% block title %}Timeseries Modeling{% endblock %}</title>
+    <title>{% block title %}Spillover Lab{% endblock %}</title>
     
     <!-- SEO Metadata -->
-    <meta name="description" content="Interactive time series analysis tool for financial and econometric modeling with ARIMA and GARCH capabilities">
-    <meta name="keywords" content="time series analysis, ARIMA, GARCH, econometrics, financial modeling, forecasting, volatility">
+    <meta name="description" content="Interactive spillover analysis and time series modeling tool for financial and econometric analysis with ARIMA and GARCH capabilities">
+    <meta name="keywords" content="spillover analysis, time series analysis, ARIMA, GARCH, econometrics, financial modeling, forecasting, volatility">
     
     <!-- Open Graph / Social Media -->
-    <meta property="og:title" content="Timeseries Modeling">
-    <meta property="og:description" content="Interactive time series analysis tool for financial and econometric modeling">
+    <meta property="og:title" content="Spillover Lab">
+    <meta property="og:description" content="Interactive spillover analysis and time series modeling tool for financial and econometric analysis">
     <meta property="og:url" content="{{ request.build_absolute_uri }}">
     <meta property="og:type" content="website">
     
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Timeseries Modeling">
-    <meta name="twitter:description" content="Interactive time series analysis tool for financial and econometric modeling">
+    <meta name="twitter:title" content="Spillover Lab">
+    <meta name="twitter:description" content="Interactive spillover analysis and time series modeling tool for financial and econometric analysis">
 
     <!-- Favicons -->
     <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon/favicon-32x32.png' %}">
@@ -62,7 +62,7 @@
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary" aria-label="Main Navigation">
         <div class="container">
-            <a class="navbar-brand" href="{% url 'timeseries:index' %}">Timeseries Modeling</a>
+            <a class="navbar-brand" href="{% url 'timeseries:index' %}">Spillover Lab</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
                     aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>

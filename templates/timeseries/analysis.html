@@ -39,19 +39,45 @@
     }
     
     .parameter-help {
-        /* background-color: #f0f4f8; */
-        /* border: 1px solid #c5d2dc; */
         padding: 0.5rem 0.75rem;
         margin-top: 0.25rem;
         border-radius: 0.25rem;
         font-size: 0.875em;
         color: #495057;
+        background-color: #f8f9fa;
+        border-left: 3px solid #6c757d;
+        display: none; /* Hidden by default */
+    }
+    
+    .parameter-help.show {
+        display: block;
     }
     
     .parameter-help strong {
         color: #2c3e50;
         display: block;
         margin-bottom: 0.25rem;
+    }
+    
+    .help-toggle {
+        color: #6c757d;
+        cursor: pointer;
+        font-size: 0.8em;
+        text-decoration: none;
+        margin-left: 0.5rem;
+    }
+    
+    .help-toggle:hover {
+        color: #495057;
+        text-decoration: underline;
+    }
+    
+    .help-toggle.expanded::after {
+        content: " ▼";
+    }
+    
+    .help-toggle.collapsed::after {
+        content: " ▶";
     }
 </style>
 {% endblock %}
@@ -1155,9 +1181,12 @@
         <div class="row">
             <div class="col-md-4">
                 <div class="mb-3">
-                    <label for="arima-p" class="form-label">p: Auto-Regressive Component</label>
+                    <label for="arima-p" class="form-label">
+                        p: Auto-Regressive Component
+                        <a href="#" class="help-toggle collapsed" data-target="arima-p-help">Help</a>
+                    </label>
                     <input type="number" class="form-control" id="arima-p" name="arima_p" min="0" max="10" value="2">
-                    <div class="parameter-help">
+                    <div class="parameter-help" id="arima-p-help">
                         The AR component assumes today's price depends on recent past prices. Think of it as "momentum" - if a stock has been rising for several days, AR captures the tendency for that trend to continue. Higher p values (3-5) capture longer-term momentum patterns but risk overfitting to noise. Start with p=1-2 for most financial series, increase if you see strong persistence in price movements.
                     </div>
                 </div>
@@ -1639,6 +1668,29 @@ document.addEventListener('DOMContentLoaded', function() {
         spilloverParams.style.display = this.checked ? 'block' : 'none';
     });
     
+    // Help toggle functionality
+    const helpToggles = document.querySelectorAll('.help-toggle');
+    
+    helpToggles.forEach(toggle => {
+        toggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('data-target');
+            const helpSection = document.getElementById(targetId);
+            
+            if (helpSection) {
+                if (helpSection.classList.contains('show')) {
+                    helpSection.classList.remove('show');
+                    this.classList.remove('expanded');
+                    this.classList.add('collapsed');
+                } else {
+                    helpSection.classList.add('show');
+                    this.classList.remove('collapsed');
+                    this.classList.add('expanded');
+                }
+            }
+        });
+    });
+
     // Set initial spillover display state
     spilloverParams.style.display = spilloverSwitch.checked ? 'block' : 'none';
 });
