@@ -59,6 +59,11 @@
 {% block content %}
 <h1 class="mb-4">Time Series Analysis</h1>
 
+<div class="alert alert-info" role="alert">
+    <h5 class="alert-heading">Model Configuration</h5>
+    <p class="mb-0">Configure your models by adjusting the parameters below.</p>
+</div>
+
 <div class="d-flex justify-content-end align-items-center mt-3 mb-2" style="gap: 0.5rem;">
     <a href="{{ TIMESERIES_API_URL }}/v1/graphql" class="btn btn-outline-secondary btn-sm" target="_blank">GraphQL Playground</a>
     <a href="{{ TIMESERIES_API_URL }}/docs" class="btn btn-outline-secondary btn-sm" target="_blank">Swagger</a>
@@ -1128,7 +1133,7 @@
     <div class="form-section">
         <h3 class="section-header">Data Preprocessing</h3>
         <div class="guide-text">
-            Prepare your data for analysis by normalizing values across different price ranges. This ensures that high-priced stocks don't dominate the analysis.
+            Data normalization addresses the scale disparities between different stocks. Without proper scaling, a $3,000 Amazon stock would mathematically dominate a $50 Ford stock in correlation and volatility calculations, creating misleading results. Normalization transforms all assets to comparable scales while preserving their relative movement patterns and volatility characteristics, ensuring each asset contributes appropriately to portfolio-level metrics and spillover analysis.
         </div>
         
         <div class="mb-3">
