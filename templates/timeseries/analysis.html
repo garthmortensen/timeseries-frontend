@@ -134,20 +134,20 @@
             
             <div id="market-params" style="display: none;">
                 <div class="mb-3">
-                    <label for="symbols" class="form-label">Symbols (comma-separated)</label>
+                    <label for="symbols" class="form-label">Symbols (comma-separated) <span class="text-danger">*Max 5 symbols</span></label>
                     <input type="text" class="form-control" id="symbols" name="symbols" value="^DJI,^HSI,^FCHI" placeholder="Enter symbols like AAPL,MSFT,GOOGL">
                     <div class="parameter-help">
-                        ^DJI,^HSI,^FCHI
+                        ^DJI,^HSI,^FCHI - <strong>Limited to 5 symbols maximum for performance</strong>
                     </div>
                 </div>
             </div>
             
             <div id="synthetic-params" style="display: block;">
                 <div class="mb-3">
-                    <label for="synthetic-symbols" class="form-label">Synthetic Symbols (comma-separated)</label>
+                    <label for="synthetic-symbols" class="form-label">Synthetic Symbols (comma-separated) <span class="text-danger">*Max 5 symbols</span></label>
                     <input type="text" class="form-control" id="synthetic-symbols" name="synthetic_symbols" value="^DJI,^HSI,^FCHI" placeholder="Enter symbols like SYM1,SYM2,SYM3">
                     <div class="parameter-help">
-                        ^DJI,^HSI,^FCHI (artificial symbol names)
+                        ^DJI,^HSI,^FCHI (artificial symbol names) - <strong>Limited to 5 symbols maximum for performance</strong>
                     </div>
                 </div>
                 <div class="mb-3">
@@ -561,7 +561,7 @@
                                     </label>
                                 </div>
                                 <div class="form-check">
-                                    <input class="form-check-input industry-checkbox" type="checkbox" value="EWQ" id="country-ewq" data-name="iShares MSCI France ETF">
+                                    <input class="form-check-input" type="checkbox" value="EWQ" id="country-ewq" data-name="iShares MSCI France ETF">
                                     <label class="form-check-label" for="country-ewq">
                                         <strong>EWQ</strong> - France<br>
                                         <small class="text-muted">French equity market</small>
@@ -1247,7 +1247,7 @@
         <div id="spillover-params" style="display: block;">
             <div class="mb-3">
                 <label for="forecast-horizon" class="form-label">Forecast Horizon</label>
-                <input type="number" class="form-control" id="forecast-horizon" name="forecast_horizon" min="1" max="5" value="3">
+                <input type="number" class="form-control" id="forecast-horizon" name="forecast_horizon" min="1" max="3" value="3">
                 <div class="parameter-help">
                     Determines how far into the future to measure spillover effects. Short horizons (1-3 periods) capture immediate contagion, longer horizons (5-10) reveal persistent interconnections. Use 1-day for high-frequency trading, 1-week for tactical allocation, 1-month for strategic portfolio decisions.
                 </div>
@@ -1270,6 +1270,12 @@
         <button type="submit" class="btn btn-primary btn-lg mb-4" id="run-analysis-btn">Run Analysis</button>
     </div>
 </form>
+
+
+
+
+
+
 
 <div id="loading" class="text-center" style="display: none;">
     <div class="spinner-border text-primary" role="status">
@@ -1421,6 +1427,58 @@ document.addEventListener('DOMContentLoaded', function() {
     
     form.addEventListener('submit', function(e) {
         e.preventDefault();
+        
+        // CLIENT-SIDE VALIDATION FOR SECURITY LIMITS
+        const syntheticSymbolsInput = document.getElementById('synthetic-symbols');
+        const symbolsInput = document.getElementById('symbols');
+        const startDateInput = document.getElementById('data-start-date');
+        const endDateInput = document.getElementById('data-end-date');
+        const forecastHorizonInput = document.getElementById('forecast-horizon');
+        
+        // Validate symbol count (max 5)
+        let symbolsToCheck = '';
+        if (syntheticRadio.checked) {
+            symbolsToCheck = syntheticSymbolsInput.value;
+        } else {
+            symbolsToCheck = symbolsInput.value;
+        }
+        
+        const symbolsArray = symbolsToCheck.split(',').map(s => s.trim()).filter(s => s.length > 0);
+        if (symbolsArray.length > 5) {
+            alert('Maximum 5 symbols allowed. You have ' + symbolsArray.length + ' symbols.');
+            loadingIndicator.style.display = 'none';
+            form.style.display = 'block';
+            return;
+        }
+        
+        // Validate date range (max 5 years)
+        const startDate = new Date(startDateInput.value);
+        const endDate = new Date(endDateInput.value);
+        const daysDiff = (endDate - startDate) / (1000 * 60 * 60 * 24);
+        const maxDays = 5 * 365; // 5 years
+        
+        if (daysDiff > maxDays) {
+            alert('Maximum date range is 5 years. Your range is ' + Math.round(daysDiff / 365 * 100) / 100 + ' years.');
+            loadingIndicator.style.display = 'none';
+            form.style.display = 'block';
+            return;
+        }
+        
+        if (startDate >= endDate) {
+            alert('Start date must be before end date.');
+            loadingIndicator.style.display = 'none';
+            form.style.display = 'block';
+            return;
+        }
+        
+        // Validate forecast horizon (max 3)
+        const forecastHorizon = parseInt(forecastHorizonInput.value);
+        if (forecastHorizon > 3) {
+            alert('Maximum forecast horizon is 3 periods.');
+            loadingIndicator.style.display = 'none';
+            form.style.display = 'block';
+            return;
+        }
         
         // Show loading indicator
         loadingIndicator.style.display = 'block';
