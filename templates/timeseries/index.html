@@ -8,34 +8,20 @@
 
 {% extends 'base.html' %}
 
+{% load static %}
+
 {% block title %}Financial Spillover Analysis & Time Series Modeling - Spillover Lab{% endblock %}
-{% block description %}Advanced financial spillover analysis platform. Analyze market interconnections, volatility clustering, and risk contagion with professional ARIMA and GARCH models for investment research.{% endblock %}
+{% block description %}Advanced Financial Markets Spillover Platform. Analyze market interconnections, volatility clustering, and risk contagion with ARIMA and GARCH models for investment research.{% endblock %}
 {% block keywords %}financial spillover analysis, market interconnection, volatility spillover, risk contagion, ARIMA modeling, GARCH analysis, time series forecasting, financial risk management, econometric analysis{% endblock %}
 
-{% block og_title %}Professional Financial Spillover Analysis Platform{% endblock %}
-{% block og_description %}Analyze market interconnections and volatility spillovers with advanced econometric models. Professional-grade ARIMA and GARCH analysis for investment research.{% endblock %}
+{% block og_title %}Financial Markets Spillover Platform{% endblock %}
+{% block og_description %}Analyze financial market interconnections using ARIMA and GARCH analysis with interactive visualizations for risk management.{% endblock %}
 
 {% block content %}
-<!-- Lottie Animation Script -->
-<script src="https://unpkg.com/@dotlottie/player-component@2.7.12/dist/dotlottie-player.mjs" type="module"></script>
-
-<div class="jumbotron p-5 mb-4 bg-light rounded-3" style="position: relative; overflow: hidden;">
-    <!-- Background Lottie Animation -->
-    <dotlottie-player 
-        src="https://lottie.host/2a94bb25-8192-4911-87d0-2d48e6fa9f36/KrQOoams4l.lottie" 
-        background="transparent" 
-        speed="1" 
-        style="width: 300px; height: 300px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.5; z-index: 1;" 
-        loop 
-        autoplay>
-    </dotlottie-player>
-    
-    <!-- Content with higher z-index to appear above animation -->
-    <div style="position: relative; z-index: 2;">
-        <h1 class="display-4">Financial Spillover Analysis Platform</h1>
-        <p class="lead">Analyze financial market interconnections using advanced econometric models. Professional-grade ARIMA and GARCH analysis with interactive visualizations for investment research and risk management.</p>
-        <a class="btn btn-primary btn-lg" href="{% url 'timeseries:analysis' %}" role="button">Start Analysis</a>
-    </div>
+<div class="jumbotron p-5 mb-4 bg-light rounded-3">
+    <h1 class="display-4">Financial Markets Spillover Platform</h1>
+    <p class="lead">Analyze financial market interconnections using ARIMA and GARCH analysis with interactive visualizations for risk management.</p>
+    <a class="btn btn-primary btn-lg" href="{% url 'timeseries:analysis' %}" role="button">Start Analysis</a>
 </div>
 
 <!-- Add structured data for the main functionality -->
@@ -43,8 +29,8 @@
 {
     "@context": "https://schema.org",
     "@type": "WebPage",
-    "name": "Financial Spillover Analysis Platform",
-    "description": "Professional financial spillover analysis and time series modeling platform",
+    "name": "Financial Markets Spillover Platform",
+    "description": "financial spillover analysis and time series modeling platform",
     "mainEntity": {
         "@type": "SoftwareApplication",
         "name": "Spillover Lab",
@@ -58,7 +44,7 @@
     <div class="col-md-4">
         <div class="card mb-4">
             <div class="card-header">
-                <h2 class="h4">Professional Data Sources</h2>
+                <h2 class="h4">Data Sources</h2>
             </div>
             <div class="card-body">
                 <p>Access real-time market data from Yahoo Finance and Stooq, or generate synthetic datasets for research and testing.</p>
@@ -77,7 +63,7 @@
                 <h2 class="h4">Advanced Econometric Models</h2>
             </div>
             <div class="card-body">
-                <p>Industry-standard time series models for professional financial analysis and forecasting.</p>
+                <p>Industry-standard time series models for financial analysis and forecasting.</p>
                 <ul>
                     <li><strong>ARIMA Models:</strong> Price forecasting and trend analysis</li>
                     <li><strong>GARCH Models:</strong> Volatility clustering and risk modeling</li>
