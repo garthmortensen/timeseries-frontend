@@ -10,11 +10,11 @@
 {% load static %}
 
 {% block title %}ARIMA GARCH Spillover Analysis Tool - Configure Models - Spillover Lab{% endblock %}
-{% block description %}Configure professional ARIMA and GARCH models for financial spillover analysis. Set parameters for volatility modeling, market interconnection analysis, and econometric forecasting with real-time data.{% endblock %}
+{% block description %}Configure ARIMA and GARCH models for financial spillover analysis. Set parameters for volatility modeling, market interconnection analysis, and econometric forecasting with real-time data.{% endblock %}
 {% block keywords %}ARIMA parameters, GARCH configuration, spillover analysis setup, volatility modeling, econometric parameters, financial model configuration, time series setup, market analysis tool{% endblock %}
 
-{% block og_title %}Professional ARIMA GARCH Analysis Configuration{% endblock %}
-{% block og_description %}Configure advanced econometric models for professional financial analysis. Set ARIMA and GARCH parameters for spillover analysis and volatility forecasting.{% endblock %}
+{% block og_title %}ARIMA GARCH Analysis Configuration{% endblock %}
+{% block og_description %}Configure advanced econometric models for financial analysis. Set ARIMA and GARCH parameters for spillover analysis and volatility forecasting.{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -62,7 +62,7 @@
 {% endblock %}
 
 {% block content %}
-<h1 class="mb-4">Professional Time Series Analysis Configuration</h1>
+<h1 class="mb-4">Time Series Analysis Configuration</h1>
 
 <!-- Adds structured JSON-LD data to provide machine-readable information about the app to web crawlers. -->
 <script type="application/ld+json">
@@ -77,21 +77,21 @@
         "GARCH Volatility Parameters",
         "Spillover Analysis Setup",
         "Real-time Market Data Integration",
-        "Professional Parameter Optimization"
+        "Parameter Optimization"
     ]
 }
 </script>
 
 <div class="alert alert-info" role="alert">
     <h2 class="alert-heading h5">Model Configuration</h2>
-    <p class="mb-0">Configure industry-standard ARIMA and GARCH models for comprehensive financial spillover analysis and volatility forecasting.</p>
+    <p class="mb-0">Configure your ARIMA and GARCH models by adjusting the parameters below.</p>
 </div>
 
 <div class="d-flex justify-content-end align-items-center mt-3 mb-2" style="gap: 0.5rem;">
-    <a href="{{ TIMESERIES_API_URL }}/v1/graphql" class="btn btn-outline-secondary btn-sm" target="_blank">GraphQL Playground</a>
+    <a href="{{ TIMESERIES_API_URL }}/v1/graphql" class="btn btn-outline-secondary btn-sm" target="_blank">GraphQL</a>
     <a href="{{ TIMESERIES_API_URL }}/docs" class="btn btn-outline-secondary btn-sm" target="_blank">Swagger</a>
     <a href="{{ TIMESERIES_API_URL }}/redoc" class="btn btn-outline-secondary btn-sm" target="_blank">ReDoc</a>
-    <a href="{{ TIMESERIES_API_URL }}/api/openapi.json" class="btn btn-outline-secondary btn-sm" target="_blank">OpenAPI Spec</a>
+    <a href="{{ TIMESERIES_API_URL }}/api/openapi.json" class="btn btn-outline-secondary btn-sm" target="_blank">OpenAPI</a>
 </div>
 
 <form id="analysis-form" method="post" action="{% url 'timeseries:run_pipeline' %}">
@@ -190,7 +190,7 @@
             <!-- Most Traded Stocks in the USA -->
             <div class="mb-3">
                 <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#mostTradedStocks" aria-expanded="false" aria-controls="mostTradedStocks">
-                    <i class="bi bi-chevron-down"></i> Highest Volume US Stocks
+                    <i class="bi bi-chevron-down"></i> US High Volume
                 </button>
                 <div class="collapse mt-2" id="mostTradedStocks">
                     <div class="card card-body">
@@ -212,14 +212,14 @@
                                     </label>
                                 </div>
                                 <div class="form-check">
-                                    <input class="form-check-input industry-checkbox" type="checkbox" value="MSFT" id="stock-msft" data-name="Microsoft Corporation">
+                                    <input class="form-check-input" type="checkbox" value="MSFT" id="stock-msft" data-name="Microsoft Corporation">
                                     <label class="form-check-label" for="stock-msft">
                                         <strong>MSFT</strong> - Microsoft<br>
                                         <small class="text-muted">Software & cloud services</small>
                                     </label>
                                 </div>
                                 <div class="form-check">
-                                    <input class="form-check-input industry-checkbox" type="checkbox" value="TSM" id="stock-tsm" data-name="Taiwan Semiconductor">
+                                    <input class="form-check-input" type="checkbox" value="TSM" id="stock-tsm" data-name="Taiwan Semiconductor">
                                     <label class="form-check-label" for="stock-tsm">
                                         <strong>TSM</strong> - Taiwan Semiconductor<br>
                                         <small class="text-muted">Semiconductor manufacturing</small>
@@ -517,7 +517,7 @@
             <!-- Regional & Country Indices -->
             <div class="mb-3">
                 <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#regionalETFs" aria-expanded="false" aria-controls="regionalETFs">
-                    <i class="bi bi-chevron-down"></i> Regional & Country Indices
+                    <i class="bi bi-chevron-down"></i> Grouped Country Indices
                 </button>
                 <div class="collapse mt-2" id="regionalETFs">
                     <div class="card card-body">
@@ -562,7 +562,7 @@
             <!-- Individual Country ETFs - Developed Markets -->
             <div class="mb-3">
                 <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#developedCountryETFs" aria-expanded="false" aria-controls="developedCountryETFs">
-                    <i class="bi bi-chevron-down"></i> Individual Country ETFs - Developed Markets
+                    <i class="bi bi-chevron-down"></i> Developed Market ETFs
                 </button>
                 <div class="collapse mt-2" id="developedCountryETFs">
                     <div class="card card-body">
@@ -710,7 +710,7 @@
             <!-- Individual Country ETFs - Emerging Markets -->
             <div class="mb-3">
                 <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#emergingCountryETFs" aria-expanded="false" aria-controls="emergingCountryETFs">
-                    <i class="bi bi-chevron-down"></i> Individual Country ETFs - Emerging Markets
+                    <i class="bi bi-chevron-down"></i> Emerging Market ETFs
                 </button>
                 <div class="collapse mt-2" id="emergingCountryETFs">
                     <div class="card card-body">
@@ -916,7 +916,7 @@
             <!-- Oil & Gas / Energy -->
             <div class="mb-3">
                 <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#energyETFs" aria-expanded="false" aria-controls="energyETFs">
-                    <i class="bi bi-chevron-down"></i> Oil & Gas / Energy
+                    <i class="bi bi-chevron-down"></i> Energy
                 </button>
                 <div class="collapse mt-2" id="energyETFs">
                     <div class="card card-body">
@@ -975,7 +975,7 @@
             <!-- Regional Broad Market -->
             <div class="mb-3">
                 <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#regionalBroadETFs" aria-expanded="false" aria-controls="regionalBroadETFs">
-                    <i class="bi bi-chevron-down"></i> Regional Broad Market
+                    <i class="bi bi-chevron-down"></i> Broad Regions
                 </button>
                 <div class="collapse mt-2" id="regionalBroadETFs">
                     <div class="card card-body">
@@ -1027,7 +1027,7 @@
             <!-- Technology -->
             <div class="mb-3">
                 <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#technologyETFs" aria-expanded="false" aria-controls="technologyETFs">
-                    <i class="bi bi-chevron-down"></i> Technology
+                    <i class="bi bi-chevron-down"></i> Tech
                 </button>
                 <div class="collapse mt-2" id="technologyETFs">
                     <div class="card card-body">

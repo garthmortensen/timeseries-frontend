@@ -118,7 +118,7 @@ function createTimeSeriesChart(elementId, x, y, title, xTitle, yTitle) {
         type: 'scatter',
         mode: 'lines',
         line: {
-            color: '#007bff',
+            color: '#003366',
             width: 2
         }
     }];

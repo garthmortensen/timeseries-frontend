@@ -13,15 +13,24 @@
  */
 
  :root {
-    /* Color variables */
-    --primary-color: #007bff;
-    --secondary-color: #6c757d;
-    --success-color: #28a745;
-    --danger-color: #dc3545;
-    --warning-color: #ffc107;
-    --info-color: #17a2b8;
-    --light-color: #f8f9fa;
-    --dark-color: #343a40;
+    /* New Color Palette */
+    --primary-color: #003366;     /* Dark blue */
+    --secondary-color: #e6e9ed;   /* Light gray */
+    --accent-color: #00bcd4;      /* Cyan */
+    
+    /* Extended color variables based on new palette */
+    --success-color: #00bcd4;     /* Use cyan for success */
+    --danger-color: #dc3545;      /* Keep existing red for errors */
+    --warning-color: #ffc107;     /* Keep existing yellow for warnings */
+    --info-color: #00bcd4;        /* Use cyan for info */
+    --light-color: #e6e9ed;       /* Use light gray */
+    --dark-color: #003366;        /* Use dark blue */
+    
+    /* Additional theme colors */
+    --navbar-bg: #003366;         /* Dark blue for navbar */
+    --card-header-bg: #e6e9ed;    /* Light gray for card headers */
+    --hover-color: #004080;       /* Slightly lighter blue for hover states */
+    --border-color: #c5d2dc;      /* Complementary border color */
     
     /* Font sizes */
     --font-size-base: 1rem;
@@ -69,7 +78,7 @@ h1, h2, h3, h4, h5, h6 {
 /* Form elements */
 .form-control:focus {
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    box-shadow: 0 0 0 0.2rem rgba(0, 51, 102, 0.25);
 }
 
 /* Buttons */
@@ -79,8 +88,68 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .btn-primary:hover {
-    background-color: #0069d9;
-    border-color: #0062cc;
+    background-color: var(--hover-color);
+    border-color: var(--hover-color);
+}
+
+/* Custom Bootstrap overrides */
+.bg-primary {
+    background-color: var(--primary-color) !important;
+}
+
+.text-primary {
+    color: var(--primary-color) !important;
+}
+
+.border-primary {
+    border-color: var(--primary-color) !important;
+}
+
+.btn-outline-primary {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+
+.badge.bg-primary {
+    background-color: var(--accent-color) !important;
+}
+
+.alert-info {
+    background-color: rgba(0, 188, 212, 0.1);
+    border-color: var(--accent-color);
+    color: #003366;
+}
+
+/* Navbar customization */
+.navbar.bg-primary {
+    background-color: var(--navbar-bg) !important;
+}
+
+/* Card header customization */
+.card-header.bg-primary {
+    background-color: var(--primary-color) !important;
+    color: white;
+}
+
+.card-header.bg-success {
+    background-color: var(--accent-color) !important;
+    color: white;
+}
+
+.card-header.bg-warning {
+    background-color: var(--accent-color) !important;
+    color: var(--primary-color);
+}
+
+.card-header.bg-info {
+    background-color: var(--accent-color) !important;
+    color: white;
 }
 
 /* Footer */
