@@ -11,7 +11,7 @@ from .base import *
 DEBUG = False
 
 # Get allowed hosts from environment variable
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['spilloverlab.com', 'www.spilloverlab.com'] # Add your custom domain
 allowed_hosts_env = os.environ.get('ALLOWED_HOSTS')
 if allowed_hosts_env:
     ALLOWED_HOSTS.extend([h.strip() for h in allowed_hosts_env.split(',') if h.strip()])
@@ -23,10 +23,13 @@ if app_host_env and app_host_env not in ALLOWED_HOSTS:
 # Fallback if no hosts are configured via environment variables
 if not ALLOWED_HOSTS:
     # This should ideally be configured via environment variables in production
-    ALLOWED_HOSTS = ['your-production-domain.com'] # Replace with a sensible default or raise error
+    ALLOWED_HOSTS = ['spilloverlab.com', 'www.spilloverlab.com', 'your-production-domain.com'] # Replace with a sensible default or raise error
 
 # CSRF Trusted Origins - use APP_HOST
-CSRF_TRUSTED_ORIGINS = []
+CSRF_TRUSTED_ORIGINS = [
+    'https://spilloverlab.com',
+    'https://www.spilloverlab.com'
+]
 if app_host_env:
     CSRF_TRUSTED_ORIGINS.append(f"https://{app_host_env}")
 elif allowed_hosts_env: # Fallback to the first host in ALLOWED_HOSTS if APP_HOST is not set
