@@ -9,14 +9,13 @@
   ╚════██║██╔═══╝ ██║██║     ██║     ██║   ██║╚██╗ ██╔╝██╔══╝  ██╔══██╗
   ███████║██║     ██║███████╗███████╗╚██████╔╝ ╚████╔╝ ███████╗██║  ██║
   ╚══════╝╚═╝     ╚═╝╚══════╝╚══════╝ ╚═════╝   ╚═══╝  ╚══════╝╚═╝  ╚═╝
-                                                                        
-     ██╗      █████╗ ██████╗                                           
-     ██║     ██╔══██╗██╔══██╗                                          
-     ██║     ███████║██████╔╝                                          
-     ██║     ██╔══██║██╔══██╗                                          
-     ███████╗██║  ██║██████╔╝                                          
-     ╚══════╝╚═╝  ╚═╝╚═════╝                                           
-```
+                           ██╗      █████╗ ██████╗
+                           ██║     ██╔══██╗██╔══██╗
+                           ██║     ███████║██████╔╝
+                           ██║     ██╔══██║██╔══██╗
+                           ███████╗██║  ██║██████╔╝
+                           ╚══════╝╚═╝  ╚═╝╚═════╝
+```                   
 
 A Django frontend for spillover analysis and time series modeling.
 
@@ -29,42 +28,58 @@ A Django frontend for spillover analysis and time series modeling.
 - API integration with the backend pipeline
 - User authentication and saved analysis
 
-## Integration Overview
+### Integration Overview
 
 ```mermaid
 flowchart TB
     %% Styling
-    classDef person fill:#08427B,color:#fff,stroke:#052E56,stroke-width:1px
+    classDef person fill:#7B4B94,color:#fff,stroke:#5D2B6D,stroke-width:1px
+    classDef agent fill:#7B4B94,color:#fff,stroke:#5D2B6D,stroke-width:1px
     classDef system fill:#1168BD,color:#fff,stroke:#0B4884,stroke-width:1px
     classDef external fill:#999999,color:#fff,stroke:#6B6B6B,stroke-width:1px
     classDef database fill:#2E7C8F,color:#fff,stroke:#1D4E5E,stroke-width:1px
+    classDef publishing fill:#E67E22,color:#fff,stroke:#D35400,stroke-width:1px
     
     %% Actors and Systems
     User((User)):::person
+    AIAgent((AI Agent)):::agent
     
     %% Main Systems
-    TimeSeriesFrontend["Frontend App
-    (Django)"]:::system
-    TimeSeriesPipeline["RESTful Pipeline
-    (FastAPI)"]:::system
-    TimeseriesCompute["timeseries-compute
-    (Python Package)"]:::system
+    TimeSeriesFrontend["Frontend App"]:::system
+    TimeSeriesPipeline["RESTful Pipeline"]:::system
+    MCPServer["MCP Server"]:::system
+    TimeseriesCompute["Timeseries-Compute 
+    Python Package"]:::system
     
     %% Database
-    TimeSeriesDB[("Database
-    (SQLite)")]:::database
+    TimeSeriesDB[("Relational database")]:::database
     
     %% External Systems
     ExternalDataSource[(Yahoo Finance / Stooq)]:::external
     
+    %% Publishing Platforms
+    PublishingPlatforms["
+    GitHub
+    Docker Hub
+    Google Cloud Run
+    PyPI
+    Read the Docs"]:::publishing
+    
     %% Relationships
-    User -- "Uses" --> TimeSeriesFrontend
-    TimeSeriesFrontend -- "Will make API calls to" --> TimeSeriesPipeline
-    TimeSeriesPipeline -- "Stores pipeline results in" --> TimeSeriesDB
-    TimeSeriesPipeline -- "Uses" --> TimeseriesCompute
-    User -- "Can pip install" --> TimeseriesCompute
+    User -- "Uses UI" --> TimeSeriesFrontend
+    AIAgent -- "Natural language requests" --> MCPServer
+    TimeSeriesFrontend -- "Makes API calls to" --> TimeSeriesPipeline
+    MCPServer -- "Makes API calls to" --> TimeSeriesPipeline
+    TimeSeriesPipeline -- "Inserts results into" --> TimeSeriesDB
+    TimeSeriesPipeline -- "imports" --> TimeseriesCompute
+    User -- "pip install" --> TimeseriesCompute
+    AIAgent -- "pip install" --> TimeseriesCompute
     ExternalDataSource -- "Provides time series data" --> TimeSeriesPipeline
-    TimeseriesCompute -- "Publishes to" --> Github/DockerHub/PyPI/ReadTheDocs
+    
+    %% Publishing relationships (simplified)
+    TimeSeriesFrontend  --> PublishingPlatforms
+    TimeSeriesPipeline --> PublishingPlatforms
+    TimeseriesCompute --> PublishingPlatforms
 ```
 
 ### Additional (C4) Architectural Diagrams
