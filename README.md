@@ -20,7 +20,7 @@
 
 A Django frontend for spillover analysis and time series modeling.
 
-## Features (Planned)
+## Features
 
 - User-friendly interface for time series analysis
 - Interactive charts with Plotly

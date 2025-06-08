@@ -23,7 +23,7 @@ if app_host_env and app_host_env not in ALLOWED_HOSTS:
 # Fallback if no hosts are configured via environment variables
 if not ALLOWED_HOSTS:
     # This should ideally be configured via environment variables in production
-    ALLOWED_HOSTS = ['spilloverlab.com', 'www.spilloverlab.com', 'your-production-domain.com'] # Replace with a sensible default or raise error
+    ALLOWED_HOSTS = ['spilloverlab.com', 'www.spilloverlab.com']
 
 # CSRF Trusted Origins - use APP_HOST
 CSRF_TRUSTED_ORIGINS = [
