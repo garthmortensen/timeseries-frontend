@@ -3,136 +3,177 @@
 ## Environment and Configuration
 
 1. **Environment Variable Management**:
-   - Uses `python-dotenv` to load sensitive configuration from `.env` file
-   - Keeps secrets like `SECRET_KEY` outside of version control
-   - Different configurations for development vs production environments
+   - Uses `python-dotenv` in base.py to load configuration from `.env` file  
+   - Handles secrets like `SECRET_KEY` with fallback defaults for development
+   - Uses `os.environ.get()` pattern throughout for environment variable access
+   - API URL configuration via `API_URL` environment variable
 
-2. **Environment Detection**:
-   - Adjusts settings like `DEBUG` and `ALLOWED_HOSTS`
+2. **Settings Architecture**:
+   - Modular settings structure with `base.py`, `development.py`, `production.py`, and `security_settings.py`
+   - Automatic environment detection via `is_production_environment()` function in security_settings.py
+   - Production detection based on Cloud Run indicators, DEBUG flag, and hostname patterns
+   - Cloud Run specific configurations with SSL termination handling
+
+3. **Environment Detection Logic**:
+   - Checks for `GOOGLE_CLOUD_RUN` environment variable
+   - Validates `DEBUG` flag (production should have DEBUG=False)
+   - Examines hostname patterns (`.appspot.com`, `.run.app`)
+   - Defaults to development for safety
 
 ## Security Implementations
 
-1. **Django-Secure Integration**:
-   - Implements HTTP Strict Transport Security (HSTS)
-   - Forces HTTPS with `SECURE_SSL_REDIRECT` in production
-   - Secures cookies with `SESSION_COOKIE_SECURE` and `CSRF_COOKIE_SECURE`
+1. **Comprehensive Security Settings Module**:
+   - Dedicated `security_settings.py` file with environment-aware configurations
+   - Automatic production/development security profile switching
+   - Detailed logging of security configuration state
 
 2. **Content Security Policy (CSP)**:
-   - Uses `django_csp` middleware to prevent XSS attacks
-   - Defines trusted sources for scripts, styles, fonts, and connections
-   - Restricts content loading from unknown origins
+   - Uses `django_csp` middleware integrated in base settings
+   - Comprehensive CSP directives including:
+     - `CSP_DEFAULT_SRC`: Restricts all content to same origin
+     - `CSP_STYLE_SRC`: Allows Bootstrap and CDN stylesheets with unsafe-inline
+     - `CSP_SCRIPT_SRC`: Permits Plot.ly, CDN scripts, and inline scripts
+     - `CSP_FONT_SRC`: Google Fonts and CDN font sources
+     - `CSP_IMG_SRC`: Self and data URIs
+     - `CSP_CONNECT_SRC`: API endpoints and self
+     - `CSP_FRAME_SRC`: Set to 'none' to prevent iframe embedding
 
-3. **Browser Protection Features**:
-   - Enables XSS filtering with `SECURE_BROWSER_XSS_FILTER`
-   - Prevents MIME type sniffing with `SECURE_CONTENT_TYPE_NOSNIFF`
-   - Implements subdomain protection with `SECURE_HSTS_INCLUDE_SUBDOMAINS`
+3. **HTTPS and Cookie Security** (Environment Dependent):
+   - **Production**: Full security enabled with HSTS, secure cookies
+   - **Development**: Security relaxed for local development
+   - **Cloud Run**: Special handling for SSL termination at load balancer level
+   - `SECURE_SSL_REDIRECT` conditionally set based on deployment environment
+
+4. **Cross-Site Protection**:
+   - `SECURE_BROWSER_XSS_FILTER`: Enabled across all environments
+   - `SECURE_CONTENT_TYPE_NOSNIFF`: Prevents MIME sniffing attacks
+   - `X_FRAME_OPTIONS`: Set to 'DENY' to prevent clickjacking
 
 ## Containerization
 
 1. **Docker Implementation**:
-   - Uses Python 3.11 slim image as base
-   - Sets proper environment variables (`PYTHONDONTWRITEBYTECODE`, `PYTHONUNBUFFERED`)
-   - Contains helpful commented commands for container management
+   - Uses Python 3.13 (bugfix phase at time of writing)
+   - Non-root user setup with configurable USER_ID/GROUP_ID
+   - Proper directory ownership and permissions
+   - Binary wheel preference for faster builds
+   - Production-ready with Gunicorn WSGI server
+   - Cloud Run optimized (Port 8080, proper environment handling)
 
-2. **Docker Compose Setup**:
-   - Defines service configuration with volumes and port mapping
-   - Sets environment variables for the container
-   - Includes SELinux compatibility with volume mount workaround (`:Z`)
+2. **Security Features**:
+   - Runs as non-root user 'djangoapp'
+   - Minimal system dependencies installation
+   - Proper file ownership throughout container layers
+   - Static file collection during build process
+
+3. **Docker Compose**:
+   - No docker-compose.yml file bc cloud deployment rather than local orchestration
 
 ## Development Workflow
 
 1. **Virtual Environment**:
-   - Uses `venv` for local development isolation
-   - Tracks dependencies with `requirements.txt`
-   - Includes pin-review for dependency management
+   - Standard `venv` approach for local development
+   - `requirements.txt` dependency management including:
+     - Django framework and extensions
+     - Security packages (django-csp)
+     - Static file handling (whitenoise)
+     - Development tools (debug toolbar)
 
 2. **Version Control**:
-   - Proper `.gitignore` configuration for Python/Django projects
-   - Excludes sensitive files and directories
-   - Includes strategy for keeping empty directories (`.gitkeep`)
+   - Comprehensive `.gitignore` for Python/Django projects
+   - Excludes logs, migrations, cache files, and sensitive data
+   - Includes `.gitkeep` strategy for empty directories
+   - `.dockerignore` mirrors `.gitignore` with Docker-specific additions
 
-3. **Code Quality**:
-   - Includes Black for code formatting
-   - Manages static files properly
+3. **Static File Management**:
+   - WhiteNoise for static file serving in production
+   - Compressed manifest storage for optimized delivery
+   - Proper static file collection in Docker builds
 
 ## Logging and Monitoring
 
-1. **Comprehensive Logging**:
-   - Configures different log handlers (file and console)
-   - Uses different formatters for different contexts
-   - Separate logging levels for different components
+1. **Structured Logging Configuration**:
+   - TimedRotatingFileHandler with 7-day retention
+   - Separate formatters for console (simple) and file (verbose)
+   - Application-specific loggers for Django and timeseries app
+   - Log file location: `logs/app.log` with automatic rotation
 
-## Frontend Considerations
+2. **Log Management**:
+   - Console and file handlers for all environments
+   - Structured log formatting with timestamp, module, and process info
+   - Proper log level configuration (INFO default)
 
-1. **Template Organization**:
-   - Implements base.html approach mentioned in design_decisions.txt
-   - Uses Bootstrap with integrity checks for security
-   - Implements CSS variables with root colors for consistent styling
-   - Includes accessibility considerations (ARIA labels)
+## Frontend Architecture
+
+1. **Template Structure**:
+   - Base template approach with Bootstrap integration
+   - CSP-compliant external resource loading
+   - Accessibility features and semantic HTML5
+   - Context processors for global template variables (API URL)
+
+2. **Security-First Frontend**:
+   - External CDN resources with integrity checking capability
+   - CSP-compliant inline scripts and styles
+   - Proper form CSRF protection
+
+3. **API Integration**:
+   - Dynamic API URL configuration via context processors
+   - Environment-aware API endpoint management
+   - Cross-origin request handling for development/production
+
+## Production Deployment Considerations
+
+1. **Cloud Run Optimization**:
+   - SSL termination handling at load balancer level
+   - Environment-specific security configurations
+   - Proper health check endpoints
+   - Gunicorn WSGI server with optimized worker count
+
+2. **Domain and CORS Configuration**:
+   - `ALLOWED_HOSTS` management with environment variables
+   - `CSRF_TRUSTED_ORIGINS` for cross-origin form submissions
+   - Flexible hostname configuration for different deployment environments
+
+3. **Security Headers**:
+   - Production-grade HSTS configuration (1 year, include subdomains, preload)
+   - XSS and content-type protection enabled
+   - Frame options set to prevent clickjacking
+
+## Application-Specific Features
+
+1. **Time Series Analysis Integration**:
+   - API client configuration with environment-aware URL handling
+   - Context processor for template API URL injection
+   - Structured form handling for complex analysis parameters
+
+2. **SEO and Web Standards**:
+   - Sitemap framework integration
+   - Robots.txt template with bot-specific rules
+   - Proper meta tag and accessibility implementations
 
 ## To Replicate This Approach in Future Django Projects
 
 1. **Initial Setup**:
-   - Create virtual environment with `python -m venv venv`
-   - Start Django project with `django-admin startproject`
-   - Set up `.env` file with `python-dotenv` for secrets
-   - Configure git with appropriate `.gitignore`
+   - Create modular settings structure (base, development, production, security)
+   - Implement environment detection logic
+   - Set up proper Docker containerization with non-root user
+   - Configure comprehensive logging from the start
 
-2. **Security Configuration**:
-   - Install and configure `django-secure` and `django_csp`
-   - Implement proper settings for cookie security and HTTPS
-   - Set up environment-specific configurations
-   - Add logging configuration
+2. **Security Implementation**:
+   - Create dedicated security settings module with environment awareness
+   - Implement CSP with application-specific requirements
+   - Set up environment-dependent security profiles
+   - Configure proper HTTPS and cookie security
 
-3. **Containerization**:
-   - Create `Dockerfile` and `.dockerignore`
-   - Set up `docker-compose.yml` for development
-   - Include helpful commands in comments
+3. **Development Workflow**:
+   - Establish proper `.gitignore` and `.dockerignore` files
+   - Set up static file handling with WhiteNoise
+   - Implement context processors for global template variables
+   - Configure debug toolbar and development tools
 
-4. **Frontend Structure**:
-   - Start with base templates using HTML5 semantics
-   - Implement Bootstrap or other CSS framework securely
-   - Use CSS variables for theming
-   - Include accessibility features
+4. **Production Readiness**:
+   - Cloud-specific deployment configurations
+   - Proper environment variable management
+   - Security header implementation
+   - Performance optimization (static file compression, etc.)
 
-5. **Development Practices**:
-   - Document design decisions and rationale
-   - Track command history for reference
-   - Use context processors for global template variables
-   - Implement robust static file handling
-
-6. **Deployment Preparation**:
-   - Configure different settings for development/production
-   - Set up appropriate security headers
-   - Prepare logging structure
-   - Configure media and static file handling
-
-## Security
-
-1. **Enhanced Content Security Policy (CSP)**
-CSP implementation restricts which resources can be loaded on pages:
-
-   - CSP_DEFAULT_SRC: Restricts all content to the same origin by default
-   - CSP_STYLE_SRC: Allows stylesheets only from this site and specified CDNs
-   - CSP_SCRIPT_SRC: Allows scripts only from this site and specified CDNs
-   - CSP_FONT_SRC: Allows fonts only from this site and specified CDNs
-   - CSP_IMG_SRC: Allows images only from this site and data URIs
-   - CSP_CONNECT_SRC: Restricts AJAX/WebSocket connections to specific origins
-   - CSP_FRAME_SRC: Prevents this site from being embedded in iframes
-
-2. **HTTPS and Cookie Security**
-Settings to improve transport security and cookie protection:
-
-   - SECURE_SSL_REDIRECT: Forces all traffic to use HTTPS
-   - SESSION_COOKIE_SECURE: Makes session cookies only transmit over HTTPS
-   - CSRF_COOKIE_SECURE: Makes CSRF cookies only transmit over HTTPS
-   - SECURE_HSTS_SECONDS: Enables HTTP Strict Transport Security
-   - SECURE_HSTS_INCLUDE_SUBDOMAINS: Extends HSTS to all subdomains
-   - SECURE_HSTS_PRELOAD: Allows browsers to preload HSTS configuration
-
-3. **XSS Protection**
-Settings to help prevent cross-site scripting attacks:
-
-   - SECURE_BROWSER_XSS_FILTER: Enables browser XSS filtering
-   - SECURE_CONTENT_TYPE_NOSNIFF: Prevents MIME type sniffing
-   - X_FRAME_OPTIONS: Prevents clickjacking via iframes
+This approach provides a robust, security-first Django application structure suitable for both development and cloud production deployments, with particular optimization for Google Cloud Run environments.

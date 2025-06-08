@@ -15,20 +15,53 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>{% block title %}Spillover Lab{% endblock %}</title>
     
-    <!-- SEO Metadata -->
-    <meta name="description" content="Interactive spillover analysis and time series modeling tool for financial and econometric analysis with ARIMA and GARCH capabilities">
-    <meta name="keywords" content="spillover analysis, time series analysis, ARIMA, GARCH, econometrics, financial modeling, forecasting, volatility">
+    <!-- Enhanced SEO Metadata -->
+    <meta name="description" content="{% block description %}Financial spillover analysis and time series modeling platform. Analyze market interconnections with ARIMA, GARCH models, and real-time volatility forecasting for investment research.{% endblock %}">
+    <meta name="keywords" content="{% block keywords %}spillover analysis, time series analysis, ARIMA, GARCH, econometrics, financial modeling, forecasting, volatility, market risk, portfolio analysis, financial research, quantitative finance{% endblock %}">
+    <meta name="author" content="Spillover Lab">
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+    <link rel="canonical" href="{{ request.build_absolute_uri|slice:':-1' }}{{ request.get_full_path }}">
     
-    <!-- Open Graph / Social Media -->
-    <meta property="og:title" content="Spillover Lab">
-    <meta property="og:description" content="Interactive spillover analysis and time series modeling tool for financial and econometric analysis">
-    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    <!-- Enhanced Open Graph / Social Media -->
+    <meta property="og:title" content="{% block og_title %}Spillover Lab{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Financial spillover analysis and time series modeling platform for investment research and risk management.{% endblock %}">
+    <meta property="og:url" content="{{ request.build_absolute_uri|slice:':-1' }}{{ request.get_full_path }}">
     <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Spillover Lab">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:image" content="{% block og_image %}{{ request.build_absolute_uri }}{% static 'images/spillover-lab-og.png' %}{% endblock %}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
     
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="Spillover Lab">
-    <meta name="twitter:description" content="Interactive spillover analysis and time series modeling tool for financial and econometric analysis">
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Spillover Lab",
+        "description": "Professional financial spillover analysis and time series modeling platform for investment research and risk management",
+        "url": "{{ request.build_absolute_uri|slice:':-1' }}",
+        "applicationCategory": "FinanceApplication",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        },
+        "author": {
+            "@type": "Organization",
+            "name": "Spillover Lab"
+        },
+        "featureList": [
+            "ARIMA Time Series Modeling",
+            "GARCH Volatility Analysis",
+            "Spillover Effect Analysis",
+            "Financial Risk Assessment",
+            "Market Interconnection Analysis",
+            "Real-time Data Processing"
+        ]
+    }
+    </script>
 
     <!-- Favicons -->
     <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon/favicon-32x32.png' %}">
@@ -37,11 +70,13 @@
     <meta name="msapplication-TileColor" content="#2b5797">
     <meta name="theme-color" content="#ffffff">
 
-    <!-- Fonts Preloading -->
+    <!-- DNS Prefetch and Preconnect for Performance -->
+    <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
+    <link rel="dns-prefetch" href="//cdn.plot.ly">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
-    
+
     <!-- Bootstrap CSS with integrity -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" 
         rel="stylesheet" 

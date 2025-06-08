@@ -9,7 +9,12 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Analysis - Spillover Lab{% endblock %}
+{% block title %}ARIMA GARCH Spillover Analysis Tool - Configure Models - Spillover Lab{% endblock %}
+{% block description %}Configure professional ARIMA and GARCH models for financial spillover analysis. Set parameters for volatility modeling, market interconnection analysis, and econometric forecasting with real-time data.{% endblock %}
+{% block keywords %}ARIMA parameters, GARCH configuration, spillover analysis setup, volatility modeling, econometric parameters, financial model configuration, time series setup, market analysis tool{% endblock %}
+
+{% block og_title %}Professional ARIMA GARCH Analysis Configuration{% endblock %}
+{% block og_description %}Configure advanced econometric models for professional financial analysis. Set ARIMA and GARCH parameters for spillover analysis and volatility forecasting.{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -57,11 +62,29 @@
 {% endblock %}
 
 {% block content %}
-<h1 class="mb-4">Time Series Analysis</h1>
+<h1 class="mb-4">Professional Time Series Analysis Configuration</h1>
+
+<!-- Adds structured JSON-LD data to provide machine-readable information about the app to web crawlers. -->
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "ARIMA GARCH Spillover Analysis Tool",
+    "description": "Econometric model configuration for financial spillover analysis",
+    "applicationCategory": "FinanceApplication",
+    "featureList": [
+        "ARIMA Model Configuration",
+        "GARCH Volatility Parameters",
+        "Spillover Analysis Setup",
+        "Real-time Market Data Integration",
+        "Professional Parameter Optimization"
+    ]
+}
+</script>
 
 <div class="alert alert-info" role="alert">
-    <h5 class="alert-heading">Model Configuration</h5>
-    <p class="mb-0">Configure your models by adjusting the parameters below.</p>
+    <h2 class="alert-heading h5">Model Configuration</h2>
+    <p class="mb-0">Configure industry-standard ARIMA and GARCH models for comprehensive financial spillover analysis and volatility forecasting.</p>
 </div>
 
 <div class="d-flex justify-content-end align-items-center mt-3 mb-2" style="gap: 0.5rem;">

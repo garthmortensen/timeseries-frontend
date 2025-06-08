@@ -29,26 +29,35 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
-
-# Django
-staticfiles/
-media/
-db.sqlite3
-db.sqlite3-journal
-*.log
+*.manifest
+*.spec
+pip-log.txt
+pip-delete-this-directory.txt
 
 # Virtual Environment
+env/
 venv/
 ENV/
-.env
 .venv
+.env
+env.bak/
+venv.bak/
 
-# IDE Files
+# Django-specific files
+# *.log # Covered by logs/
+# local_settings.py # Already present in .gitignore, good to keep here
+db.sqlite3
+db.sqlite3-journal
+# media/ # Already present
+# staticfiles/ # Already present
+
+# IDE / Editor configurations
 .idea/
 .vscode/
 *.swp
 *.swo
 .DS_Store
+Thumbs.db
 
 # Testing
 .coverage
@@ -58,16 +67,67 @@ htmlcov/
 nosetests.xml
 coverage.xml
 *.cover
+.hypothesis/
 
-# Logs
-logs/
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# celery
+celerybeat-schedule.*
+
+# SageMath parsed files
+*.sage.py
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# Ruff stuff:
+.ruff_cache/
+
+# PyPI configuration file
+.pypirc
+
+# Miscellaneous
+# logs/ # Already present
+*.bak
 
 # Docker
 Dockerfile
 docker-compose.yml
-.dockerignore
+# .dockerignore # Should not ignore itself
 
-# Documentation
-README.md
-LICENSE
-docs/
+# Logs - ensure this is comprehensive
+logs/
+*.log
+
+# Django migrations - ensure these are ignored as per .gitignore
+**/migrations/*.py
+!**/migrations/__init__.py
+
+# Media and Static files - ensure these are ignored
+media/
+staticfiles/
+local_settings.py
