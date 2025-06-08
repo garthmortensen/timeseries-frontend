@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sitemaps',  # Add sitemap support
     # Third party apps
     'whitenoise.runserver_nostatic',
     'csp',
