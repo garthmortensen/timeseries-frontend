@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# config/settings/asgi.py
+# config/asgi.py
 
 """
 ASGI config for config project.
@@ -28,12 +28,5 @@ load_dotenv(dotenv_path=env_path)
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings.production')
 
 from django.core.asgi import get_asgi_application
-
-application = get_asgi_application()
-import os
-
-from django.core.asgi import get_asgi_application
-
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 
 application = get_asgi_application()
