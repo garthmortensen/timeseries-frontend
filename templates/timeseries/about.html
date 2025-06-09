@@ -35,12 +35,132 @@
         <div class="col-md-12">
             <div class="card">
                 <div class="card-body">
+                    <h2 class="card-title">Inspiration for this Lab</h2>
+                    <p>
+                        This project is a reimplementation of my master's research on GARCH volatility spillover effects in global markets. It examined how a Chinese real estate market collapse would impact global real estate ETFs. Think 2008 Global Financial Crisis but with the epicenter switched to Beijing.
+                    </p>
+                    <p>
+                        With this tool, the epicenters can be easily switched. Where do you see a bubble brewing?
+                    </p>
+                    <p>
+                        The original .pdf research is here: 
+                        <a href="https://github.com/garthmortensen/finance/blob/master/15_thesis/Volatility_Spillover.pdf" target="_blank" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-file-pdf"></i> GitHub
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mb-5">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="card-title">Features</h2>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card mb-4">
+                                <div class="card-header bg-primary text-white">
+                                    <h3 class="h4 mb-0">Data Sources</h3>
+                                </div>
+                                <div class="card-body">
+                                    <p>Access real-time market data from Stooq and Yahoo Finance, or generate synthetic R&D datasets.</p>
+                                    <ul>
+                                        <li><strong>Stooq and Yahoo Finance:</strong> Real-time stock, ETF, and index data</li>
+                                        <li><strong>Synthetic Data:</strong> Controlled testing environments</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="card mb-4">
+                                <div class="card-header bg-primary text-white">
+                                    <h3 class="h4 mb-0">Econometric Models</h3>
+                                </div>
+                                <div class="card-body">
+                                    <p>Industry-standard time series models for financial analysis and forecasting. Implementation details available at <a href="https://timeseries-compute.readthedocs.io/en/latest/" target="_blank" rel="noopener noreferrer">ReadTheDocs</a>.</p>
+                                    <ul>
+                                        <li><strong>ARIMA Models:</strong> Price forecasting and trend analysis</li>
+                                        <li><strong>GARCH Models:</strong> Volatility clustering</li>
+                                        <li><strong>Spillover Analysis:</strong> Interconnection measurement</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="card mb-4">
+                                <div class="card-header bg-primary text-white">
+                                    <h3 class="h4 mb-0">Visualizations</h3>
+                                </div>
+                                <div class="card-body">
+                                    <p>Charts and analysis tools for comprehensive market research.</p>
+                                    <ul>
+                                        <li><strong>Time Series Plots:</strong> Price and volatility</li>
+                                        <li><strong>Spillover Networks:</strong> interconnection diagrams</li>
+                                        <li><strong>Risk Metrics:</strong> Various point estimates</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mb-5">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
                     <h2 class="card-title">Project Overview</h2>
                     <p class="card-text">
                         Spillover Lab is a comprehensive suite of tools for time series analysis and forecasting, 
                         focusing on financial and econometric modeling. The project consists of four main components 
                         that work together to provide a complete solution.
                     </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mb-5">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="h5 mb-0">Architecture</h3>
+                </div>
+                <div class="card-body">
+                    <p>The components interact according to the following architecture:</p>
+                    
+                    <div class="mermaid">
+                        sequenceDiagram
+                        actor User
+                        participant Frontend as Frontend
+                        participant API as API
+                        participant Package as Compute Package
+                        participant DB as PostgreSQL DB
+                    
+                        User->>Frontend: Submit analysis request
+                        Frontend->>API: Forward request parameters
+                        API->>Package: Execute computations
+                        Package-->>API: Return computation results
+                        API->>DB: Write results to database
+                        API-->>Frontend: Return processed results
+                        Frontend-->>User: Display visualization
+                        %% Direct API interaction
+                        User-->>API: Direct REST/GraphQL request
+                        API-->>User: Direct API response
+                    </div>
+                    
+                    <p class="mt-4">This separation of concerns allows for:</p>
+                    <ul>
+                        <li>Scalable architecture with specialized components</li>
+                        <li>Independent development and deployment of each component</li>
+                        <li>Reuse of the various components</li>
+                    </ul>
                 </div>
             </div>
         </div>
@@ -174,67 +294,13 @@
         </div>
     </div>
 
-    <div class="row mb-5">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="h5 mb-0">Architecture</h3>
-                </div>
-                <div class="card-body">
-                    <p>The components interact according to the following architecture:</p>
-                    
-                    <div class="mermaid">
-                        sequenceDiagram
-                        actor User
-                        participant Frontend as Frontend
-                        participant API as API
-                        participant Package as Compute Package
-                        participant DB as PostgreSQL DB
-                    
-                        User->>Frontend: Submit analysis request
-                        Frontend->>API: Forward request parameters
-                        API->>Package: Execute computations
-                        Package-->>API: Return computation results
-                        API->>DB: Write results to database
-                        API-->>Frontend: Return processed results
-                        Frontend-->>User: Display visualization
-                        %% Direct API interaction
-                        User-->>API: Direct REST/GraphQL request
-                        API-->>User: Direct API response
-                    </div>
-                    
-                    <p class="mt-4">This separation of concerns allows for:</p>
-                    <ul>
-                        <li>Scalable architecture with specialized components</li>
-                        <li>Independent development and deployment of each component</li>
-                        <li>Reuse of the various components</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row mb-5">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="h5 mb-0">Project Origins</h3>
-                </div>
-                <div class="card-body">
-                    <p>
-                        This project is a modern reimplementation of my master's research on GARCH volatility spillover effects in global markets. 
-                        Back then, I was convinced the Chinese real estate market would collapse and impact the rest of the world, similar to the 2008 Global Financial Crisis.
-                    </p>
-                    <p>
-                        That collapse never happened. But the research still holds value, especially given today's context 
-                        of post-COVID supply disruptions and increased tariff volatility.
-                    </p>
-                    <p>
-                        Find the original .pdf research here: 
-                        <a href="https://github.com/garthmortensen/finance/blob/master/15_thesis/Volatility_Spillover.pdf" target="_blank" class="btn btn-outline-secondary btn-sm">
-                            <i class="bi bi-file-pdf"></i> GitHub
-                        </a>
-                    </p>
+    <!-- Photo Credit -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="text-center">
+                <div class="text-muted" style="font-size: 1.0rem;">
+                    Home page photo by <a href="https://unsplash.com/@thierrymeier" target="_blank" rel="noopener" class="text-muted">Thierry Meier</a>
+                    under <a href="https://unsplash.com/license" target="_blank" rel="noopener" class="text-muted">Unsplash License</a>
                 </div>
             </div>
         </div>

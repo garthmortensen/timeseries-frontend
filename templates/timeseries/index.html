@@ -17,11 +17,116 @@
 {% block og_title %}Financial Markets Spillover Platform{% endblock %}
 {% block og_description %}Analyze financial market interconnections using ARIMA and GARCH analysis with interactive visualizations for risk management.{% endblock %}
 
+{% block extra_css %}
+<style>
+/* Full screen background */
+body {
+    background-image: url('{% static "images/wave.jpg" %}');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    margin: 0;
+    padding: 0;
+}
+
+/* Hero section styling - full screen layout without box */
+.hero-section {
+    padding: 2rem 1rem;
+    text-align: center;
+    margin: 0;
+    width: 100vw;
+    height: calc(100vh - 60px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    top: 60px;
+    left: 0;
+    z-index: -1;
+}
+
+.hero-title {
+    font-size: 15vw;
+    font-weight: 900;
+    color: white;
+    margin-bottom: 2rem;
+    line-height: 0.9;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    text-align: center;
+}
+
+.hero-byline {
+    font-size: 1.8vw;
+    color: white;
+    margin-bottom: 2rem;
+    font-weight: 500;
+    max-width: 80%;
+    text-align: center;
+}
+
+.hero-cta {
+    font-size: 1.5rem;
+    padding: 1.2rem 3rem;
+    font-weight: 600;
+}
+
+/* Ensure navbar stays on top */
+.navbar {
+    position: relative;
+    z-index: 1000;
+}
+
+/* Ensure main content doesn't interfere */
+main.container {
+    background: transparent;
+    position: relative;
+    z-index: 1;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .hero-section {
+        padding: 1.5rem 1rem;
+        min-height: 100vh;
+    }
+    
+    .hero-title {
+        font-size: 20vw;
+        margin-bottom: 1.5rem;
+    }
+    
+    .hero-byline {
+        font-size: 3.5vw;
+        margin-bottom: 1.5rem;
+    }
+    
+    .hero-cta {
+        font-size: 1.25rem;
+        padding: 1rem 2rem;
+    }
+}
+
+@media (min-width: 1200px) {
+    .hero-title {
+        font-size: 10rem;
+    }
+    
+    .hero-byline {
+        font-size: 1.5rem;
+    }
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="jumbotron p-5 mb-4 bg-light rounded-3">
-    <h1 class="display-4">Spillover Lab for Financial Markets</h1>
-    <p class="lead">Analyze financial market interconnections using ARIMA and GARCH analysis with interactive visualizations for risk management.</p>
-    <a class="btn btn-primary btn-lg" href="{% url 'timeseries:analysis' %}" role="button">Start Analysis</a>
+<div class="hero-section">
+    <h1 class="hero-title">Spillover Lab</h1>
+    <p class="hero-byline">Ready to turn market volatility into actionable intelligence?</p>
+    <a class="btn btn-primary btn-lg hero-cta" href="{% url 'timeseries:analysis' %}" role="button">Start Analysis</a>
 </div>
 
 <!-- Add structured data for the main functionality -->
@@ -39,53 +144,4 @@
     }
 }
 </script>
-
-<div class="row">
-    <div class="col-md-4">
-        <div class="card mb-4">
-            <div class="card-header">
-                <h2 class="h4">Data Sources</h2>
-            </div>
-            <div class="card-body">
-                <p>Access real-time market data from Stooq and Yahoo Finance, or generate synthetic R&D datasets.</p>
-                <ul>
-                    <li><strong>Stooq and Yahoo Finance:</strong> Real-time stock, ETF, and index data</li>
-                    <li><strong>Synthetic Data:</strong> Controlled testing environments</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-4">
-        <div class="card mb-4">
-            <div class="card-header">
-                <h2 class="h4">Econometric Models</h2>
-            </div>
-            <div class="card-body">
-                <p>Industry-standard time series models for financial analysis and forecasting. Implementation details available at <a href="https://timeseries-compute.readthedocs.io/en/latest/" target="_blank" rel="noopener noreferrer">ReadTheDocs</a>.</p>
-                <ul>
-                    <li><strong>ARIMA Models:</strong> Price forecasting and trend analysis</li>
-                    <li><strong>GARCH Models:</strong> Volatility clustering</li>
-                    <li><strong>Spillover Analysis:</strong> Interconnection measurement</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-4">
-        <div class="card mb-4">
-            <div class="card-header">
-                <h2 class="h4">Visualizations</h2>
-            </div>
-            <div class="card-body">
-                <p>Charts and analysis tools for comprehensive market research.</p>
-                <ul>
-                    <li><strong>Time Series Plots:</strong> Price and volatility</li>
-                    <li><strong>Spillover Networks:</strong> interconnection diagrams</li>
-                    <li><strong>Risk Metrics:</strong> Various point estimates</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-</div>
 {% endblock %}
