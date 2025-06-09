@@ -29,10 +29,17 @@
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Spillover Lab">
     <meta property="og:locale" content="en_US">
-    <meta property="og:image" content="{% block og_image %}{{ request.build_absolute_uri }}{% static 'images/spillover-lab-og.png' %}{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{{ request.build_absolute_uri }}{% static 'images/wave_small_texxt.jpg' %}{% endblock %}">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{% block twitter_title %}{% block og_title %}Spillover Lab{% endblock %}{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}{% block og_description %}Financial spillover analysis and time series modeling platform for investment research and risk management.{% endblock %}{% endblock %}">
+    <meta name="twitter:image" content="{% block twitter_image %}{{ request.build_absolute_uri }}{% static 'images/wave_small_texxt.jpg' %}{% endblock %}">
+    <meta name="twitter:image:alt" content="Spillover Lab - Financial Markets Analysis Platform">
+
     <!-- JSON-LD Structured Data -->
     <script type="application/ld+json">
     {
