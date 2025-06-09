@@ -21,7 +21,7 @@
 <style>
 /* Full screen background */
 body {
-    background-image: url('{% static "images/wave.jpg" %}');
+    background-image: url('{% static "images/wave_small.jpg" %}');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -48,7 +48,7 @@ body {
 }
 
 .hero-title {
-    font-size: 15vw;
+    font-size: 13vw;
     font-weight: 900;
     color: white;
     margin-bottom: 2rem;
@@ -95,7 +95,7 @@ main.container {
     }
     
     .hero-title {
-        font-size: 20vw;
+        font-size: 18vw;
         margin-bottom: 1.5rem;
     }
     
@@ -112,7 +112,7 @@ main.container {
 
 @media (min-width: 1200px) {
     .hero-title {
-        font-size: 10rem;
+        font-size: 9rem;
     }
     
     .hero-byline {
@@ -125,7 +125,7 @@ main.container {
 {% block content %}
 <div class="hero-section">
     <h1 class="hero-title">Spillover Lab</h1>
-    <p class="hero-byline">Ready to turn market volatility into actionable intelligence?</p>
+    <p class="hero-byline">Ready to turn financial market volatility into actionable intelligence?</p>
     <a class="btn btn-primary btn-lg hero-cta" href="{% url 'timeseries:analysis' %}" role="button">Start Analysis</a>
 </div>
 
