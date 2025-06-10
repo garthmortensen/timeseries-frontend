@@ -19,6 +19,8 @@
 
 A Django frontend for spillover analysis and time series modeling.
 
+Implementation hosted at www.spilloverlab.com.
+
 ## Features
 
 - User-friendly interface for time series analysis
