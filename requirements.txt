@@ -1,6 +1,9 @@
 # Core Django framework
 Django==5.2.3
 
+# Production WSGI server
+gunicorn==23.0.0
+
 # Static file serving
 whitenoise==6.9.0
 

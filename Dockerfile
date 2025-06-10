@@ -37,7 +37,7 @@ ENV PATH="/home/djangoapp/.local/bin:${PATH}"
 # Copy application files (as the user)
 COPY --chown=djangoapp:djangoapp ./ /app
 
-# Expose port 8080 for Cloud Run
+# Expose port 8080 for Cloud Run (but use PORT env var at runtime)
 EXPOSE 8080
 
 # Set environment variable for API URL (example, adjust as needed)
@@ -46,5 +46,5 @@ ENV API_URL="http://timeseries-api:8080"
 # Collect static files (already present)
 RUN python manage.py collectstatic --noinput
 
-# Use gunicorn for production instead of runserver
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "2", "config.wsgi:application"]
+# Use gunicorn with PORT environment variable for Cloud Run compatibility
+CMD exec gunicorn --bind 0.0.0.0:${PORT:-8080} --workers 2 config.wsgi:application
