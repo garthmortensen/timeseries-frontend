@@ -1181,7 +1181,7 @@
         </div>
         
         <div class="row">
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="mb-3">
                     <label for="arima-p" class="form-label">p: Auto-Regressive Component</label>
                     <input type="number" class="form-control" id="arima-p" name="arima_p" min="0" max="10" value="2">
@@ -1190,21 +1190,30 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="mb-3">
                     <label for="arima-d" class="form-label">d: Integration Component</label>
-                    <input type="number" class="form-control" id="arima-d" name="arima_d" min="0" max="2" value="0">
+                    <input type="number" class="form-control" id="arima-d" name="arima_d" min="0" max="5" value="0">
                     <div class="parameter-help">
                         Differencing removes trends to make the data stationary (constant mean/variance over time). Most financial prices are "integrated" - they wander randomly and don't revert to a mean. d=1 means taking first differences (today's price minus yesterday's), which usually converts trending price data into stationary returns. Use d=0 for already-stationary data like volatility indices, d=2 rarely needed except for highly trending series. This analysis pipeline automatically differences prices to returns, so this is default to 0.
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="mb-3">
                     <label for="arima-q" class="form-label">q: Moving Average Component</label>
                     <input type="number" class="form-control" id="arima-q" name="arima_q" min="0" max="10" value="4">
                     <div class="parameter-help">
                         The MA component captures how today's price reacts to recent random shocks or surprises. Unlike AR which uses actual past prices, MA uses past forecast errors. This helps model temporary market overreactions or corrections. Higher q values (3-6) are useful for financial data since markets often show clustered volatility and mean reversion after shocks.
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-3">
+                    <label for="arima-forecast-steps" class="form-label">Forecast Steps</label>
+                    <input type="number" class="form-control" id="arima-forecast-steps" name="arima_forecast_steps" min="1" max="50" value="10">
+                    <div class="parameter-help">
+                        Number of time periods to forecast into the future. Higher values (10-30) provide more detailed forecast plots but may be less reliable. Use 5-10 for daily data, 10-20 for weekly data. More than 30 steps is rarely meaningful for financial forecasting.
                     </div>
                 </div>
             </div>
@@ -1270,7 +1279,7 @@
         <div id="spillover-params" style="display: block;">
             <div class="mb-3">
                 <label for="forecast-horizon" class="form-label">Forecast Horizon</label>
-                <input type="number" class="form-control" id="forecast-horizon" name="forecast_horizon" min="1" max="3" value="3">
+                <input type="number" class="form-control" id="forecast-horizon" name="forecast_horizon" min="1" max="10" value="3">
                 <div class="parameter-help">
                     Determines how far into the future to measure spillover effects. Short horizons (1-3 periods) capture immediate contagion, longer horizons (5-10) reveal persistent interconnections. Use 1-day for high-frequency trading, 1-week for tactical allocation, 1-month for strategic portfolio decisions.
                 </div>
@@ -1569,7 +1578,8 @@ document.addEventListener('DOMContentLoaded', function() {
         data.arima_params = {
             p: parseInt(data.arima_p) || 2,
             d: parseInt(data.arima_d) || 1,
-            q: parseInt(data.arima_q) || 4
+            q: parseInt(data.arima_q) || 4,
+            forecast_steps: parseInt(data.arima_forecast_steps) || 10
         };
         
         data.garch_params = {
