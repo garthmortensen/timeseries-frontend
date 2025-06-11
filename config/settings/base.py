@@ -120,7 +120,20 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # URL for the backend Timeseries API
 # Used by the api_proxy view and other direct server-to-server API calls
-TIMESERIES_API_URL = os.environ.get("API_URL", "http://localhost:8001")
+TIMESERIES_API_URL_ENV = os.environ.get("API_URL")
+if TIMESERIES_API_URL_ENV:
+    if not TIMESERIES_API_URL_ENV.startswith(("http://", "https://")):
+        # If it looks like a domain (e.g., contains a dot, not localhost) and has no scheme, assume https
+        if "." in TIMESERIES_API_URL_ENV and "localhost" not in TIMESERIES_API_URL_ENV:
+            TIMESERIES_API_URL = f"https://{TIMESERIES_API_URL_ENV}"
+        # Otherwise (e.g. localhost or something else without a dot), default to http if no scheme
+        else:
+            TIMESERIES_API_URL = f"http://{TIMESERIES_API_URL_ENV}"
+    else:
+        TIMESERIES_API_URL = TIMESERIES_API_URL_ENV
+else:
+    # Default for local development if API_URL is not set
+    TIMESERIES_API_URL = "http://localhost:8001"
 
 # Timeout for requests made to the backend Timeseries API
 API_TIMEOUT_SECONDS = int(os.environ.get("API_TIMEOUT_SECONDS", 60))
