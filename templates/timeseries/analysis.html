@@ -39,7 +39,7 @@
         border-radius: 0 0.25rem 0.25rem 0;
         font-style: italic;
         color: #1565c0;
-        font-size: 0.95em;
+        font-size: 1.1em;
         line-height: 1.4;
     }
     
@@ -62,7 +62,7 @@
 {% endblock %}
 
 {% block content %}
-<h1 class="mb-4">Time Series Analysis Configuration</h1>
+<h1 class="mb-4">Analysis Configuration</h1>
 
 <!-- Adds structured JSON-LD data to provide machine-readable information about the app to web crawlers. -->
 <script type="application/ld+json">
@@ -82,16 +82,10 @@
 }
 </script>
 
-<div class="alert alert-info" role="alert">
-    <h2 class="alert-heading h5">Model Configuration</h2>
-    <p class="mb-0">Configure your ARIMA and GARCH models by adjusting the parameters below.</p>
-</div>
-
-<div class="d-flex justify-content-end align-items-center mt-3 mb-2" style="gap: 0.5rem;">
-    <a href="{{ TIMESERIES_API_URL }}/v1/graphql" class="btn btn-outline-secondary btn-sm" target="_blank">GraphQL</a>
-    <a href="{{ TIMESERIES_API_URL }}/docs" class="btn btn-outline-secondary btn-sm" target="_blank">Swagger</a>
-    <a href="{{ TIMESERIES_API_URL }}/redoc" class="btn btn-outline-secondary btn-sm" target="_blank">ReDoc</a>
-    <a href="{{ TIMESERIES_API_URL }}/api/openapi.json" class="btn btn-outline-secondary btn-sm" target="_blank">OpenAPI</a>
+<div class="guide-text" style="font-size: 1.1em;">
+    <strong>Markets are connected.</strong>  A shock in one can ripple through others—stocks, indexes, even regions.<br>
+    This analysis quantifies those spillovers, predicts volatility, and maps how risk moves between assets.<br><br>
+    <strong>Choose Your Own Analysis</strong> below to explore market dynamics, forecast volatility, and uncover contagion paths.
 </div>
 
 <form id="analysis-form" method="post" action="{% url 'timeseries:run_pipeline' %}">
@@ -1264,7 +1258,7 @@
 
     <div class="form-section">
         <h3 class="section-header">Spillover Analysis</h3>
-        <div class="guide-text">
+        <div class="guide-text" style="font-size: 0.95em;">
             Spillover analysis reveals how shocks in one market or asset spread to others. For example, if the US stock market crashes, how much does it affect European or Asian markets? This helps understand global market interconnectedness and contagion risks.
         </div>
         
@@ -1305,15 +1299,11 @@
 
 
 
-
-
-
-
 <div id="loading" class="text-center" style="display: none;">
     <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Loading...</span>
     </div>
-    <p class="mt-2">Running analysis, please wait...</p>
+    <p class="mt-2" style="white-space: pre-line;">Running analysis, please wait...</p>
 </div>
 {% endblock %}
 
@@ -1456,6 +1446,58 @@ document.addEventListener('DOMContentLoaded', function() {
     // Handle form submission
     const form = document.getElementById('analysis-form');
     const loadingIndicator = document.getElementById('loading');
+    const pageTitle = document.querySelector('h1.mb-4');
+    const marketIntroText = document.querySelector('.guide-text[style*="font-size: 1.1em"]');
+    
+    // Cycling loading messages - Statistics Pop Quiz
+    let loadingMessageInterval;
+    const loadingMessages = [
+        'Loading...\nQ: When was the ROC curve created?',
+        'Loading...\nA: During WWII, for radar signal detection',
+        'Loading...\nQ: What does ARIMA stand for?',
+        'Loading...\nA: AutoRegressive Integrated Moving Average',
+        'Loading...\nQ: Who invented the correlation coefficient?',
+        'Loading...\nA: Karl Pearson in 1896',
+        'Loading...\nQ: What is the Central Limit Theorem about?',
+        'Loading...\nA: Sample means approach normal distribution',
+        'Loading...\nQ: What does GARCH model?',
+        'Loading...\nA: Generalized AutoRegressive Conditional Heteroskedasticity (volatility clustering)',
+        'Loading...\nQ: Who developed the Black-Scholes model?',
+        'Loading...\nA: Fischer Black, Myron Scholes, and Robert Merton in 1973',
+        'Loading...\nQ: What is the difference between Type I and Type II errors?',
+        'Loading...\nA: Type I: False positive, Type II: False negative',
+        'Loading...\nQ: What does VAR stand for in econometrics?',
+        'Loading...\nA: Vector AutoRegression',
+        'Loading...\nQ: Who created the concept of statistical significance?',
+        'Loading...\nA: Ronald Fisher in the 1920s',
+        'Loading...\nQ: What is heteroskedasticity?',
+        'Loading...\nA: When error variance is not constant across observations'
+    ];
+    let currentMessageIndex = Math.floor(Math.random() * loadingMessages.length);
+    
+    function startLoadingMessageCycle() {
+        const loadingText = loadingIndicator.querySelector('p.mt-2');
+        if (!loadingText) {
+            console.error('Could not find loading text element');
+            return;
+        }
+        
+        // Start immediately with a random message
+        loadingText.textContent = loadingMessages[currentMessageIndex];
+        
+        loadingMessageInterval = setInterval(() => {
+            // Randomly select the next message index
+            currentMessageIndex = Math.floor(Math.random() * loadingMessages.length);
+            loadingText.textContent = loadingMessages[currentMessageIndex];
+        }, 4000);
+    }
+    
+    function stopLoadingMessageCycle() {
+        if (loadingMessageInterval) {
+            clearInterval(loadingMessageInterval);
+            loadingMessageInterval = null;
+        }
+    }
     
     form.addEventListener('submit', function(e) {
         e.preventDefault();
@@ -1478,8 +1520,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const symbolsArray = symbolsToCheck.split(',').map(s => s.trim()).filter(s => s.length > 0);
         if (symbolsArray.length > 5) {
             alert('Maximum 5 symbols allowed. You have ' + symbolsArray.length + ' symbols.');
-            loadingIndicator.style.display = 'none';
-            form.style.display = 'block';
             return;
         }
         
@@ -1491,15 +1531,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (daysDiff > maxDays) {
             alert('Maximum date range is 5 years. Your range is ' + Math.round(daysDiff / 365 * 100) / 100 + ' years.');
-            loadingIndicator.style.display = 'none';
-            form.style.display = 'block';
             return;
         }
         
         if (startDate >= endDate) {
             alert('Start date must be before end date.');
-            loadingIndicator.style.display = 'none';
-            form.style.display = 'block';
             return;
         }
         
@@ -1507,14 +1543,17 @@ document.addEventListener('DOMContentLoaded', function() {
         const forecastHorizon = parseInt(forecastHorizonInput.value);
         if (forecastHorizon > 3) {
             alert('Maximum forecast horizon is 3 periods.');
-            loadingIndicator.style.display = 'none';
-            form.style.display = 'block';
             return;
         }
         
-        // Show loading indicator
-        loadingIndicator.style.display = 'block';
+        // Hide all content and show loading indicator
+        pageTitle.style.display = 'none';
+        marketIntroText.style.display = 'none';
         form.style.display = 'none';
+        loadingIndicator.style.display = 'block';
+        
+        // Start cycling loading messages
+        startLoadingMessageCycle();
         
         // Prepare form data
         const formData = new FormData(form);
@@ -1632,6 +1671,9 @@ document.addEventListener('DOMContentLoaded', function() {
             return response.json();
         })
         .then(responseData => {
+            // Stop loading message cycle
+            stopLoadingMessageCycle();
+            
             // Log the response data
             console.log("API Response received:", responseData);
             
@@ -1720,8 +1762,12 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => {
             console.error('Error:', error);
-            // Show proper error message
+            // Stop loading message cycle
+            stopLoadingMessageCycle();
+            // Show proper error message and restore form
             loadingIndicator.style.display = 'none';
+            pageTitle.style.display = 'block';
+            marketIntroText.style.display = 'block';
             form.style.display = 'block';
             alert(`Error running analysis: ${error.message}`);
         });
