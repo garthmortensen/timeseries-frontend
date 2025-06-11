@@ -31,7 +31,9 @@ def api_proxy(request, api_path):
     A generic proxy view to forward requests to the backend API.
     It captures the part of the URL after /api_proxy/ and appends it to settings.TIMESERIES_API_URL.
     """
-    api_url = f"{settings.TIMESERIES_API_URL}/{api_path}"
+    # Remove trailing slash from api_path if present, to align with common FastAPI route definitions
+    processed_api_path = api_path.rstrip('/')
+    api_url = f"{settings.TIMESERIES_API_URL}/{processed_api_path}"
     method = request.method
 
     headers = {
@@ -41,7 +43,7 @@ def api_proxy(request, api_path):
     # Add any other headers you might need to forward, e.g., Authorization
 
     try:
-        logger.info(f"API Proxy: Method={method}, Original_Request_Path={request.path}, Target_API_Path={api_path}, Constructed_Target_URL={api_url}")
+        logger.info(f"API Proxy: Method={method}, Original_Request_Path={request.path}, Processed_API_Path={processed_api_path}, Constructed_Target_URL={api_url}")
 
         if method == 'POST':
             # Try to load JSON data, if fails, use raw body
