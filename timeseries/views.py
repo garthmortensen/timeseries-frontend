@@ -41,6 +41,8 @@ def api_proxy(request, api_path):
     # Add any other headers you might need to forward, e.g., Authorization
 
     try:
+        logger.info(f"API Proxy: Method={method}, Original_Request_Path={request.path}, Target_API_Path={api_path}, Constructed_Target_URL={api_url}")
+
         if method == 'POST':
             # Try to load JSON data, if fails, use raw body
             try:
@@ -49,10 +51,22 @@ def api_proxy(request, api_path):
                 data = request.body
             logger.info(f"Proxying POST request to {api_url} with data:")
             logger.info(pprint.pformat(data, indent=2))
-            response = requests.post(api_url, json=data if isinstance(data, dict) else None, data=data if not isinstance(data, dict) else None, headers=headers, timeout=settings.API_TIMEOUT_SECONDS if hasattr(settings, 'API_TIMEOUT_SECONDS') else 60)
+            # Explicitly set allow_redirects=True (which is the default) to be clear
+            response = requests.post(api_url, json=data if isinstance(data, dict) else None, data=data if not isinstance(data, dict) else None, headers=headers, timeout=settings.API_TIMEOUT_SECONDS if hasattr(settings, 'API_TIMEOUT_SECONDS') else 60, allow_redirects=True)
+            logger.info(f"Proxy: Backend POST to {api_url} initially returned status {response.status_code}")
+            if response.history:
+                for i, resp_in_history in enumerate(response.history):
+                    logger.info(f"Proxy: Redirect history [{i}]: {resp_in_history.status_code} {resp_in_history.request.method} -> {resp_in_history.url}")
+            logger.info(f"Proxy: Final URL after potential redirects: {response.url}, Final Status: {response.status_code}, Final Method of original request: {response.request.method}")
+
         elif method == 'GET':
             logger.info(f"Proxying GET request to {api_url} with params: {request.GET}")
-            response = requests.get(api_url, params=request.GET, headers=headers, timeout=settings.API_TIMEOUT_SECONDS if hasattr(settings, 'API_TIMEOUT_SECONDS') else 60)
+            response = requests.get(api_url, params=request.GET, headers=headers, timeout=settings.API_TIMEOUT_SECONDS if hasattr(settings, 'API_TIMEOUT_SECONDS') else 60, allow_redirects=True)
+            logger.info(f"Proxy: Backend GET to {api_url} initially returned status {response.status_code}")
+            if response.history:
+                for i, resp_in_history in enumerate(response.history):
+                    logger.info(f"Proxy: Redirect history [{i}]: {resp_in_history.status_code} {resp_in_history.request.method} -> {resp_in_history.url}")
+            logger.info(f"Proxy: Final URL after potential redirects: {response.url}, Final Status: {response.status_code}, Final Method of original request: {response.request.method}")
         else:
             return JsonResponse({'error': f'Unsupported method: {method}'}, status=405)
 
