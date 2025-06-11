@@ -25,6 +25,64 @@ from django.views.decorators.csrf import csrf_exempt
 # Get a logger instance specific to this module
 logger = logging.getLogger(__name__)
 
+@csrf_exempt
+def api_proxy(request, api_path):
+    """
+    A generic proxy view to forward requests to the backend API.
+    It captures the part of the URL after /api_proxy/ and appends it to settings.TIMESERIES_API_URL.
+    """
+    api_url = f"{settings.TIMESERIES_API_URL}/{api_path}"
+    method = request.method
+
+    headers = {
+        'Content-Type': request.headers.get('Content-Type', 'application/json'),
+        'Accept': request.headers.get('Accept', 'application/json'),
+    }
+    # Add any other headers you might need to forward, e.g., Authorization
+
+    try:
+        if method == 'POST':
+            # Try to load JSON data, if fails, use raw body
+            try:
+                data = json.loads(request.body)
+            except json.JSONDecodeError:
+                data = request.body
+            logger.info(f"Proxying POST request to {api_url} with data:")
+            logger.info(pprint.pformat(data, indent=2))
+            response = requests.post(api_url, json=data if isinstance(data, dict) else None, data=data if not isinstance(data, dict) else None, headers=headers, timeout=settings.API_TIMEOUT_SECONDS if hasattr(settings, 'API_TIMEOUT_SECONDS') else 60)
+        elif method == 'GET':
+            logger.info(f"Proxying GET request to {api_url} with params: {request.GET}")
+            response = requests.get(api_url, params=request.GET, headers=headers, timeout=settings.API_TIMEOUT_SECONDS if hasattr(settings, 'API_TIMEOUT_SECONDS') else 60)
+        else:
+            return JsonResponse({'error': f'Unsupported method: {method}'}, status=405)
+
+        response.raise_for_status() # Raise an exception for HTTP errors (4xx or 5xx)
+
+        # Try to return JSON if the content type suggests it, otherwise raw content
+        if 'application/json' in response.headers.get('Content-Type', ''):
+            return JsonResponse(response.json(), status=response.status_code)
+        else:
+            return HttpResponse(response.content, status=response.status_code, content_type=response.headers.get('Content-Type'))
+
+    except requests.exceptions.Timeout:
+        logger.error(f"Timeout error when proxying request to {api_url}")
+        return JsonResponse({'error': 'The request to the backend API timed out.'}, status=504)
+    except requests.exceptions.ConnectionError:
+        logger.error(f"Connection error when proxying request to {api_url}")
+        return JsonResponse({'error': 'Could not connect to the backend API.'}, status=503)
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Error proxying request to {api_url}: {e}")
+        # Attempt to return the actual error from the backend if available
+        if e.response is not None:
+            try:
+                return JsonResponse(e.response.json(), status=e.response.status_code)
+            except json.JSONDecodeError:
+                return HttpResponse(e.response.text, status=e.response.status_code, content_type=e.response.headers.get('Content-Type'))
+        return JsonResponse({'error': str(e)}, status=500)
+    except Exception as e:
+        logger.exception(f"Unexpected error in API proxy view: {str(e)}")
+        return JsonResponse({'error': f'An unexpected error occurred: {str(e)}'}, status=500)
+
 def index(request):
     """
     Homepage with introduction to the time series analysis tool.

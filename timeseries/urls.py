@@ -14,7 +14,9 @@ urlpatterns = [
     path('analysis/', views.analysis, name='analysis'),
     path('results/', views.results, name='results'),
     path('about/', views.about, name='about'),
-    # API proxy endpoints
+    # Generic API proxy - captures the rest of the path and passes it to the view
+    path('api_proxy/<path:api_path>', views.api_proxy, name='api_proxy'),
+    # Specific API proxy endpoints (if you want to keep them for non-JS or specific logic)
     path('api/run_pipeline/', views.run_pipeline, name='run_pipeline'),
     # Debug endpoints
     path('debug/api-data/', views.debug_data, name='debug_data'),

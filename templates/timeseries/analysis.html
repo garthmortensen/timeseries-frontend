@@ -1473,7 +1473,31 @@ document.addEventListener('DOMContentLoaded', function() {
         'Loading...\nQ: What is heteroskedasticity?',
         'Loading...\nA: When error variance is not constant across observations'
     ];
-    let currentMessageIndex = Math.floor(Math.random() * loadingMessages.length);
+
+    let shuffledQuestionIndices = [];
+    let currentShuffledIndex = 0;
+    const displayDurationPerPair = 5000; // Total time for one Q&A (e.g., 5s)
+    const answerDelay = 2500;           // Time to show Q before showing A (e.g., 2.5s)
+    window.answerTimeoutId = null; // To store the timeout ID for the answer part
+
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    function prepareShuffledIndices() {
+        shuffledQuestionIndices = [];
+        for (let i = 0; i < loadingMessages.length; i += 2) {
+            // Ensure there's a corresponding answer
+            if (loadingMessages[i+1]) {
+                shuffledQuestionIndices.push(i);
+            }
+        }
+        shuffleArray(shuffledQuestionIndices);
+        currentShuffledIndex = 0;
+    }
     
     function startLoadingMessageCycle() {
         const loadingText = loadingIndicator.querySelector('p.mt-2');
@@ -1481,15 +1505,54 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Could not find loading text element');
             return;
         }
-        
-        // Start immediately with a random message
-        loadingText.textContent = loadingMessages[currentMessageIndex];
-        
-        loadingMessageInterval = setInterval(() => {
-            // Randomly select the next message index
-            currentMessageIndex = Math.floor(Math.random() * loadingMessages.length);
-            loadingText.textContent = loadingMessages[currentMessageIndex];
-        }, 4000);
+
+        prepareShuffledIndices();
+
+        if (shuffledQuestionIndices.length === 0) {
+            console.error('No Q&A pairs to display from loadingMessages.');
+            loadingText.textContent = 'Loading...'; // Fallback message
+            return;
+        }
+
+        function displayNextQAPair() {
+            if (currentShuffledIndex >= shuffledQuestionIndices.length) {
+                // Reshuffle and reset if we've gone through all pairs
+                prepareShuffledIndices();
+                // If still no pairs (e.g. loadingMessages was cleared), exit.
+                if (shuffledQuestionIndices.length === 0) {
+                    loadingText.textContent = 'Loading...';
+                    if(loadingMessageInterval) clearInterval(loadingMessageInterval);
+                    if(window.answerTimeoutId) clearTimeout(window.answerTimeoutId);
+                    return;
+                }
+            }
+
+            const questionIndex = shuffledQuestionIndices[currentShuffledIndex];
+            const question = loadingMessages[questionIndex];
+            const answer = loadingMessages[questionIndex + 1];
+
+            loadingText.textContent = question; // Display Question
+
+            if (window.answerTimeoutId) {
+                clearTimeout(window.answerTimeoutId); // Clear previous answer timeout
+            }
+
+            window.answerTimeoutId = setTimeout(() => {
+                // Only update to answer if the question is still displayed
+                if (loadingText.textContent === question) {
+                    loadingText.textContent = answer; // Display Answer
+                }
+            }, answerDelay);
+
+            currentShuffledIndex++;
+        }
+
+        // Initial display of the first Q&A pair
+        displayNextQAPair();
+
+        // Set interval for subsequent Q&A pairs
+        if (loadingMessageInterval) clearInterval(loadingMessageInterval); // Clear existing interval if any
+        loadingMessageInterval = setInterval(displayNextQAPair, displayDurationPerPair);
     }
     
     function stopLoadingMessageCycle() {
@@ -1497,6 +1560,15 @@ document.addEventListener('DOMContentLoaded', function() {
             clearInterval(loadingMessageInterval);
             loadingMessageInterval = null;
         }
+        if (window.answerTimeoutId) {
+            clearTimeout(window.answerTimeoutId);
+            window.answerTimeoutId = null;
+        }
+        // Optionally reset the loading text to a default state if needed
+        // const loadingText = loadingIndicator.querySelector('p.mt-2');
+        // if (loadingText) {
+        //     loadingText.textContent = 'Running analysis, please wait...';
+        // }
     }
     
     form.addEventListener('submit', function(e) {
@@ -1654,7 +1726,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log("Sending data to API:", data);
         
         // Send the AJAX request
-        fetch('/api/run_pipeline/', {
+        fetch('/api_proxy/api/v1/run_pipeline/', { // Changed to use the new proxy endpoint
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

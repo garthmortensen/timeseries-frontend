@@ -118,12 +118,12 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Timeseries API settings
-api_url = os.environ.get('API_URL', 'http://localhost:8001')
-# Ensure the API URL has a protocol if it doesn't already
-if api_url and not api_url.startswith(('http://', 'https://')):
-    api_url = f'https://{api_url}'
-TIMESERIES_API_URL = api_url
+# URL for the backend Timeseries API
+# Used by the api_proxy view and other direct server-to-server API calls
+TIMESERIES_API_URL = os.environ.get("API_URL", "http://localhost:8001")
+
+# Timeout for requests made to the backend Timeseries API
+API_TIMEOUT_SECONDS = int(os.environ.get("API_TIMEOUT_SECONDS", 60))
 
 # Logging configuration
 # Logging configuration
