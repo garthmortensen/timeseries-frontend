@@ -123,7 +123,7 @@
     <div class="form-section">
         <h3 class="section-header">Select Symbols</h3>
         <div class="guide-text">
-            Define which financial instruments to analyze. Choose your preferred method for selecting symbols.
+            Define which symbols to analyze (max 5). Choose your preferred method for selecting symbols
         </div>
         
         <!-- Symbol Selection Method -->
@@ -151,25 +151,25 @@
             
             <div id="market-params" style="display: none;">
                 <div class="mb-3">
-                    <label for="symbols" class="form-label">Symbols (comma-separated) <span class="text-danger">*Max 5 symbols</span></label>
+                    <label for="symbols" class="form-label">Symbols (comma-separated)</label>
                     <input type="text" class="form-control" id="symbols" name="symbols" value="^DJI,^HSI,^FCHI" placeholder="Enter symbols like AAPL,MSFT,GOOGL">
                     <div class="parameter-help">
-                        ^DJI,^HSI,^FCHI - <strong>Limited to 5 symbols maximum for performance</strong>
+                        ^DJI,^HSI,^FCHI
                     </div>
                 </div>
             </div>
             
             <div id="synthetic-params" style="display: block;">
                 <div class="mb-3">
-                    <label for="synthetic-symbols" class="form-label">Synthetic Symbols (comma-separated) <span class="text-danger">*Max 5 symbols</span></label>
+                    <label for="synthetic-symbols" class="form-label">Synthetic Symbols (comma-separated)</label>
                     <input type="text" class="form-control" id="synthetic-symbols" name="synthetic_symbols" value="^DJI,^HSI,^FCHI" placeholder="Enter symbols like SYM1,SYM2,SYM3">
                     <div class="parameter-help">
-                        ^DJI,^HSI,^FCHI (artificial symbol names) - <strong>Limited to 5 symbols maximum for performance</strong>
+                        ^DJI,^HSI,^FCHI (artificial symbol names)
                     </div>
                 </div>
                 <div class="mb-3">
                     <label for="synthetic-anchor-prices" class="form-label">Anchor Prices (comma-separated)</label>
-                    <input type="text" class="form-control" id="synthetic-anchor-prices" name="synthetic_anchor_prices" value="150.0,200.0,15.0" placeholder="Enter prices like 100.0,200.0,50.0">
+                    <input type="text" class="form-control" id="synthetic-anchor-prices" name="synthetic_anchor_prices" value="10,20,30" placeholder="Enter prices like 100.0,200.0,50.0">
                     <div class="parameter-help">
                         150.0,200.0,15.0 (corresponding to symbols above)
                     </div>
@@ -1128,7 +1128,7 @@
     <div class="form-section">
         <h3 class="section-header">Date Range</h3>
         <div class="guide-text">
-            Specify the time period to analyze.
+            Specify the time period (max 5 years).
         </div>
         
         <div class="row">
@@ -1205,9 +1205,9 @@
             <div class="col-md-3">
                 <div class="mb-3">
                     <label for="arima-forecast-steps" class="form-label">Forecast Steps</label>
-                    <input type="number" class="form-control" id="arima-forecast-steps" name="arima_forecast_steps" min="1" max="50" value="10">
+                    <input type="number" class="form-control" id="arima-forecast-steps" name="arima_forecast_steps" min="1" max="20" value="10">
                     <div class="parameter-help">
-                        Number of time periods to forecast into the future. Higher values (10-30) provide more detailed forecast plots but may be less reliable. Use 5-10 for daily data, 10-20 for weekly data. More than 30 steps is rarely meaningful for financial forecasting.
+                        Number of time periods to forecast into the future. Higher values (10-20) provide more detailed forecast plots but may be less reliable. Use 5-10 for daily data, 10-20 for weekly data. More than 20 steps is rarely meaningful for financial forecasting.
                     </div>
                 </div>
             </div>
@@ -1273,7 +1273,7 @@
         <div id="spillover-params" style="display: block;">
             <div class="mb-3">
                 <label for="forecast-horizon" class="form-label">Forecast Horizon</label>
-                <input type="number" class="form-control" id="forecast-horizon" name="forecast_horizon" min="1" max="10" value="3">
+                <input type="number" class="form-control" id="forecast-horizon" name="forecast_horizon" min="1" max="10" value="5">
                 <div class="parameter-help">
                     Determines how far into the future to measure spillover effects. Short horizons (1-3 periods) capture immediate contagion, longer horizons (5-10) reveal persistent interconnections. Use 1-day for high-frequency trading, 1-week for tactical allocation, 1-month for strategic portfolio decisions.
                 </div>
@@ -1449,19 +1449,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const pageTitle = document.querySelector('h1.mb-4');
     const marketIntroText = document.querySelector('.guide-text[style*="font-size: 1.1em"]');
     
-    // Cycling loading messages - Statistics Pop Quiz
-    let loadingMessageInterval;
+// Cycling loading messages - Statistics Pop Quiz
+let loadingMessageInterval;
     const loadingMessages = [
         'Loading...\nQ: When was the ROC curve created?',
         'Loading...\nA: During WWII, for radar signal detection',
-        'Loading...\nQ: What does ARIMA stand for?',
-        'Loading...\nA: AutoRegressive Integrated Moving Average',
+        'Loading...\nQ: What does ARIMA tell you?',
+        'Loading...\nA: How past values and trends shape the future',
         'Loading...\nQ: Who invented the correlation coefficient?',
         'Loading...\nA: Karl Pearson in 1896',
         'Loading...\nQ: What is the Central Limit Theorem about?',
         'Loading...\nA: Sample means approach normal distribution',
-        'Loading...\nQ: What does GARCH model?',
-        'Loading...\nA: Generalized AutoRegressive Conditional Heteroskedasticity (volatility clustering)',
+        'Loading...\nQ: What does GARCH tell you?',
+        'Loading...\nA: When volatility spikes are likely to return',
         'Loading...\nQ: Who developed the Black-Scholes model?',
         'Loading...\nA: Fischer Black, Myron Scholes, and Robert Merton in 1973',
         'Loading...\nQ: What is the difference between Type I and Type II errors?',
@@ -1611,10 +1611,17 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // Validate forecast horizon (max 3)
+        // Validate forecast horizon (max 10)
         const forecastHorizon = parseInt(forecastHorizonInput.value);
-        if (forecastHorizon > 3) {
-            alert('Maximum forecast horizon is 3 periods.');
+        if (forecastHorizon > 10) { 
+            alert('Maximum forecast horizon is 10 periods.');
+            return;
+        }
+
+        // Validate ARIMA forecast steps (max 20)
+        const arimaForecastSteps = parseInt(document.getElementById('arima-forecast-steps').value);
+        if (arimaForecastSteps > 20) {
+            alert('Maximum ARIMA forecast steps is 20 periods.');
             return;
         }
         
