@@ -30,29 +30,27 @@
 {% block content %}
 <div class="container">
     <h1 class="mb-4">About Spillover Lab</h1>
-    
+
+    <!-- Project Overview and Inspiration -->
     <div class="row mb-5">
         <div class="col-md-12">
             <div class="card">
                 <div class="card-body">
-                    <h2 class="card-title">Inspiration for this Lab</h2>
-                    <p>
-                        This project is a reimplementation of my master's research on GARCH volatility spillover effects in global markets. It examined how a Chinese real estate market collapse would impact global real estate ETFs. Think 2008 Global Financial Crisis but with the epicenter switched to Beijing.
-                    </p>
-                    <p>
-                        With this tool, the epicenters can be easily switched. Where do you see a bubble brewing?
-                    </p>
-                    <p>
-                        The original .pdf research is here: 
-                        <a href="https://github.com/garthmortensen/finance/blob/master/15_thesis/Volatility_Spillover.pdf" target="_blank" class="btn btn-outline-secondary btn-sm">
-                            <i class="bi bi-file-pdf"></i> GitHub
-                        </a>
+                    <h2 class="card-title">Project Overview</h2>
+                    <p class="card-text">
+
+                        Spillover Lab is a modular platform for time series analysis and forecasting, built around financial and econometric models. It reimagines my master's thesis on GARCH-based volatility spillovers in global markets.
+
+                        <p><a href="https://github.com/garthmortensen/finance/blob/master/15_thesis/Volatility_Spillover.pdf" target="_blank" class="text-primary font-weight-bold">The original research</a> modeled how a collapse in China's real estate sector could ripple through global real estate ETFs—like the 2008 Financial Crisis, but with the shock centered in Beijing.</p>
+
+                        <p>With Spillover Lab, the epicenter is yours to choose. Where's the next bubble forming?</p>
                     </p>
                 </div>
             </div>
         </div>
     </div>
-    
+
+    <!-- Features -->
     <div class="row mb-5">
         <div class="col-md-12">
             <div class="card">
@@ -110,185 +108,176 @@
             </div>
         </div>
     </div>
-    
+
+    <!-- Implementation -->
     <div class="row mb-5">
         <div class="col-md-12">
             <div class="card">
                 <div class="card-body">
-                    <h2 class="card-title">Project Overview</h2>
-                    <p class="card-text">
-                        Spillover Lab is a comprehensive suite of tools for time series analysis and forecasting, 
-                        focusing on financial and econometric modeling. The project consists of four main components 
-                        that work together to provide a complete solution.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="row mb-5">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="h5 mb-0">Architecture</h3>
-                </div>
-                <div class="card-body">
-                    <p>The components interact according to the following architecture:</p>
-                    
-                    <div class="mermaid">
-                        sequenceDiagram
-                        actor User
-                        participant Frontend as Frontend
-                        participant API as API
-                        participant Package as Compute Package
-                        participant DB as PostgreSQL DB
-                    
-                        User->>Frontend: Submit analysis request
-                        Frontend->>API: Forward request parameters
-                        API->>Package: Execute computations
-                        Package-->>API: Return computation results
-                        API->>DB: Write results to database
-                        API-->>Frontend: Return processed results
-                        Frontend-->>User: Display visualization
-                        %% Direct API interaction
-                        User-->>API: Direct REST/GraphQL request
-                        API-->>User: Direct API response
+                    <h2 class="card-title">Implementation</h2>
+
+                    <!-- Architecture -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">Architecture</h3>
+                        </div>
+                        <div class="card-body">
+                            <p>The following sequence diagram illustrates the project's architecture:</p>
+                            <div class="mermaid">
+                                sequenceDiagram
+                                actor User
+                                actor AIAgent as AI Agent
+                                participant Frontend as Frontend
+                                participant Proxy as Proxy Server
+                                participant API as API
+                                participant Package as Compute Package
+                                participant DB as Database
+                                
+                                User->>Frontend: Submit analysis request
+                                Frontend->>Proxy: Forward request parameters
+                                Proxy->>API: Forward request to backend API
+                                API->>Package: Execute computations
+                                Package-->>API: Return computation results
+                                API->>DB: Write results to database
+                                API-->>Proxy: Return processed results
+                                Proxy-->>Frontend: Return results to frontend
+                                Frontend-->>User: Display visualization
+                                %% Direct API interaction
+                                User-->>Proxy: Direct REST/GraphQL request
+                                Proxy-->>User: Direct API response
+                                %% AI Agent interaction
+                                AIAgent->>Proxy: Submit LLM requests via MCP Server
+                                Proxy->>API: Forward request to backend API
+                                API-->>Proxy: Return analysis results
+                                Proxy-->>AIAgent: Return results to AI Agent
+                            </div>
+                        </div>
                     </div>
-                    
-                    <p class="mt-4">This separation of concerns allows for:</p>
-                    <ul>
-                        <li>Scalable architecture with specialized components</li>
-                        <li>Independent development and deployment of each component</li>
-                        <li>Reuse of the various components</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="row mb-5">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="h5 mb-0">Tech Stack</h3>
-                </div>
-                <div class="card-body">
-                    <div class="row mb-4">
-                        <div class="col-md-3">
-                            <div class="card h-100">
-                                <div class="card-header bg-primary text-white">
-                                    <h3 class="card-title h5 mb-0">Frontend</h3>
-                                </div>
-                                <div class="card-body">
-                                    <p>A Django web app provides an intuitive UI for analysis. Why Django?</p>
-                                    <ul class="small mb-3">
-                                        <li>less boilerplate</li>
-                                        <li>faster prototyping</li>
-                                        <li>batteries-included (auth, forms, routing)</li>
-                                    </ul>
-                                    <a href="https://github.com/garthmortensen/timeseries-frontend" class="btn btn-outline-primary btn-sm" target="_blank">
-                                        <i class="bi bi-github"></i> GitHub Repository
-                                    </a>
-                                </div>
-                            </div>
+
+                    <!-- Tech Stack -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="h5 mb-0">Tech Stack</h3>
                         </div>
-    
-                        <div class="col-md-3">
-                            <div class="card h-100">
-                                <div class="card-header bg-success text-white">
-                                    <h3 class="card-title h5 mb-0">API</h3>
-                                </div>
-                                <div class="card-body">
-                                    <p>A FastAPI service handles the computational tasks. Why FastAPI?</p>
-                                    <ul class="small mb-3">
-                                        <li>Fast, easy to write</li>
-                                        <li>auto-docs with Swagger/OpenAPI</li>
-                                        <li>GraphQL wrapper for flexible data querying</li>
-                                    </ul>
-                                    <div class="mb-2">
-                                        <a href="https://github.com/garthmortensen/timeseries-api" class="btn btn-outline-primary btn-sm" target="_blank">
-                                            <i class="bi bi-github"></i> GitHub Repository
-                                        </a>
-                                    </div>
-                                    <div class="mb-2">
-                                        <a href="https://hub.docker.com/r/goattheprofessionalmeower/timeseries-api" class="btn btn-outline-primary btn-sm" target="_blank">
-                                            <i class="bi bi-box"></i> Docker Hub
-                                        </a>
-                                    </div>
-                                    <div class="mb-2">
-                                        <a href="{{ TIMESERIES_API_URL }}/v1/graphql" class="btn btn-outline-primary btn-sm" target="_blank">
-                                            <i class="bi bi-graph-up"></i> GraphQL Playground
-                                        </a>
-                                    </div>
-                                    <div class="mb-2">
-                                        <a href="{{ TIMESERIES_API_URL }}/docs" class="btn btn-outline-primary btn-sm" target="_blank">
-                                            <i class="bi bi-journal-code"></i> Swagger
-                                        </a>
-                                    </div>
-                                    <div class="mb-2">
-                                        <a href="{{ TIMESERIES_API_URL }}/redoc" class="btn btn-outline-primary btn-sm" target="_blank">
-                                            <i class="bi bi-journal-text"></i> ReDoc
-                                        </a>
-                                    </div>
-                                    <div class="mb-2">
-                                        <a href="{{ TIMESERIES_API_URL }}/api/openapi.json" class="btn btn-outline-primary btn-sm" target="_blank">
-                                            <i class="bi bi-filetype-json"></i> OpenAPI Spec
-                                        </a>
+                        <div class="card-body">
+                            <div class="row mb-4">
+                                <div class="col-md-3">
+                                    <div class="card h-100">
+                                        <div class="card-header bg-primary text-white">
+                                            <h3 class="card-title h5 mb-0">Frontend</h3>
+                                        </div>
+                                        <div class="card-body">
+                                            <p>A Django web app provides an intuitive UI for analysis. Why Django?</p>
+                                            <ul class="small mb-3">
+                                                <li>less boilerplate</li>
+                                                <li>faster prototyping</li>
+                                                <li>batteries-included (auth, forms, routing)</li>
+                                            </ul>
+                                            <a href="https://github.com/garthmortensen/timeseries-frontend" class="btn btn-outline-primary btn-sm" target="_blank">
+                                                <i class="bi bi-github"></i> GitHub Repository
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+
+                                <div class="col-md-3">
+                                    <div class="card h-100">
+                                        <div class="card-header bg-success text-white">
+                                            <h3 class="card-title h5 mb-0">API</h3>
+                                        </div>
+                                        <div class="card-body">
+                                            <p>A FastAPI service handles the computational tasks. Why FastAPI?</p>
+                                            <ul class="small mb-3">
+                                                <li>Fast, easy to write</li>
+                                                <li>auto-docs with Swagger/OpenAPI</li>
+                                                <li>GraphQL wrapper for flexible data querying</li>
+                                            </ul>
+                                            <div class="mb-2">
+                                                <a href="https://github.com/garthmortensen/timeseries-api" class="btn btn-outline-primary btn-sm" target="_blank">
+                                                    <i class="bi bi-github"></i> GitHub Repository
+                                                </a>
+                                            </div>
+                                            <div class="mb-2">
+                                                <a href="https://hub.docker.com/r/goattheprofessionalmeower/timeseries-api" class="btn btn-outline-primary btn-sm" target="_blank">
+                                                    <i class="bi bi-box"></i> Docker Hub
+                                                </a>
+                                            </div>
+                                            <div class="mb-2">
+                                                <a href="{{ TIMESERIES_API_URL }}/v1/graphql" class="btn btn-outline-primary btn-sm" target="_blank">
+                                                    <i class="bi bi-graph-up"></i> GraphQL Playground
+                                                </a>
+                                            </div>
+                                            <div class="mb-2">
+                                                <a href="{{ TIMESERIES_API_URL }}/docs" class="btn btn-outline-primary btn-sm" target="_blank">
+                                                    <i class="bi bi-journal-code"></i> Swagger
+                                                </a>
+                                            </div>
+                                            <div class="mb-2">
+                                                <a href="{{ TIMESERIES_API_URL }}/redoc" class="btn btn-outline-primary btn-sm" target="_blank">
+                                                    <i class="bi bi-journal-text"></i> ReDoc
+                                                </a>
+                                            </div>
+                                            <div class="mb-2">
+                                                <a href="{{ TIMESERIES_API_URL }}/api/openapi.json" class="btn btn-outline-primary btn-sm" target="_blank">
+                                                    <i class="bi bi-filetype-json"></i> OpenAPI Spec
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <div class="card h-100">
+                                        <div class="card-header bg-info text-white">
+                                            <h3 class="card-title h5 mb-0">Compute Package</h3>
+                                        </div>
+                                        <div class="card-body">
+                                            <p>Python package implements statistical models. Why package?</p>
+                                            <ul class="small mb-3">
+                                                <li>package once, use everywhere (API, CLI)</li>
+                                                <li>Easy to publish and integrate with CI/CD</li>
+                                            </ul>
+                                            <div class="mb-2">
+                                                <a href="https://github.com/garthmortensen/timeseries-compute" class="btn btn-outline-primary btn-sm" target="_blank">
+                                                    <i class="bi bi-github"></i> GitHub Repository
+                                                </a>
+                                            </div>
+                                            <div class="mb-2">
+                                                <a href="https://hub.docker.com/r/goattheprofessionalmeower/timeseries-compute" class="btn btn-outline-primary btn-sm" target="_blank">
+                                                    <i class="bi bi-box"></i> Docker Hub
+                                                </a>
+                                            </div>
+                                            <div class="mb-2">
+                                                <a href="https://pypi.org/project/timeseries-compute/" class="btn btn-outline-primary btn-sm" target="_blank">
+                                                    <i class="bi bi-box"></i> PyPI Package
+                                                </a>
+                                            </div>
+                                            <div class="mb-2">
+                                                <a href="https://timeseries-compute.readthedocs.io/en/latest/" class="btn btn-outline-primary btn-sm" target="_blank">
+                                                    <i class="bi bi-book"></i> ReadTheDocs
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <div class="card h-100">
+                                        <div class="card-header bg-warning text-white">
+                                            <h3 class="card-title h5 mb-0">Database</h3>
+                                        </div>
+                                        <div class="card-body">
+                                            <p>A Postgresql database stores pipeline run metadata and model results. Why postgres?</p>
+                                            <ul class="small">
+                                                <li>scales</li>
+                                                <li>good Python libraries (psycopg2, SQLAlchemy)</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div> <!-- inner row -->
                         </div>
-    
-                        <div class="col-md-3">
-                            <div class="card h-100">
-                                <div class="card-header bg-warning text-white">
-                                    <h3 class="card-title h5 mb-0">Database</h3>
-                                </div>
-                                <div class="card-body">
-                                    <p>A Postgresql database stores pipeline run metadata and model results. Why postgres?</p>
-                                    <ul class="small">
-                                        <li>scales</li>
-                                        <li>good Python libraries (psycopg2, SQLAlchemy)</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-    
-                        <div class="col-md-3">
-                            <div class="card h-100">
-                                <div class="card-header bg-info text-white">
-                                    <h3 class="card-title h5 mb-0">Compute Package</h3>
-                                </div>
-                                <div class="card-body">
-                                    <p>Python package implements statistical models. Why package?</p>
-                                    <ul class="small mb-3">
-                                        <li>package once, use everywhere (API, CLI)</li>
-                                        <li>Easy to publish and integrate with CI/CD</li>
-                                    </ul>
-                                    <div class="mb-2">
-                                        <a href="https://github.com/garthmortensen/timeseries-compute" class="btn btn-outline-primary btn-sm" target="_blank">
-                                            <i class="bi bi-github"></i> GitHub Repository
-                                        </a>
-                                    </div>
-                                    <div class="mb-2">
-                                        <a href="https://hub.docker.com/r/goattheprofessionalmeower/timeseries-compute" class="btn btn-outline-primary btn-sm" target="_blank">
-                                            <i class="bi bi-box"></i> Docker Hub
-                                        </a>
-                                    </div>
-                                    <div class="mb-2">
-                                        <a href="https://pypi.org/project/timeseries-compute/" class="btn btn-outline-primary btn-sm" target="_blank">
-                                            <i class="bi bi-box"></i> PyPI Package
-                                        </a>
-                                    </div>
-                                    <div class="mb-2">
-                                        <a href="https://timeseries-compute.readthedocs.io/en/latest/" class="btn btn-outline-primary btn-sm" target="_blank">
-                                            <i class="bi bi-book"></i> ReadTheDocs
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div> <!-- inner row -->
+                    </div>
                 </div>
             </div>
         </div>
