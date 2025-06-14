@@ -83,7 +83,8 @@
 </script>
 
 <div class="guide-text" style="font-size: 1.1em;">
-    <strong>Markets are connected.</strong>  A shock in one can ripple through others—stocks, indexes, even regions.<br>
+
+    <strong>Markets are deeply interconnected</strong>, as the 2008 Global Financial Crisis proved beyond doubt. A shock in one can ripple through others—stocks, indexes, even regions.
     This analysis quantifies those spillovers, predicts volatility, and maps how risk moves between assets.<br><br>
     <strong>Choose Your Own Analysis</strong> below to explore market dynamics, forecast volatility, and uncover contagion paths.
 </div>
@@ -93,6 +94,7 @@
         
     <div class="form-section">
         <h3 class="section-header">Define Data Source</h3>
+        
         <div class="guide-text">
             Use synthetic data for testing or actual market data.
         </div>
@@ -108,14 +110,14 @@
             <input class="form-check-input" type="radio" name="source_actual_or_synthetic_data" id="data-source-actual-yfinance" value="actual_yfinance">
             <label class="form-check-label" for="data-source-actual-yfinance">
                 <strong>Yahoo Finance Market Data</strong><br>
-                <small class="text-muted">Real market data from <a href="https://finance.yahoo.com/" target="_blank" rel="noopener noreferrer">Yahoo Finance API</a>. Low API limits apply!</small>
+                <small class="text-muted">Real market data from Yahoo Finance API. Low API limits apply!</small>
             </label>
         </div>
         <div class="form-check mb-3">
             <input class="form-check-input" type="radio" name="source_actual_or_synthetic_data" id="data-source-actual-stooq" value="actual_stooq">
             <label class="form-check-label" for="data-source-actual-stooq">
                 <strong>Stooq Market Data</strong><br>
-                <small class="text-muted">Real market data from <a href="https://stooq.com/" target="_blank" rel="noopener noreferrer">Stooq data provider</a></small>
+                <small class="text-muted">Real market data from Stooq data provider</small>
             </label>
         </div>
     </div>
@@ -123,7 +125,7 @@
     <div class="form-section">
         <h3 class="section-header">Select Symbols</h3>
         <div class="guide-text">
-            Define which symbols to analyze (max 5). Choose your preferred method for selecting symbols
+            Define which symbols to analyze (max 5 symbols). Choose your preferred method for selecting symbols
         </div>
         
         <!-- Symbol Selection Method -->
@@ -169,9 +171,9 @@
                 </div>
                 <div class="mb-3">
                     <label for="synthetic-anchor-prices" class="form-label">Anchor Prices (comma-separated)</label>
-                    <input type="text" class="form-control" id="synthetic-anchor-prices" name="synthetic_anchor_prices" value="10,20,30" placeholder="Enter prices like 100.0,200.0,50.0">
+                    <input type="text" class="form-control" id="synthetic-anchor-prices" name="synthetic_anchor_prices" value="10, 20, 30" placeholder="Enter prices like 100,200,50">
                     <div class="parameter-help">
-                        150.0,200.0,15.0 (corresponding to symbols above)
+                        10, 20, 30 (corresponding to symbols above)
                     </div>
                 </div>
             </div>
@@ -1171,7 +1173,7 @@
     <div class="form-section">
         <h3 class="section-header">ARIMA Parameters</h3>
         <div class="guide-text">
-            ARIMA models help predict future prices by analyzing patterns in historical data. The model looks at past price movements, trends, and random fluctuations to forecast where prices might go next.
+            ARIMA models predict future prices by analyzing patterns in historical data. By examining past price movements, trends, and random fluctuations, ARIMA provides a data-driven forecast of potential future price trajectories. This enables users to anticipate market behavior and make informed decisions.
         </div>
         
         <div class="row">
@@ -1217,7 +1219,7 @@
     <div class="form-section">
         <h3 class="section-header">GARCH Parameters</h3>
         <div class="guide-text">
-            GARCH models analyze market volatility - how much prices swing up and down over time. This helps identify periods of high uncertainty (like during market crashes) versus stable periods, which is crucial for risk management.
+            GARCH models delve into market volatility, quantifying how much prices swing up and down over time. By identifying periods of heightened uncertainty (e.g., during market crashes) versus stable periods, GARCH models are indispensable for risk management and strategic planning. They help users understand and prepare for potential market turbulence.
         </div>
         
         <div class="row">
@@ -1248,7 +1250,6 @@
                         <option value="skewt">Skewed t</option>
                     </select>
                     <div class="parameter-help">
-                        <strong>Default: Student's t (handles heavy tails)</strong>
                         Financial returns exhibit "fat tails" - extreme movements occur more frequently than normal distribution predicts. Student's t-distribution accommodates this reality, providing better risk estimates during market stress. Use normal distribution only for very stable, low-volatility assets. Consider skewed-t for assets with asymmetric return patterns.
                     </div>
                 </div>
@@ -1258,8 +1259,8 @@
 
     <div class="form-section">
         <h3 class="section-header">Spillover Analysis</h3>
-        <div class="guide-text" style="font-size: 0.95em;">
-            Spillover analysis reveals how shocks in one market or asset spread to others. For example, if the US stock market crashes, how much does it affect European or Asian markets? This helps understand global market interconnectedness and contagion risks.
+        <div class="guide-text" style="font-size: 1.1em;">
+            Spillover analysis uncovers how shocks in one market or asset propagate to others. For instance, a crash in the US stock market might ripple through European or Asian markets. This analysis sheds light on global market interconnectedness and contagion risks, enabling better risk assessment and diversification strategies.
         </div>
         
         <div class="form-check form-switch mb-3">
@@ -1275,7 +1276,7 @@
                 <label for="forecast-horizon" class="form-label">Forecast Horizon</label>
                 <input type="number" class="form-control" id="forecast-horizon" name="forecast_horizon" min="1" max="10" value="5">
                 <div class="parameter-help">
-                    Determines how far into the future to measure spillover effects. Short horizons (1-3 periods) capture immediate contagion, longer horizons (5-10) reveal persistent interconnections. Use 1-day for high-frequency trading, 1-week for tactical allocation, 1-month for strategic portfolio decisions.
+                    Determines how far into the future to measure spillover effects. Short horizons (1-3 periods) capture immediate contagion, longer horizons (5-10) reveal persistent interconnections. Use 1-week for tactical allocation, 1-month for strategic portfolio decisions.
                 </div>
             </div>
             <div class="mb-3">
@@ -1285,7 +1286,7 @@
                     <option value="garch_spillover">GARCH-based</option>
                 </select>
                 <div class="parameter-help">
-                    Diebold-Yilmaz: looks at how much price returns in one asset explain returns in another. It's fast and easy—only uses return series and a VAR model, so great for quick or exploratory analysis. <br>
+                    Diebold-Yilmaz: looks at how much price returns in one asset explain returns in another. It's fast and easy—only uses return series and a VAR model, so great for quick or exploratory analysis.
                     GARCH-based: fits a GARCH model to each asset's volatility first, then measures how those volatility “shocks” spread. It's slower because of that extra modeling step, but it captures risk/volatility contagion over calm vs crisis periods. It also requires more observations.
                 </div>
             </div>
