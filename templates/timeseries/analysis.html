@@ -58,11 +58,6 @@
         display: block;
         margin-bottom: 0.25rem;
     }
-    
-    /* Ensure consistent font size across all sections */
-    p {
-        font-size: 1rem;
-    }
 </style>
 {% endblock %}
 
@@ -88,7 +83,7 @@
 </script>
 
 <div class="guide-text" style="font-size: 1.1em;">
-    <strong>The 2008 Global Financial Crisis proved beyond doubt that markets are deeply interconnected.</strong>  A shock in one can ripple through others—stocks, indexes, even regions.<br>
+    <strong>Markets are connected.</strong>  A shock in one can ripple through others—stocks, indexes, even regions.<br>
     This analysis quantifies those spillovers, predicts volatility, and maps how risk moves between assets.<br><br>
     <strong>Choose Your Own Analysis</strong> below to explore market dynamics, forecast volatility, and uncover contagion paths.
 </div>
@@ -128,7 +123,7 @@
     <div class="form-section">
         <h3 class="section-header">Select Symbols</h3>
         <div class="guide-text">
-            Define which symbols to analyze (max 5 years). Choose your preferred method for selecting symbols
+            Define which symbols to analyze (max 5). Choose your preferred method for selecting symbols
         </div>
         
         <!-- Symbol Selection Method -->
@@ -174,9 +169,9 @@
                 </div>
                 <div class="mb-3">
                     <label for="synthetic-anchor-prices" class="form-label">Anchor Prices (comma-separated)</label>
-                    <input type="text" class="form-control" id="synthetic-anchor-prices" name="synthetic_anchor_prices" value="10, 20, 30" placeholder="Enter prices like 100.0,200.0,50.0">
+                    <input type="text" class="form-control" id="synthetic-anchor-prices" name="synthetic_anchor_prices" value="10,20,30" placeholder="Enter prices like 100.0,200.0,50.0">
                     <div class="parameter-help">
-                        10, 20, 30 (starting points for corresponding symbols above)
+                        150.0,200.0,15.0 (corresponding to symbols above)
                     </div>
                 </div>
             </div>
@@ -1176,15 +1171,14 @@
     <div class="form-section">
         <h3 class="section-header">ARIMA Parameters</h3>
         <div class="guide-text">
-            ARIMA models predict future prices by analyzing patterns in historical data. By examining past price movements, trends, and random fluctuations, ARIMA provides a data-driven forecast of potential future price trajectories. This enables traders and analysts to anticipate market behavior and make informed decisions.
+            ARIMA models help predict future prices by analyzing patterns in historical data. The model looks at past price movements, trends, and random fluctuations to forecast where prices might go next.
         </div>
-
+        
         <div class="row">
             <div class="col-md-3">
                 <div class="mb-3">
                     <label for="arima-p" class="form-label">p: Auto-Regressive Component</label>
-                    <input type="range" class="form-range" id="arima-p-slider" name="arima_p" min="0" max="5" value="2" oninput="document.getElementById('arima-p-input').value = this.value">
-                    <input type="number" class="form-control mt-2" id="arima-p-input" name="arima_p_input" min="0" max="5" value="2" oninput="document.getElementById('arima-p-slider').value = this.value">
+                    <input type="number" class="form-control" id="arima-p" name="arima_p" min="0" max="10" value="2">
                     <div class="parameter-help">
                         The AR component assumes today's price depends on recent past prices. Think of it as "momentum" - if a stock has been rising for several days, AR captures the tendency for that trend to continue. Higher p values (3-5) capture longer-term momentum patterns but risk overfitting to noise. Start with p=1-2 for most financial series, increase if you see strong persistence in price movements.
                     </div>
@@ -1193,8 +1187,7 @@
             <div class="col-md-3">
                 <div class="mb-3">
                     <label for="arima-d" class="form-label">d: Integration Component</label>
-                    <input type="range" class="form-range" id="arima-d-slider" name="arima_d" min="0" max="2" value="0" oninput="document.getElementById('arima-d-input').value = this.value">
-                    <input type="number" class="form-control mt-2" id="arima-d-input" name="arima_d_input" min="0" max="2" value="0" oninput="document.getElementById('arima-d-slider').value = this.value">
+                    <input type="number" class="form-control" id="arima-d" name="arima_d" min="0" max="5" value="0">
                     <div class="parameter-help">
                         Differencing removes trends to make the data stationary (constant mean/variance over time). Most financial prices are "integrated" - they wander randomly and don't revert to a mean. d=1 means taking first differences (today's price minus yesterday's), which usually converts trending price data into stationary returns. Use d=0 for already-stationary data like volatility indices, d=2 rarely needed except for highly trending series. This analysis pipeline automatically differences prices to returns, so this is default to 0.
                     </div>
@@ -1203,8 +1196,7 @@
             <div class="col-md-3">
                 <div class="mb-3">
                     <label for="arima-q" class="form-label">q: Moving Average Component</label>
-                    <input type="range" class="form-range" id="arima-q-slider" name="arima_q" min="0" max="6" value="4" oninput="document.getElementById('arima-q-input').value = this.value">
-                    <input type="number" class="form-control mt-2" id="arima-q-input" name="arima_q_input" min="0" max="6" value="4" oninput="document.getElementById('arima-q-slider').value = this.value">
+                    <input type="number" class="form-control" id="arima-q" name="arima_q" min="0" max="10" value="4">
                     <div class="parameter-help">
                         The MA component captures how today's price reacts to recent random shocks or surprises. Unlike AR which uses actual past prices, MA uses past forecast errors. This helps model temporary market overreactions or corrections. Higher q values (3-6) are useful for financial data since markets often show clustered volatility and mean reversion after shocks.
                     </div>
@@ -1213,8 +1205,7 @@
             <div class="col-md-3">
                 <div class="mb-3">
                     <label for="arima-forecast-steps" class="form-label">Forecast Steps</label>
-                    <input type="range" class="form-range" id="arima-forecast-steps-slider" name="arima_forecast_steps" min="0" max="20" value="10" oninput="document.getElementById('arima-forecast-steps-input').value = this.value">
-                    <input type="number" class="form-control mt-2" id="arima-forecast-steps-input" name="arima_forecast_steps_input" min="0" max="20" value="10" oninput="document.getElementById('arima-forecast-steps-slider').value = this.value">
+                    <input type="number" class="form-control" id="arima-forecast-steps" name="arima_forecast_steps" min="1" max="20" value="10">
                     <div class="parameter-help">
                         Number of time periods to forecast into the future. Higher values (10-20) provide more detailed forecast plots but may be less reliable. Use 5-10 for daily data, 10-20 for weekly data. More than 20 steps is rarely meaningful for financial forecasting.
                     </div>
@@ -1226,15 +1217,14 @@
     <div class="form-section">
         <h3 class="section-header">GARCH Parameters</h3>
         <div class="guide-text">
-            GARCH models delve into market volatility, quantifying how much prices swing up and down over time. By identifying periods of heightened uncertainty (e.g., during market crashes) versus stable periods, GARCH models are indispensable for risk management and strategic planning. They help investors understand and prepare for potential market turbulence.
+            GARCH models analyze market volatility - how much prices swing up and down over time. This helps identify periods of high uncertainty (like during market crashes) versus stable periods, which is crucial for risk management.
         </div>
-
+        
         <div class="row">
             <div class="col-md-4">
                 <div class="mb-3">
                     <label for="garch-p" class="form-label">p: ARCH</label>
-                    <input type="range" class="form-range" id="garch-p-slider" name="garch_p" min="0" max="3" value="1" oninput="document.getElementById('garch-p-input').value = this.value">
-                    <input type="number" class="form-control mt-2" id="garch-p-input" name="garch_p_input" min="0" max="3" value="1" oninput="document.getElementById('garch-p-slider').value = this.value">
+                    <input type="number" class="form-control" id="garch-p" name="garch_p" min="0" max="5" value="1">
                     <div class="parameter-help">
                         ARCH captures how today's volatility depends on recent large price movements. If yesterday had a big price swing, today's volatility will likely be elevated. p=1 is usually sufficient since volatility shocks decay quickly. Higher values (2-3) may help with extremely volatile assets like crypto or emerging market currencies.
                     </div>
@@ -1243,8 +1233,7 @@
             <div class="col-md-4">
                 <div class="mb-3">
                     <label for="garch-q" class="form-label">q: Generalized ARCH</label>
-                    <input type="range" class="form-range" id="garch-q-slider" name="garch_q" min="0" max="2" value="1" oninput="document.getElementById('garch-q-input').value = this.value">
-                    <input type="number" class="form-control mt-2" id="garch-q-input" name="garch_q_input" min="0" max="2" value="1" oninput="document.getElementById('garch-q-slider').value = this.value">
+                    <input type="number" class="form-control" id="garch-q" name="garch_q" min="0" max="5" value="1">
                     <div class="parameter-help">
                         GARCH adds persistence to volatility clustering - the tendency for volatile periods to persist over time. This captures the "volatility of volatility" phenomenon where market stress tends to continue for weeks or months. q=1 handles most cases; q=2 for assets with very persistent volatility clustering like VIX or commodity futures.
                     </div>
@@ -1252,11 +1241,15 @@
             </div>
             <div class="col-md-4">
                 <div class="mb-3">
-                    <label for="forecast-horizon" class="form-label">Forecast Horizon</label>
-                    <input type="range" class="form-range" id="forecast-horizon-slider" name="forecast_horizon" min="0" max="10" value="5" oninput="document.getElementById('forecast-horizon-input').value = this.value">
-                    <input type="number" class="form-control mt-2" id="forecast-horizon-input" name="forecast_horizon_input" min="0" max="10" value="5" oninput="document.getElementById('forecast-horizon-slider').value = this.value">
+                    <label for="garch-dist" class="form-label">Distribution</label>
+                    <select class="form-select" id="garch-dist" name="garch_dist">
+                        <option value="normal">Normal</option>
+                        <option value="t" selected>Student's t</option>
+                        <option value="skewt">Skewed t</option>
+                    </select>
                     <div class="parameter-help">
-                        Determines how far into the future to measure spillover effects. Short horizons (1-3 periods) capture immediate contagion, longer horizons (5-10) reveal persistent interconnections. Use 1-day for high-frequency trading, 1-week for tactical allocation, 1-month for strategic portfolio decisions.
+                        <strong>Default: Student's t (handles heavy tails)</strong>
+                        Financial returns exhibit "fat tails" - extreme movements occur more frequently than normal distribution predicts. Student's t-distribution accommodates this reality, providing better risk estimates during market stress. Use normal distribution only for very stable, low-volatility assets. Consider skewed-t for assets with asymmetric return patterns.
                     </div>
                 </div>
             </div>
@@ -1266,7 +1259,7 @@
     <div class="form-section">
         <h3 class="section-header">Spillover Analysis</h3>
         <div class="guide-text" style="font-size: 0.95em;">
-            Spillover analysis uncovers how shocks in one market or asset propagate to others. For instance, a crash in the US stock market might ripple through European or Asian markets. This analysis sheds light on global market interconnectedness and contagion risks, enabling better risk assessment and diversification strategies.
+            Spillover analysis reveals how shocks in one market or asset spread to others. For example, if the US stock market crashes, how much does it affect European or Asian markets? This helps understand global market interconnectedness and contagion risks.
         </div>
         
         <div class="form-check form-switch mb-3">
