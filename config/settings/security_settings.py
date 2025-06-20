@@ -36,37 +36,41 @@ def is_production_environment():
 # Determine environment
 PRODUCTION = is_production_environment()
 
-# Content Security Policy settings - consistent across environments
-CSP_DEFAULT_SRC = ("'self'",)
-CSP_STYLE_SRC = (
-    "'self'", 
-    "'unsafe-inline'",  # Required for Bootstrap
-    "https://cdn.jsdelivr.net",
-    "https://cdnjs.cloudflare.com",
-    "https://fonts.googleapis.com"
-)
-CSP_SCRIPT_SRC = (
-    "'self'", 
-    "'unsafe-inline'",  # Required for inline scripts
-    "https://cdn.jsdelivr.net",
-    "https://cdn.plot.ly",
-    "https://cdnjs.cloudflare.com",
-    # "https://www.googletagmanager.com/gtag/"  # For Google Analytics if needed
-)
-CSP_FONT_SRC = (
-    "'self'", 
-    "https://cdn.jsdelivr.net",
-    "https://fonts.googleapis.com", 
-    "https://fonts.gstatic.com"
-)
-CSP_IMG_SRC = ("'self'", "data:")
-CSP_CONNECT_SRC = (
-    "'self'", 
-    # Add the Timeseries API URL
-    os.environ.get('TIMESERIES_API_URL', 'http://localhost:8001'),
-    # "https://www.google-analytics.com"  # For Google Analytics if needed
-)
-CSP_FRAME_SRC = ("'none'",)  # Prevents the site from being embedded in a frame
+# Content Security Policy settings - Updated for django-csp 4.0+
+CONTENT_SECURITY_POLICY = {
+    'DIRECTIVES': {
+        'default-src': ("'self'",),
+        'style-src': (
+            "'self'", 
+            "'unsafe-inline'",  # Required for Bootstrap
+            "https://cdn.jsdelivr.net",
+            "https://cdnjs.cloudflare.com",
+            "https://fonts.googleapis.com"
+        ),
+        'script-src': (
+            "'self'", 
+            "'unsafe-inline'",  # Required for inline scripts
+            "https://cdn.jsdelivr.net",
+            "https://cdn.plot.ly",
+            "https://cdnjs.cloudflare.com",
+            # "https://www.googletagmanager.com/gtag/"  # For Google Analytics if needed
+        ),
+        'font-src': (
+            "'self'", 
+            "https://cdn.jsdelivr.net",
+            "https://fonts.googleapis.com", 
+            "https://fonts.gstatic.com"
+        ),
+        'img-src': ("'self'", "data:"),
+        'connect-src': (
+            "'self'", 
+            # Add the Timeseries API URL
+            os.environ.get('TIMESERIES_API_URL', 'http://localhost:8001'),
+            # "https://www.google-analytics.com"  # For Google Analytics if needed
+        ),
+        'frame-src': ("'none'",),  # Prevents the site from being embedded in a frame
+    }
+}
 
 # XSS Protection - consistent across environments
 SECURE_BROWSER_XSS_FILTER = True

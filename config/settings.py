@@ -144,14 +144,18 @@ CSRF_COOKIE_SECURE = not DEBUG # True in production
 # Set SECURE_SSL_REDIRECT to False because Cloud Run handles SSL termination.
 SECURE_SSL_REDIRECT = False
 
-# Content Security Policy
-CSP_DEFAULT_SRC = ("'self'",)
-CSP_SCRIPT_SRC = ("'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://cdn.plot.ly", "https://www.googletagmanager.com")
-CSP_STYLE_SRC = ("'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://fonts.googleapis.com") # Added fonts.googleapis.com for Bootstrap if needed
-CSP_IMG_SRC = ("'self'", "data:") # Added data: for inline images if any
-CSP_FONT_SRC = ("'self'", "https://fonts.gstatic.com") # Added fonts.gstatic.com for Bootstrap if needed
-CSP_CONNECT_SRC = ("'self'", "https://www.googletagmanager.com", "https://www.google-analytics.com") # For gtag.js to send data
-CSP_FRAME_ANCESTORS = ("'none'",) # Disallow framing by default
-CSP_OBJECT_SRC = ("'none'",)
-CSP_BASE_URI = ("'self'",)
-CSP_INCLUDE_NONCE_IN = ['script-src'] # If you want to use nonces for inline scripts later
+# Content Security Policy - Updated for django-csp 4.0+
+CONTENT_SECURITY_POLICY = {
+    'DIRECTIVES': {
+        'default-src': ("'self'",),
+        'script-src': ("'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://cdn.plot.ly", "https://www.googletagmanager.com"),
+        'style-src': ("'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://fonts.googleapis.com"),
+        'img-src': ("'self'", "data:"),
+        'font-src': ("'self'", "https://fonts.gstatic.com"),
+        'connect-src': ("'self'", "https://www.googletagmanager.com", "https://www.google-analytics.com"),
+        'frame-ancestors': ("'none'",),
+        'object-src': ("'none'",),
+        'base-uri': ("'self'",),
+        'frame-src': ("'none'",),
+    }
+}

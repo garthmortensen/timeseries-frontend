@@ -186,10 +186,15 @@ LOGGING = {
     },
 }
 
-# Content Security Policy settings
-CSP_DEFAULT_SRC = ("'self'",)
-CSP_STYLE_SRC = ("'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://fonts.googleapis.com")
-CSP_SCRIPT_SRC = ("'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://cdn.plot.ly", "https://www.googletagmanager.com")
-CSP_FONT_SRC = ("'self'", "https://cdn.jsdelivr.net", "https://fonts.gstatic.com")
-CSP_IMG_SRC = ("'self'", "data:")
-CSP_CONNECT_SRC = ("'self'", TIMESERIES_API_URL, "https://www.googletagmanager.com", "https://www.google-analytics.com")
+# Content Security Policy settings - Updated for django-csp 4.0+
+CONTENT_SECURITY_POLICY = {
+    'DIRECTIVES': {
+        'default-src': ("'self'",),
+        'style-src': ("'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://fonts.googleapis.com"),
+        'script-src': ("'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://cdn.plot.ly", "https://www.googletagmanager.com"),
+        'font-src': ("'self'", "https://cdn.jsdelivr.net", "https://fonts.gstatic.com"),
+        'img-src': ("'self'", "data:"),
+        'connect-src': ("'self'", TIMESERIES_API_URL, "https://www.googletagmanager.com", "https://www.google-analytics.com"),
+        'frame-src': ("'none'",),
+    }
+}
