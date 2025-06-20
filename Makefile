@@ -2,7 +2,7 @@
 # === FILE META OPENING ===
 # file: ./timeseries-frontend/Makefile
 # role: config
-# desc: build automation and Docker management commands for the frontend Django application
+# desc: build automation and Docker management commands for the frontend Django application with uv support
 # === FILE META CLOSING ===
 #
 
@@ -13,10 +13,37 @@ print-% : ; @echo $* = $($*)
 
 PROJECT_NAME = timeseries-frontend
 SHELL = /bin/bash
-PYTHON ?= $(shell command -v python3 || command -v python)
+UV ?= uv
+PYTHON ?= $(UV) run python
 COMMIT_HASH = $(shell git log -1 --format=%h || echo "dev")
 DJANGO_PORT ?= 8000
 API_MOCK_PORT ?= 8001
+
+# uv environment management
+.PHONY: install
+install:
+	$(UV) sync
+
+.PHONY: install-dev
+install-dev:
+	$(UV) sync --extra dev
+
+.PHONY: update
+update:
+	$(UV) lock --upgrade
+	$(UV) sync
+
+.PHONY: add
+add:
+	$(UV) add $(PKG)
+
+.PHONY: add-dev
+add-dev:
+	$(UV) add --optional dev $(PKG)
+
+.PHONY: remove
+remove:
+	$(UV) remove $(PKG)
 
 # Docker commands
 .PHONY: docker-clean
@@ -78,11 +105,31 @@ shell:
 
 .PHONY: test
 test:
-	$(PYTHON) manage.py test
+	$(PYTHON) -m pytest
+
+.PHONY: test-coverage
+test-coverage:
+	$(PYTHON) -m pytest --cov=timeseries --cov-report=html --cov-report=term
 
 .PHONY: static
 static:
 	$(PYTHON) manage.py collectstatic --noinput
+
+# Code quality commands
+.PHONY: format
+format:
+	$(UV) run black .
+
+.PHONY: format-check
+format-check:
+	$(UV) run black --check .
+
+.PHONY: lint
+lint:
+	$(UV) run flake8 .
+
+.PHONY: check
+check: format-check lint test
 
 # API Mock commands
 .PHONY: run-api-mock
@@ -91,7 +138,7 @@ run-api-mock:
 
 # Application setup commands
 .PHONY: setup-dev
-setup-dev: venv install migrate static
+setup-dev: install-dev migrate static
 	@echo "Development environment setup complete!"
 
 # Environment management
@@ -104,21 +151,18 @@ create-env-file:
 		echo ".env file already exists"; \
 	fi
 
-# Update dependencies
-.PHONY: update-deps
-update-deps:
-	@echo "Updating dependencies to latest versions..."
-	@if [ -d "venv" ]; then \
-		echo "Activating virtual environment..."; \
-		. venv/bin/activate && \
-		$(PYTHON) -m pip install --upgrade pip && \
-		$(PYTHON) -m pip install --upgrade -r requirements.txt && \
-		echo "Generating new requirements.txt with updated dependencies..." && \
-		$(PYTHON) -m pip freeze > requirements.txt && \
-		echo "Dependencies updated."; \
-	else \
-		echo "Virtual environment 'venv' not found."; \
-	fi
+# Clean commands
+.PHONY: clean
+clean:
+	find . -type f -name "*.pyc" -delete
+	find . -type d -name "__pycache__" -delete
+	rm -rf htmlcov/
+	rm -rf .coverage
+
+.PHONY: clean-all
+clean-all: clean
+	rm -rf .venv/
+	rm -f uv.lock
 
 # Rebuild shortcuts
 .PHONY: rebuild
@@ -132,8 +176,34 @@ rebuild-compose: compose-down docker-clean
 # Production commands
 .PHONY: gunicorn
 gunicorn:
-	gunicorn --bind 0.0.0.0:$(DJANGO_PORT) config.wsgi:application
+	$(UV) run gunicorn --bind 0.0.0.0:$(DJANGO_PORT) config.wsgi:application
 
 .PHONY: deploy-check
 deploy-check:
 	$(PYTHON) manage.py check --deploy
+
+# Help command
+.PHONY: help
+help:
+	@echo "Available targets:"
+	@echo "  install          - Install dependencies"
+	@echo "  install-dev      - Install dependencies including dev tools"
+	@echo "  update           - Update dependencies and lock file"
+	@echo "  add PKG=<name>   - Add a new dependency"
+	@echo "  add-dev PKG=<name> - Add a new dev dependency"
+	@echo "  remove PKG=<name> - Remove a dependency"
+	@echo "  run-server       - Start Django development server"
+	@echo "  migrate          - Run database migrations"
+	@echo "  test             - Run tests with pytest"
+	@echo "  test-coverage    - Run tests with coverage report"
+	@echo "  format           - Format code with black"
+	@echo "  lint             - Lint code with flake8"
+	@echo "  check            - Run all code quality checks"
+	@echo "  docker-build     - Build Docker image"
+	@echo "  docker-run       - Run Docker container"
+	@echo "  setup-dev        - Complete development setup"
+	@echo "  clean            - Clean Python cache files"
+	@echo "  clean-all        - Clean everything including venv"
+
+.PHONY: default
+default: help

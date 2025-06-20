@@ -39,11 +39,11 @@ var/
 pip-log.txt
 pip-delete-this-directory.txt
 
-# Virtual Environment
+# Virtual Environment (traditional and uv)
 env/
 venv/
 ENV/
-.venv
+.venv/
 .env
 env.bak/
 venv.bak/

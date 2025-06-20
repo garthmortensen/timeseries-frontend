@@ -1,5 +1,5 @@
-# Use the official Python image
-FROM python:3.13
+# Use the official Python image with uv pre-installed
+FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim
 
 # Install only essential system dependencies
 RUN apt-get update && apt-get install -y \
@@ -24,15 +24,16 @@ RUN chown -R djangoapp:djangoapp /app
 # Switch to non-root user
 USER djangoapp
 
-# Copy requirements file (as the user)
-COPY --chown=djangoapp:djangoapp requirements.txt ./requirements.txt
+# Enable bytecode compilation for performance
+ENV UV_COMPILE_BYTECODE=1
+# Cache optimization for Docker builds
+ENV UV_LINK_MODE=copy
 
-# Install dependencies with optimizations - prefer binary wheels
-RUN pip install --no-cache-dir --user --upgrade pip && \
-    pip install --no-cache-dir --user --prefer-binary -r requirements.txt
+# Copy dependency files
+COPY --chown=djangoapp:djangoapp pyproject.toml uv.lock ./
 
-# Add .local/bin to PATH to ensure installed executables are found
-ENV PATH="/home/djangoapp/.local/bin:${PATH}"
+# Install dependencies using uv
+RUN uv sync --frozen --no-dev
 
 # Copy application files (as the user)
 COPY --chown=djangoapp:djangoapp ./ /app
@@ -43,8 +44,8 @@ EXPOSE 8080
 # Set environment variable for API URL (example, adjust as needed)
 ENV API_URL="http://timeseries-api:8080"
 
-# Collect static files (already present)
-RUN python manage.py collectstatic --noinput
+# Collect static files using uv run
+RUN uv run python manage.py collectstatic --noinput
 
 # Use gunicorn with PORT environment variable for Cloud Run compatibility
-CMD exec gunicorn --bind 0.0.0.0:${PORT:-8080} --workers 2 config.wsgi:application
+CMD uv run gunicorn --bind 0.0.0.0:${PORT:-8080} --workers 2 config.wsgi:application

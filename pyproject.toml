@@ -1,0 +1,112 @@
+[project]
+name = "timeseries-frontend"
+version = "0.1.0"
+description = "Django frontend for spillover analysis and time series modeling"
+authors = [
+    { name="Garth Mortensen", email="mortensengarth@hotmail.com" }
+]
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text="MIT" }
+
+dependencies = [
+    "django>=5.2.3",
+    "gunicorn>=23.0.0",
+    "whitenoise>=6.9.0",
+    "django-csp>=3.8",
+    "python-dotenv>=1.1.0",
+    "requests>=2.32.4",
+]
+
+[project.optional-dependencies]
+dev = [
+    "django-debug-toolbar>=4.4.6",
+    "pytest>=8.3.5",
+    "pytest-django>=4.9.0",
+    "pytest-cov>=6.0.0",
+    "black>=25.1.0",
+    "flake8>=7.2.0",
+    "coverage>=7.7.1",
+]
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = { find = {} }
+
+[tool.black]
+line-length = 88
+target-version = ['py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+  | migrations
+)/
+'''
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.development"
+python_files = ["tests.py", "test_*.py", "*_tests.py"]
+addopts = [
+    "--verbose",
+    "--tb=short",
+    "--strict-markers",
+    "--disable-warnings",
+    "--cov=timeseries",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+]
+testpaths = ["timeseries/tests"]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+]
+
+[tool.coverage.run]
+source = ["timeseries"]
+omit = [
+    "*/migrations/*",
+    "*/tests/*",
+    "*/venv/*",
+    "manage.py",
+    "config/wsgi.py",
+    "config/asgi.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = ["E203", "W503"]
+exclude = [
+    ".git",
+    "__pycache__",
+    "migrations",
+    ".venv",
+    "build",
+    "dist",
+]
