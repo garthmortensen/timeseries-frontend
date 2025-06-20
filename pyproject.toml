@@ -110,3 +110,71 @@ exclude = [
     "build",
     "dist",
 ]
+[tool.commitizen]
+name = "cz_conventional_commits"
+tag_format = "frontend-v$version"
+version_scheme = "pep440"
+version_provider = "pep621"
+update_changelog_on_bump = true
+major_version_zero = true
+version_files = [
+    "pyproject.toml:version"
+]
+
+# Custom scopes specific to Django frontend
+[tool.commitizen.settings]
+schema_pattern = "^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\\(django|views|templates|static|config|models|api|auth|middleware|forms|tests|migrations)\\)?: .{1,50}"
+
+# Define frontend-specific commit types and scopes
+[[tool.commitizen.customize.questions]]
+type = "list"
+name = "prefix"
+choices = [
+    {value = "feat", name = "feat: A new feature"},
+    {value = "fix", name = "fix: A bug fix"},
+    {value = "docs", name = "docs: Documentation only changes"},
+    {value = "style", name = "style: Changes that do not affect the meaning of the code"},
+    {value = "refactor", name = "refactor: A code change that neither fixes a bug nor adds a feature"},
+    {value = "perf", name = "perf: A code change that improves performance"},
+    {value = "test", name = "test: Adding missing tests or correcting existing tests"},
+    {value = "build", name = "build: Changes that affect the build system or external dependencies"},
+    {value = "ci", name = "ci: Changes to our CI configuration files and scripts"},
+    {value = "chore", name = "chore: Other changes that don't modify src or test files"},
+    {value = "revert", name = "revert: Reverts a previous commit"}
+]
+message = "Select the type of change that you're committing"
+
+[[tool.commitizen.customize.questions]]
+type = "list"
+name = "scope"
+choices = [
+    {value = "django", name = "django: Core Django configuration"},
+    {value = "views", name = "views: Django views and URL routing"},
+    {value = "templates", name = "templates: HTML templates and UI"},
+    {value = "static", name = "static: CSS, JavaScript, and static assets"},
+    {value = "config", name = "config: Settings and configuration"},
+    {value = "models", name = "models: Data models and database"},
+    {value = "api", name = "api: API client and external integrations"},
+    {value = "auth", name = "auth: Authentication and authorization"},
+    {value = "middleware", name = "middleware: Django middleware"},
+    {value = "forms", name = "forms: Django forms and validation"},
+    {value = "tests", name = "tests: Testing code"},
+    {value = "migrations", name = "migrations: Database migrations"},
+    {value = "security", name = "security: Security-related changes (CSP, CORS, etc.)"}
+]
+message = "What is the scope of this change (optional)"
+
+[[tool.commitizen.customize.questions]]
+type = "input"
+name = "subject"
+message = "Write a short, imperative tense description of the change (max 50 chars)"
+
+[[tool.commitizen.customize.questions]]
+type = "input"
+name = "body"
+message = "Provide a longer description of the change (optional)"
+
+[[tool.commitizen.customize.questions]]
+type = "input"
+name = "footer"
+message = "List any BREAKING CHANGES or issues closed by this change (optional)"
