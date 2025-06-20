@@ -1282,12 +1282,34 @@
             <div class="mb-3">
                 <label for="spillover-method" class="form-label">Spillover Method</label>
                 <select class="form-select" id="spillover-method" name="spillover_method">
-                    <option value="diebold_yilmaz" selected>Diebold-Yilmaz</option>
-                    <option value="garch_spillover">GARCH-based</option>
+                    <option value="diebold_yilmaz" selected>Diebold-Yilmaz VAR-GFEVD</option>
+                    <option value="garch_spillover">GARCH Volatility Spillover</option>
                 </select>
                 <div class="parameter-help">
-                    Diebold-Yilmaz: looks at how much price returns in one asset explain returns in another. It's fast and easy—only uses return series and a VAR model, so great for quick or exploratory analysis.
-                    GARCH-based: fits a GARCH model to each asset's volatility first, then measures how those volatility “shocks” spread. It's slower because of that extra modeling step, but it captures risk/volatility contagion over calm vs crisis periods. It also requires more observations.
+                    <strong>Diebold-Yilmaz VAR-GFEVD:</strong> Uses Vector AutoRegression (VAR) with Generalized Forecast Error Variance Decomposition to measure how shocks in one asset's returns explain variance in other assets. This is the standard academic methodology for spillover analysis, providing total spillover index, directional spillover, and net spillover measures.<br>
+                    <strong>GARCH Volatility Spillover:</strong> Applies spillover analysis to GARCH-modeled conditional volatilities rather than raw returns. This captures how volatility shocks (rather than return shocks) propagate between assets, useful for understanding risk contagion during volatile periods.
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="var-lag-selection" class="form-label">VAR Lag Selection Method</label>
+                <select class="form-select" id="var-lag-selection" name="var_lag_selection_method">
+                    <option value="aic" selected>AIC (Akaike Information Criterion)</option>
+                    <option value="bic">BIC (Bayesian Information Criterion)</option>
+                    <option value="hqic">HQIC (Hannan-Quinn Information Criterion)</option>
+                </select>
+                <div class="parameter-help">
+                    <strong>AIC:</strong> Tends to select higher lag orders, capturing more dynamics but potentially overfitting.<br>
+                    <strong>BIC:</strong> More conservative, tends to select lower lag orders, preferred for parsimonious models.<br>
+                    <strong>HQIC:</strong> Balance between AIC and BIC, good compromise for most applications.
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="max-lags" class="form-label">Maximum Lags to Consider</label>
+                <input type="number" class="form-control" id="max-lags" name="max_lags" min="1" max="20" value="10">
+                <div class="parameter-help">
+                    Maximum number of lags to test for VAR model selection. Higher values allow capturing longer-term relationships but require more data. For daily data, 5-10 lags are typical; for weekly/monthly data, consider 10-20 lags.
                 </div>
             </div>
         </div>
@@ -1716,9 +1738,14 @@ let loadingMessageInterval;
         // Using the wrong input will give meaningless spillover metrics.
         if (data.spillover_enabled) {
             const spilloverMethod = document.getElementById('spillover-method').value;
+            const varLagSelection = document.getElementById('var-lag-selection').value;
+            const maxLags = parseInt(document.getElementById('max-lags').value);
+            
             data.spillover_params = {
                 forecast_horizon: parseInt(data.forecast_horizon) || 5,
-                method: spilloverMethod
+                method: spilloverMethod,
+                var_lag_selection_method: varLagSelection || 'aic',
+                max_lags: maxLags || 10
             };
         }
         

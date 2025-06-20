@@ -994,131 +994,213 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Populate Spillover Analysis tab
-    if (results.spillover_results) {
+    if (results.spillover_results || results.var_results) {
         const spilloverContainer = document.getElementById('spillover-results-container');
         let spilloverHTML = '';
         
-        // Add main spillover interpretation at the very top
-        spilloverHTML += '<div class="alert alert-info mt-2 mb-4">';
-        if (results.spillover_results.interpretation) {
-            spilloverHTML += `<p><strong>Interpretation:</strong> ${results.spillover_results.interpretation}</p>`;
-        }
-        spilloverHTML += '</div>';
-        
-        // Pairwise spillover matrix (after interpretation)
-        if (results.spillover_results.pairwise_spillover) {
-            spilloverHTML += '<h5 class="mt-2">Pairwise Spillover Matrix</h5>';
-            spilloverHTML += '<p>Values show the percentage of forecast error variance of row i coming from innovations to column j.</p>';
+        // VAR Model Results Section (if available)
+        if (results.var_results) {
+            spilloverHTML += '<div class="card mb-4">';
+            spilloverHTML += '<div class="card-header"><h5 class="mb-0">VAR Model Results</h5></div>';
+            spilloverHTML += '<div class="card-body">';
             
-            // Extract symbols from pairwise spillover data
-            const symbols = Object.keys(results.spillover_results.pairwise_spillover);
-            
-            if (symbols.length > 0) {
-                spilloverHTML += '<table class="table table-bordered table-sm">';
-                spilloverHTML += '<thead><tr><th>From/To</th>';
-                
-                // Header row with symbols
-                symbols.forEach(symbol => {
-                    spilloverHTML += `<th>${symbol}</th>`;
-                });
-                
-                spilloverHTML += '</tr></thead><tbody>';
-                
-                // Data rows
-                symbols.forEach(fromSymbol => {
-                    spilloverHTML += `<tr><th>${fromSymbol}</th>`;
-                    
-                    symbols.forEach(toSymbol => {
-                        const value = results.spillover_results.pairwise_spillover[fromSymbol][toSymbol] * 100 || 0;
-                        const isHighlighted = fromSymbol !== toSymbol && value > 10; // Highlight significant spillovers
-                        
-                        spilloverHTML += `<td class="${isHighlighted ? 'table-warning' : ''}">${value.toFixed(2)}%</td>`;
-                    });
-                    
-                    spilloverHTML += '</tr>';
-                });
-                
-                spilloverHTML += '</tbody></table>';
+            // VAR Model interpretation
+            if (results.var_results.interpretation) {
+                spilloverHTML += `<div class="alert alert-info mb-3">
+                    <strong>VAR Model Interpretation:</strong> ${results.var_results.interpretation}
+                </div>`;
             }
-        }
-        
-        // Pairwise Spillover Relationships Table (R² and Significant Lags)
-        if (results.spillover_results.pairwise_spillover_table || results.spillover_results.pairwise_spillover) {
-            spilloverHTML += '<h5 class="mt-4">Pairwise Spillover Relationships</h5>';
             
-            // Add interpretation before the relationships table
-            spilloverHTML += '<div class="alert alert-info mt-3 mb-3">';
-            spilloverHTML += '<ul class="mb-0">';
-            spilloverHTML += '<li><strong>R² Value:</strong> Measures the strength of the relationship (0 = no relationship, 1 = perfect relationship)</li>';
-            spilloverHTML += '<li><strong>Strength:</strong> Strong (>25%), Moderate (10-25%), Weak (<10%)</li>';
-            spilloverHTML += '<li><strong>Significant Lags:</strong> Time periods where spillover effects are statistically significant</li>';
-            spilloverHTML += '<li><strong>Color Coding:</strong> Green = Strong relationships, Yellow = Moderate relationships</li>';
-            spilloverHTML += '</ul>';
+            // VAR Model Summary
+            spilloverHTML += '<div class="row mb-3">';
+            spilloverHTML += '<div class="col-md-4">';
+            spilloverHTML += `<div class="card border-primary">
+                <div class="card-body text-center">
+                    <h6 class="card-title text-primary">Selected Lag Order</h6>
+                    <h3 class="mb-0">${results.var_results.selected_lag}</h3>
+                    <small class="text-muted">using ${results.var_results.ic_used}</small>
+                </div>
+            </div>`;
+            spilloverHTML += '</div>';
             spilloverHTML += '</div>';
             
-            spilloverHTML += '<p>This table shows the strength of relationships (R²) and significant time lags between each pair of markets.</p>';
+            // VAR Model Details
+            spilloverHTML += '<details class="mb-3">';
+            spilloverHTML += '<summary class="btn btn-outline-secondary btn-sm">Show VAR Model Summary</summary>';
+            spilloverHTML += `<pre class="mt-2 p-3 bg-light rounded" style="font-size: 0.8em;">${results.var_results.fitted_model}</pre>`;
+            spilloverHTML += '</details>';
             
-            let pairwiseTableData = results.spillover_results.pairwise_spillover_table;
-            
-            // If transformed data isn't available, create it now
-            if (!pairwiseTableData && results.spillover_results.pairwise_spillover) {
-                pairwiseTableData = [];
-                Object.entries(results.spillover_results.pairwise_spillover).forEach(([pair, data]) => {
-                    const [from, to] = pair.split('_to_');
-                    pairwiseTableData.push({
-                        from: from,
-                        to: to,
-                        relationship: pair,
-                        r_squared: data.r_squared,
-                        r_squared_percent: (data.r_squared * 100).toFixed(2),
-                        significant_lags: data.significant_lags,
-                        significant_lags_text: data.significant_lags.length > 0 ? data.significant_lags.join(', ') : 'None',
-                        strength: data.r_squared > 0.25 ? 'Strong' : data.r_squared > 0.10 ? 'Moderate' : 'Weak'
-                    });
-                });
+            // FEVD Matrix Display
+            if (results.var_results.fevd_matrix && results.var_results.fevd_matrix.length > 0) {
+                spilloverHTML += '<h6 class="mt-3">Forecast Error Variance Decomposition (FEVD) Matrix</h6>';
+                spilloverHTML += '<p class="text-muted small">Shows what percentage of each variable\'s forecast error variance is explained by shocks to other variables.</p>';
                 
-                // Sort by R² value (strongest first)
-                pairwiseTableData.sort((a, b) => b.r_squared - a.r_squared);
+                // Extract symbols from coefficients or other source
+                const symbols = Object.keys(results.var_results.coefficients || {});
+                
+                if (symbols.length > 0 && results.var_results.fevd_matrix.length === symbols.length) {
+                    spilloverHTML += '<div class="table-responsive">';
+                    spilloverHTML += '<table class="table table-bordered table-sm">';
+                    spilloverHTML += '<thead class="table-light"><tr><th>Variable</th>';
+                    symbols.forEach(symbol => {
+                        spilloverHTML += `<th>${symbol}</th>`;
+                    });
+                    spilloverHTML += '</tr></thead><tbody>';
+                    
+                    symbols.forEach((symbol, i) => {
+                        spilloverHTML += `<tr><th class="table-light">${symbol}</th>`;
+                        results.var_results.fevd_matrix[i].forEach((value, j) => {
+                            const isOwnShock = i === j;
+                            const cellClass = isOwnShock ? 'table-info' : (value > 0.1 ? 'table-warning' : '');
+                            spilloverHTML += `<td class="${cellClass}">${(value * 100).toFixed(2)}%</td>`;
+                        });
+                        spilloverHTML += '</tr>';
+                    });
+                    
+                    spilloverHTML += '</tbody></table>';
+                    spilloverHTML += '</div>';
+                }
             }
             
-            if (pairwiseTableData && pairwiseTableData.length > 0) {
+            // FEVD Interpretations
+            if (results.var_results.fevd_interpretation) {
+                spilloverHTML += '<h6 class="mt-3">FEVD Interpretations</h6>';
+                spilloverHTML += '<div class="row">';
+                Object.entries(results.var_results.fevd_interpretation).forEach(([symbol, interpretation]) => {
+                    spilloverHTML += `<div class="col-md-6 mb-2">
+                        <div class="card border-secondary">
+                            <div class="card-body">
+                                <h6 class="card-title">${symbol}</h6>
+                                <p class="card-text small">${interpretation}</p>
+                            </div>
+                        </div>
+                    </div>`;
+                });
+                spilloverHTML += '</div>';
+            }
+            
+            spilloverHTML += '</div></div>';
+        }
+        
+        // Spillover Analysis Results Section
+        if (results.spillover_results) {
+            spilloverHTML += '<div class="card mb-4">';
+            spilloverHTML += '<div class="card-header"><h5 class="mb-0">Spillover Analysis Results</h5></div>';
+            spilloverHTML += '<div class="card-body">';
+            
+            // Main spillover interpretation
+            if (results.spillover_results.interpretation) {
+                spilloverHTML += `<div class="alert alert-info mb-4">
+                    <strong>Spillover Interpretation:</strong> ${results.spillover_results.interpretation}
+                </div>`;
+            }
+            
+            // Key Spillover Metrics
+            spilloverHTML += '<div class="row mb-4">';
+            
+            // Total Spillover Index
+            if (results.spillover_results.total_spillover_index !== undefined) {
+                spilloverHTML += `<div class="col-md-4">
+                    <div class="card border-danger">
+                        <div class="card-body text-center">
+                            <h6 class="card-title text-danger">Total Spillover Index</h6>
+                            <h3 class="mb-0">${(results.spillover_results.total_spillover_index * 100).toFixed(2)}%</h3>
+                            <small class="text-muted">System-wide interconnectedness</small>
+                        </div>
+                    </div>
+                </div>`;
+            }
+            
+            spilloverHTML += '</div>';
+            
+            // Directional Spillover
+            if (results.spillover_results.directional_spillover) {
+                spilloverHTML += '<h6 class="mt-3">Directional Spillover</h6>';
+                spilloverHTML += '<p class="text-muted small">Shows spillover TO others and FROM others for each variable.</p>';
                 spilloverHTML += '<div class="table-responsive">';
-                spilloverHTML += '<table class="table table-bordered table-striped table-hover">';
-                spilloverHTML += `
-                    <thead class="table-dark">
-                        <tr>
-                            <th>From</th>
-                            <th>To</th>
-                            <th>R² Value</th>
-                            <th>R² Percentage</th>
-                            <th>Strength</th>
-                            <th>Significant Lags</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                `;
+                spilloverHTML += '<table class="table table-bordered table-striped">';
+                spilloverHTML += '<thead class="table-dark"><tr><th>Variable</th><th>To Others (%)</th><th>From Others (%)</th></tr></thead><tbody>';
                 
-                pairwiseTableData.forEach(row => {
-                    const strengthClass = row.strength === 'Strong' ? 'text-success fw-bold' : 
-                                        row.strength === 'Moderate' ? 'text-warning fw-bold' : 'text-muted';
-                    const r2Class = row.r_squared > 0.25 ? 'table-success' : 
-                                  row.r_squared > 0.10 ? 'table-warning' : '';
-                    
-                    spilloverHTML += `
-                        <tr class="${r2Class}">
-                            <td><strong>${row.from}</strong></td>
-                            <td><strong>${row.to}</strong></td>
-                            <td>${row.r_squared.toFixed(4)}</td>
-                            <td>${row.r_squared_percent}%</td>
-                            <td class="${strengthClass}">${row.strength}</td>
-                            <td>${row.significant_lags_text}</td>
-                        </tr>
-                    `;
+                Object.entries(results.spillover_results.directional_spillover).forEach(([variable, data]) => {
+                    const toOthers = (data.to_others * 100).toFixed(2);
+                    const fromOthers = (data.from_others * 100).toFixed(2);
+                    spilloverHTML += `<tr>
+                        <th>${variable}</th>
+                        <td>${toOthers}%</td>
+                        <td>${fromOthers}%</td>
+                    </tr>`;
                 });
                 
                 spilloverHTML += '</tbody></table>';
                 spilloverHTML += '</div>';
             }
+            
+            // Net Spillover
+            if (results.spillover_results.net_spillover) {
+                spilloverHTML += '<h6 class="mt-3">Net Spillover</h6>';
+                spilloverHTML += '<p class="text-muted small">Positive values indicate net spillover transmitters, negative values indicate net receivers.</p>';
+                spilloverHTML += '<div class="table-responsive">';
+                spilloverHTML += '<table class="table table-bordered table-striped">';
+                spilloverHTML += '<thead class="table-dark"><tr><th>Variable</th><th>Net Spillover (%)</th><th>Role</th></tr></thead><tbody>';
+                
+                Object.entries(results.spillover_results.net_spillover).forEach(([variable, netValue]) => {
+                    const netPercent = (netValue * 100).toFixed(2);
+                    const role = netValue > 0 ? 'Net Transmitter' : 'Net Receiver';
+                    const roleClass = netValue > 0 ? 'text-danger' : 'text-primary';
+                    spilloverHTML += `<tr>
+                        <th>${variable}</th>
+                        <td>${netPercent}%</td>
+                        <td class="${roleClass}"><strong>${role}</strong></td>
+                    </tr>`;
+                });
+                
+                spilloverHTML += '</tbody></table>';
+                spilloverHTML += '</div>';
+            }
+            
+            // Pairwise spillover matrix
+            if (results.spillover_results.pairwise_spillover) {
+                spilloverHTML += '<h6 class="mt-4">Pairwise Spillover Matrix</h6>';
+                spilloverHTML += '<p class="text-muted small">Values show the percentage of forecast error variance of row variable coming from innovations to column variable.</p>';
+                
+                // Extract symbols from pairwise spillover data
+                const pairwiseData = results.spillover_results.pairwise_spillover;
+                const symbols = Object.keys(pairwiseData);
+                
+                if (symbols.length > 0) {
+                    spilloverHTML += '<div class="table-responsive">';
+                    spilloverHTML += '<table class="table table-bordered table-sm">';
+                    spilloverHTML += '<thead class="table-light"><tr><th>From/To</th>';
+                    
+                    // Header row with symbols
+                    symbols.forEach(symbol => {
+                        spilloverHTML += `<th>${symbol}</th>`;
+                    });
+                    
+                    spilloverHTML += '</tr></thead><tbody>';
+                    
+                    // Data rows
+                    symbols.forEach(fromSymbol => {
+                        spilloverHTML += `<tr><th class="table-light">${fromSymbol}</th>`;
+                        
+                        symbols.forEach(toSymbol => {
+                            const value = pairwiseData[fromSymbol][toSymbol] * 100 || 0;
+                            const isOwnEffect = fromSymbol === toSymbol;
+                            const isHighSpillover = !isOwnEffect && value > 10;
+                            const cellClass = isOwnEffect ? 'table-info' : (isHighSpillover ? 'table-warning' : '');
+                            
+                            spilloverHTML += `<td class="${cellClass}">${value.toFixed(2)}%</td>`;
+                        });
+                        
+                        spilloverHTML += '</tr>';
+                    });
+                    
+                    spilloverHTML += '</tbody></table>';
+                    spilloverHTML += '</div>';
+                }
+            }
+            
+            spilloverHTML += '</div></div>';
         }
         
         spilloverContainer.innerHTML = spilloverHTML;
@@ -1128,53 +1210,100 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Populate Granger Causality results
-    if (results.granger_causality_results) {
+    if (results.granger_causality_results || (results.var_results && results.var_results.granger_causality)) {
         const grangerContainer = document.getElementById('granger-causality-container');
         let grangerHTML = '';
         
-        if (results.granger_causality_results.interpretations) {
-            grangerHTML += '<div class="alert alert-info mb-4">';
-            grangerHTML += '<p>Granger causality tests whether changes in one variable help predict future changes in another variable.</p>';
-            grangerHTML += '</div>';
+        // Use VAR-based Granger causality if available, otherwise fall back to standalone results
+        const grangerData = results.var_results?.granger_causality || results.granger_causality_results;
+        
+        grangerHTML += '<div class="card mb-4">';
+        grangerHTML += '<div class="card-header"><h5 class="mb-0">Granger Causality Tests</h5></div>';
+        grangerHTML += '<div class="card-body">';
+        
+        grangerHTML += '<div class="alert alert-info mb-4">';
+        grangerHTML += '<p><strong>Granger Causality</strong> tests whether past values of one variable help predict future values of another variable, beyond what the variable\'s own past values can predict. This is integrated with the VAR model used for spillover analysis.</p>';
+        grangerHTML += '<ul class="mb-0"><li><strong>Null Hypothesis:</strong> Variable X does not Granger-cause variable Y</li><li><strong>Rejection:</strong> When p-value < 0.05, we reject the null and conclude X helps predict Y</li><li><strong>Bidirectional:</strong> X can cause Y while Y also causes X (feedback loops)</li></ul>';
+        grangerHTML += '</div>';
+        
+        if (grangerData) {
+            grangerHTML += '<div class="table-responsive">';
+            grangerHTML += '<table class="table table-bordered table-striped">';
+            grangerHTML += '<thead class="table-dark"><tr><th>From → To</th><th>F-Statistic</th><th>p-value</th><th>Causality</th><th>Interpretation</th></tr></thead><tbody>';
             
-            grangerHTML += '<table class="table table-bordered table-sm">';
-            grangerHTML += '<thead><tr><th>Relationship</th><th>Result</th><th>Interpretation</th></tr></thead><tbody>';
+            // Handle different data structures
+            let causalityEntries = [];
             
-            for (const [relationship, interpretation] of Object.entries(results.granger_causality_results.interpretations)) {
-                const [source, target] = relationship.split('->');
-                const result = results.granger_causality_results.causality_results[relationship];
+            if (grangerData.interpretations && grangerData.causality_results) {
+                // Structure with interpretations
+                causalityEntries = Object.entries(grangerData.interpretations).map(([relationship, interpretation]) => {
+                    const result = grangerData.causality_results[relationship];
+                    return [relationship, result, interpretation];
+                });
+            } else if (typeof grangerData === 'object') {
+                // Direct VAR granger causality structure
+                causalityEntries = Object.entries(grangerData).map(([relationship, result]) => {
+                    let interpretation = 'No detailed interpretation available';
+                    if (result.causality) {
+                        const [from, to] = relationship.includes('->') ? relationship.split('->') : [relationship.split('_')[0], relationship.split('_')[1]];
+                        interpretation = `${from} helps predict future values of ${to} (p-value: ${result.p_value?.toFixed(4) || 'N/A'})`;
+                    } else {
+                        const [from, to] = relationship.includes('->') ? relationship.split('->') : [relationship.split('_')[0], relationship.split('_')[1]];
+                        interpretation = `${from} does not significantly help predict ${to}`;
+                    }
+                    return [relationship, result, interpretation];
+                });
+            }
+            
+            // Sort by causality status and then by p-value
+            causalityEntries.sort((a, b) => {
+                const [, resultA] = a;
+                const [, resultB] = b;
+                if (resultA.causality !== resultB.causality) {
+                    return resultB.causality - resultA.causality; // True first
+                }
+                return (resultA.p_value || 1) - (resultB.p_value || 1); // Lower p-value first
+            });
+            
+            causalityEntries.forEach(([relationship, result, interpretation]) => {
                 const causalityExists = result && result.causality;
+                const pValue = result?.p_value;
+                const fStat = result?.f_statistic || result?.statistic;
+                
+                // Clean up relationship display
+                const displayRelationship = relationship.replace('->', ' → ').replace('_', ' → ');
                 
                 grangerHTML += `<tr>
-                    <td>${source} → ${target}</td>
-                    <td class="${causalityExists ? 'text-success' : 'text-danger'}">${causalityExists ? 'Yes' : 'No'}</td>
+                    <td><strong>${displayRelationship}</strong></td>
+                    <td>${fStat ? fStat.toFixed(4) : 'N/A'}</td>
+                    <td>${pValue ? pValue.toFixed(4) : 'N/A'}</td>
+                    <td class="${causalityExists ? 'text-success' : 'text-danger'}">
+                        <strong>${causalityExists ? 'Yes' : 'No'}</strong>
+                    </td>
                     <td>${interpretation}</td>
                 </tr>`;
-            }
+            });
             
             grangerHTML += '</tbody></table>';
-        } else if (results.granger_causality_results.causality_results) {
-            // Basic results display without interpretations
-            grangerHTML += '<table class="table table-bordered table-sm">';
-            grangerHTML += '<thead><tr><th>Relationship</th><th>Causality Exists</th><th>p-value</th></tr></thead><tbody>';
+            grangerHTML += '</div>';
             
-            for (const [relationship, result] of Object.entries(results.granger_causality_results.causality_results)) {
-                grangerHTML += `<tr>
-                    <td>${relationship}</td>
-                    <td class="${result.causality ? 'text-success' : 'text-danger'}">${result.causality ? 'Yes' : 'No'}</td>
-                    <td>${result.p_value?.toFixed(4) || 'N/A'}</td>
-                </tr>`;
-            }
+            // Summary statistics
+            const totalTests = causalityEntries.length;
+            const significantTests = causalityEntries.filter(([, result]) => result.causality).length;
             
-            grangerHTML += '</tbody></table>';
+            grangerHTML += `<div class="alert alert-secondary mt-3">
+                <strong>Summary:</strong> ${significantTests} out of ${totalTests} relationships show significant Granger causality (${((significantTests/totalTests)*100).toFixed(1)}%).
+            </div>`;
+            
         } else {
-            grangerHTML = '<div class="alert alert-warning">No detailed Granger causality results available.</div>';
+            grangerHTML += '<div class="alert alert-warning">No detailed Granger causality results available.</div>';
         }
         
+        grangerHTML += '</div></div>';
         grangerContainer.innerHTML = grangerHTML;
     } else {
         document.getElementById('granger-causality-container').innerHTML = 
-            '<div class="alert alert-warning">No Granger causality results available.</div>';
+            '<div class="alert alert-warning">No Granger causality results available. Granger causality tests are automatically included when spillover analysis is enabled.</div>';
     }
     
     // Helper function to create data tables from array data
