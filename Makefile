@@ -131,6 +131,27 @@ lint:
 .PHONY: check
 check: format-check lint test
 
+# Changelog and versioning commands
+.PHONY: changelog
+changelog:
+	$(UV) run cz changelog
+
+.PHONY: bump
+bump:
+	$(UV) run cz bump
+
+.PHONY: commit
+commit:
+	$(UV) run cz commit
+
+.PHONY: version
+version:
+	$(UV) run cz version
+
+.PHONY: changelog-dry-run
+changelog-dry-run:
+	$(UV) run cz changelog --dry-run
+
 # API Mock commands
 .PHONY: run-api-mock
 run-api-mock:
@@ -189,9 +210,9 @@ help:
 	@echo "  install          - Install dependencies"
 	@echo "  install-dev      - Install dependencies including dev tools"
 	@echo "  update           - Update dependencies and lock file"
-	@echo "  add PKG=<name>   - Add a new dependency"
-	@echo "  add-dev PKG=<name> - Add a new dev dependency"
-	@echo "  remove PKG=<name> - Remove a dependency"
+	@echo "  add PKG=<n>   - Add a new dependency"
+	@echo "  add-dev PKG=<n> - Add a new dev dependency"
+	@echo "  remove PKG=<n> - Remove a dependency"
 	@echo "  run-server       - Start Django development server"
 	@echo "  migrate          - Run database migrations"
 	@echo "  test             - Run tests with pytest"
@@ -199,6 +220,11 @@ help:
 	@echo "  format           - Format code with black"
 	@echo "  lint             - Lint code with flake8"
 	@echo "  check            - Run all code quality checks"
+	@echo "  changelog        - Generate/update CHANGELOG.md"
+	@echo "  bump             - Bump version and update changelog"
+	@echo "  commit           - Interactive commit with conventional format"
+	@echo "  version          - Show current version"
+	@echo "  changelog-dry-run - Preview changelog changes"
 	@echo "  docker-build     - Build Docker image"
 	@echo "  docker-run       - Run Docker container"
 	@echo "  setup-dev        - Complete development setup"
