@@ -1766,15 +1766,17 @@ let loadingMessageInterval;
                     const pairwiseData = [];
                     Object.entries(responseData.spillover_results.pairwise_spillover).forEach(([pair, data]) => {
                         const [from, to] = pair.split('_to_');
+                        // Ensure significant_lags exists and is an array
+                        const significantLags = data.significant_lags || [];
                         pairwiseData.push({
                             from: from,
                             to: to,
                             relationship: pair,
-                            r_squared: data.r_squared,
-                            r_squared_percent: (data.r_squared * 100).toFixed(2),
-                            significant_lags: data.significant_lags,
-                            significant_lags_text: data.significant_lags.length > 0 ? data.significant_lags.join(', ') : 'None',
-                            strength: data.r_squared > 0.25 ? 'Strong' : data.r_squared > 0.10 ? 'Moderate' : 'Weak'
+                            r_squared: data.r_squared || 0,
+                            r_squared_percent: ((data.r_squared || 0) * 100).toFixed(2),
+                            significant_lags: significantLags,
+                            significant_lags_text: significantLags.length > 0 ? significantLags.join(', ') : 'None',
+                            strength: (data.r_squared || 0) > 0.25 ? 'Strong' : (data.r_squared || 0) > 0.10 ? 'Moderate' : 'Weak'
                         });
                     });
                     
