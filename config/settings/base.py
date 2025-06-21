@@ -37,7 +37,6 @@ INSTALLED_APPS = [
     # Third party apps
     'whitenoise.runserver_nostatic',
     'csp',
-    'debug_toolbar',
     # Local apps
     'timeseries',
 ]
@@ -52,8 +51,12 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'csp.middleware.CSPMiddleware',  # CSP middleware
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
+
+# Add debug toolbar if in debug mode
+if os.environ.get('DJANGO_DEBUG', 'False') == 'True':
+    INSTALLED_APPS.append('debug_toolbar')
+    MIDDLEWARE.append('debug_toolbar.middleware.DebugToolbarMiddleware')
 
 ROOT_URLCONF = 'config.urls'
 
