@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial Django project setup
 - Basic spillover analysis interface
 - Google Cloud Run deployment configuration
+## frontend-v0.5.0 (2025-06-21)
+
+### Feat
+
+- **collapsible-results**: make results.html cards collapsible for easier review
+
 ## frontend-v0.4.0 (2025-06-21)
 
 ### Feat
