@@ -96,43 +96,63 @@
     <div class="tab-content" id="resultsTabsContent">
         <!-- Time Series Tab -->
         <div class="tab-pane fade show active" id="time-series" role="tabpanel" aria-labelledby="time-series-tab">
-            <!-- Price Series Plot -->
             <div class="card mb-4">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">Price Series</h5>
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Time Series Results</h5>
                 </div>
                 <div class="card-body">
-                    <div id="price-series-plot" style="height: 400px;"></div>
-                </div>
-            </div>
-            
-            <!-- Returns Series Plot -->
-            <div class="card mb-4">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">Returns Series</h5>
-                </div>
-                <div class="card-body">
-                    <div id="returns-series-plot" style="height: 400px;"></div>
-                </div>
-            </div>
-            
-            <!-- Pre-GARCH Series Plot -->
-            <div class="card mb-4">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">Pre-GARCH Series</h5>
-                </div>
-                <div class="card-body">
-                    <div id="pre-garch-series-plot" style="height: 400px;"></div>
-                </div>
-            </div>
-            
-            <!-- Post-GARCH Series Plot -->
-            <div class="card mb-4">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">Post-GARCH Series</h5>
-                </div>
-                <div class="card-body">
-                    <div id="post-garch-series-plot" style="height: 400px;"></div>
+                    <!-- Price Series Plot -->
+                    <div class="card mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <button class="btn btn-link text-decoration-none w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePriceSeries" aria-expanded="true" aria-controls="collapsePriceSeries">
+                                <h5 class="card-title mb-0">Price Series</h5>
+                            </button>
+                        </div>
+                        <div id="collapsePriceSeries" class="collapse show">
+                            <div class="card-body">
+                                <div id="price-series-plot" style="height: 400px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Returns Series Plot -->
+                    <div class="card mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <button class="btn btn-link text-decoration-none w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapseReturnsSeries" aria-expanded="true" aria-controls="collapseReturnsSeries">
+                                <h5 class="card-title mb-0">Returns Series</h5>
+                            </button>
+                        </div>
+                        <div id="collapseReturnsSeries" class="collapse show">
+                            <div class="card-body">
+                                <div id="returns-series-plot" style="height: 400px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Pre-GARCH Series Plot -->
+                    <div class="card mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <button class="btn btn-link text-decoration-none w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePreGarchSeries" aria-expanded="true" aria-controls="collapsePreGarchSeries">
+                                <h5 class="card-title mb-0">Pre-GARCH Series</h5>
+                            </button>
+                        </div>
+                        <div id="collapsePreGarchSeries" class="collapse show">
+                            <div class="card-body">
+                                <div id="pre-garch-series-plot" style="height: 400px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Post-GARCH Series Plot -->
+                    <div class="card mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <button class="btn btn-link text-decoration-none w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePostGarchSeries" aria-expanded="true" aria-controls="collapsePostGarchSeries">
+                                <h5 class="card-title mb-0">Post-GARCH Series</h5>
+                            </button>
+                        </div>
+                        <div id="collapsePostGarchSeries" class="collapse show">
+                            <div class="card-body">
+                                <div id="post-garch-series-plot" style="height: 400px;"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -144,19 +164,48 @@
                     <h5 class="card-title mb-0">Stationarity Test Results</h5>
                 </div>
                 <div class="card-body">
-                    <div class="alert" id="stationarity-alert">
-                        <strong>Interpretation:</strong> <span id="stationarity-interpretation"></span>
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <button class="btn btn-link text-decoration-none w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapseStationarityInterpretation" aria-expanded="true" aria-controls="collapseStationarityInterpretation">
+                                <h6 class="mb-0">Interpretation</h6>
+                            </button>
+                        </div>
+                        <div id="collapseStationarityInterpretation" class="collapse show">
+                            <div class="card-body">
+                                <div class="alert" id="stationarity-alert">
+                                    <strong>Interpretation:</strong> <span id="stationarity-interpretation"></span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    
-                    <!-- Combined ADF, p-value, stationarity, and critical values table -->
-                    <div id="combined-stationarity-table-container">
-                        <!-- Will be filled dynamically -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <button class="btn btn-link text-decoration-none w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapseStationarityTable" aria-expanded="true" aria-controls="collapseStationarityTable">
+                                <h6 class="mb-0">ADF, p-value, Stationarity, and Critical Values</h6>
+                            </button>
+                        </div>
+                        <div id="collapseStationarityTable" class="collapse show">
+                            <div class="card-body">
+                                <div id="combined-stationarity-table-container">
+                                    <!-- Will be filled dynamically -->
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    
-                    <!-- Series Statistics -->
-                    <div id="series-stats-container">
-                        <h6 class="mt-4">Series Statistics</h6>
-                        <!-- Will be filled dynamically -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <button class="btn btn-link text-decoration-none w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSeriesStats" aria-expanded="true" aria-controls="collapseSeriesStats">
+                                <h6 class="mb-0">Series Statistics</h6>
+                            </button>
+                        </div>
+                        <div id="collapseSeriesStats" class="collapse show">
+                            <div class="card-body">
+                                <div id="series-stats-container">
+                                    <h6 class="mt-4">Series Statistics</h6>
+                                    <!-- Will be filled dynamically -->
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -168,17 +217,8 @@
                 <div class="card-header">
                     <h5 class="card-title mb-0">ARIMA Model Results</h5>
                 </div>
-                <div class="card-body">
-                    <!-- ARIMA Interpretation -->
-                    <div class="alert alert-info mb-4" id="arima-interpretation">
-                        <strong>Interpretation:</strong> <span id="arima-interpretation-text"></span>
-                    </div>
-                    
-                    <h6>Model Summary</h6>
-                    <pre id="arima-summary" class="p-3 bg-light rounded"></pre>
-                    
-                    <h6>Forecast</h6>
-                    <div id="arima-forecast-plot" style="height: 400px;"></div>
+                <div class="card-body" id="arima-results-cards">
+                    <!-- ARIMA symbol cards will be rendered here by JS as collapsible cards -->
                 </div>
             </div>
         </div>
@@ -189,17 +229,8 @@
                 <div class="card-header">
                     <h5 class="card-title mb-0">GARCH Model Results</h5>
                 </div>
-                <div class="card-body">
-                    <!-- GARCH Interpretation -->
-                    <div class="alert alert-info mb-4" id="garch-interpretation">
-                        <strong>Interpretation:</strong> <span id="garch-interpretation-text"></span>
-                    </div>
-                    
-                    <h6>Model Summary</h6>
-                    <pre id="garch-summary" class="p-3 bg-light rounded"></pre>
-                    
-                    <h6>Volatility Forecast</h6>
-                    <div id="garch-forecast-plot" style="height: 400px;"></div>
+                <div class="card-body" id="garch-results-cards">
+                    <!-- GARCH symbol cards will be rendered here by JS as collapsible cards -->
                 </div>
             </div>
         </div>
@@ -216,12 +247,6 @@
                         <!-- Will be filled dynamically if spillover analysis was enabled -->
                         <div id="spillover-results-container">
                             <div class="alert alert-info">Loading spillover results...</div>
-                        </div>
-                        
-                        <!-- Granger Causality Results -->
-                        <h5 class="mt-4">Granger Causality Tests</h5>
-                        <div id="granger-causality-container">
-                            <div class="alert alert-info">Loading Granger causality results...</div>
                         </div>
                     </div>
                 </div>
@@ -658,23 +683,25 @@ document.addEventListener('DOMContentLoaded', function() {
             stationarityHTML += `
                 <div class="card mb-3">
                     <div class="card-header">
-                        <h6 class="mb-0">${symbol}</h6>
+                        <button class="btn btn-link text-decoration-none w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapseStationarity${symbol}" aria-expanded="true" aria-controls="collapseStationarity${symbol}">
+                            <h6 class="mb-0">${symbol}</h6>
+                        </button>
                     </div>
-                    <div class="card-body">
-                        <div class="alert alert-info">
-                            <strong>Interpretation:</strong> ${symbolResult.interpretation}
-                        </div>
-                        
-                        <table class="table table-bordered table-sm">
-                            <tbody>
-                                <tr>
-                                    <th>Is Stationary</th>
-                                    <td>${symbolResult.is_stationary ? 'Yes' : 'No'}</td>
-                                </tr>
-                                <tr>
-                                    <th>p-value</th>
-                                    <td>${symbolResult.p_value.toFixed(4)}</td>
-                                </tr>`;
+                    <div id="collapseStationarity${symbol}" class="collapse show">
+                        <div class="card-body">
+                            <div class="alert alert-info">
+                                <strong>Interpretation:</strong> ${symbolResult.interpretation}
+                            </div>
+                            <table class="table table-bordered table-sm">
+                                <tbody>
+                                    <tr>
+                                        <th>Is Stationary</th>
+                                        <td>${symbolResult.is_stationary ? 'Yes' : 'No'}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>p-value</th>
+                                        <td>${symbolResult.p_value.toFixed(4)}</td>
+                                    </tr>`;
             
             // Add the sorted critical values and ADF statistic with color coding
             valuesToSort.forEach(item => {
@@ -702,8 +729,9 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             
             stationarityHTML += `
-                            </tbody>
-                        </table>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>`;
         }
@@ -712,18 +740,21 @@ document.addEventListener('DOMContentLoaded', function() {
         stationarityHTML += `
             <div class="card mb-3">
                 <div class="card-header">
-                    <h6 class="mb-0">Rolling Statistics (Visual Stationarity Check)</h6>
+                    <button class="btn btn-link text-decoration-none w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapseRollingStats" aria-expanded="true" aria-controls="collapseRollingStats">
+                        <h6 class="mb-0">Rolling Statistics (Visual Stationarity Check)</h6>
+                    </button>
                 </div>
-                <div class="card-body">
-                    <div class="alert alert-secondary mb-3">
-                        <strong>How to Read These Charts:</strong>
-                        <ul class="mb-0 mt-2">
-                            <li><strong>Rolling Mean (Blue Line):</strong> Shows the average return over a moving window. For stationary series, this should fluctuate around a consistent level without persistent upward or downward trends.</li>
-                            <li><strong>Rolling Standard Deviation (Red Line):</strong> Shows volatility over time. For stationary series, this should remain relatively stable, though some variation is normal.</li>
-                            <li><strong>Stationarity Indicators:</strong> Look for the blue line hovering around zero (for returns) and the red line staying within a reasonable range without dramatic long-term increases or decreases.</li>
-                            <li><strong>Warning Signs:</strong> Persistent trends in either line, dramatic spikes that don't return to normal levels, or gradual drift over time may indicate non-stationarity.</li>
-                        </ul>
-                    </div>`;
+                <div id="collapseRollingStats" class="collapse show">
+                    <div class="card-body">
+                        <div class="alert alert-secondary mb-3">
+                            <strong>How to Read These Charts:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li><strong>Rolling Mean (Blue Line):</strong> Shows the average return over a moving window. For stationary series, this should fluctuate around a consistent level without persistent upward or downward trends.</li>
+                                <li><strong>Rolling Standard Deviation (Red Line):</strong> Shows volatility over time. For stationary series, this should remain relatively stable, though some variation is normal.</li>
+                                <li><strong>Stationarity Indicators:</strong> Look for the blue line hovering around zero (for returns) and the red line staying within a reasonable range without dramatic long-term increases or decreases.</li>
+                                <li><strong>Warning Signs:</strong> Persistent trends in either line, dramatic spikes that don't return to normal levels, or gradual drift over time may indicate non-stationarity.</li>
+                            </ul>
+                        </div>`;
         
         // Add all rolling statistics plots
         for (const [symbol] of Object.entries(stationarityResults.all_symbols_stationarity)) {
@@ -735,11 +766,21 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         stationarityHTML += `
+                    </div>
                 </div>
             </div>`;
-        
-        // Fourth: Add the series stats container
-        stationarityHTML += '<div id="series-stats-container"></div>';
+        // Fourth: Add the series stats container as a collapsible card
+        stationarityHTML += `
+            <div class="card mb-3">
+                <div class="card-header">
+                    <button class="btn btn-link text-decoration-none w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSeriesStatsContainer" aria-expanded="true" aria-controls="collapseSeriesStatsContainer">
+                        <h6 class="mb-0">Series Statistics</h6>
+                    </button>
+                </div>
+                <div id="collapseSeriesStatsContainer" class="collapse show">
+                    <div class="card-body" id="series-stats-container"></div>
+                </div>
+            </div>`;
         
         stationarityContainer.innerHTML = stationarityHTML;
         
@@ -920,18 +961,22 @@ document.addEventListener('DOMContentLoaded', function() {
             arimaHTML += `
                 <div class="card mb-3">
                     <div class="card-header">
-                        <h6 class="mb-0">${symbol}</h6>
+                        <button class="btn btn-link text-decoration-none w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapseArima${symbol}" aria-expanded="true" aria-controls="collapseArima${symbol}">
+                            <h6 class="mb-0">${symbol}</h6>
+                        </button>
                     </div>
-                    <div class="card-body">
-                        <div class="alert alert-info mb-4">
-                            <strong>Interpretation:</strong> ${symbolResult.interpretation}
+                    <div id="collapseArima${symbol}" class="collapse show">
+                        <div class="card-body">
+                            <div class="alert alert-info mb-4">
+                                <strong>Interpretation:</strong> ${symbolResult.interpretation}
+                            </div>
+                            
+                            <h6>Model Summary</h6>
+                            <pre class="p-3 bg-light rounded">${symbolResult.summary}</pre>
+                            
+                            <h6>Forecast</h6>
+                            <div id="arima-forecast-plot-${symbol}" style="height: 400px;"></div>
                         </div>
-                        
-                        <h6>Model Summary</h6>
-                        <pre class="p-3 bg-light rounded">${symbolResult.summary}</pre>
-                        
-                        <h6>Forecast</h6>
-                        <div id="arima-forecast-plot-${symbol}" style="height: 400px;"></div>
                     </div>
                 </div>`;
         }
@@ -979,18 +1024,22 @@ document.addEventListener('DOMContentLoaded', function() {
             garchHTML += `
                 <div class="card mb-3">
                     <div class="card-header">
-                        <h6 class="mb-0">${symbol}</h6>
+                        <button class="btn btn-link text-decoration-none w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapseGarch${symbol}" aria-expanded="true" aria-controls="collapseGarch${symbol}">
+                            <h6 class="mb-0">${symbol}</h6>
+                        </button>
                     </div>
-                    <div class="card-body">
-                        <div class="alert alert-info mb-4">
-                            <strong>Interpretation:</strong> ${symbolResult.interpretation}
+                    <div id="collapseGarch${symbol}" class="collapse show">
+                        <div class="card-body">
+                            <div class="alert alert-info mb-4">
+                                <strong>Interpretation:</strong> ${symbolResult.interpretation}
+                            </div>
+                            
+                            <h6>Model Summary</h6>
+                            <pre class="p-3 bg-light rounded">${symbolResult.summary}</pre>
+                            
+                            <h6>Volatility Forecast</h6>
+                            <div id="garch-forecast-plot-${symbol}" style="height: 400px;"></div>
                         </div>
-                        
-                        <h6>Model Summary</h6>
-                        <pre class="p-3 bg-light rounded">${symbolResult.summary}</pre>
-                        
-                        <h6>Volatility Forecast</h6>
-                        <div id="garch-forecast-plot-${symbol}" style="height: 400px;"></div>
                     </div>
                 </div>`;
         }
@@ -1033,16 +1082,27 @@ document.addEventListener('DOMContentLoaded', function() {
         let spilloverHTML = '';
         
         // Add main spillover interpretation at the very top
-        spilloverHTML += '<div class="alert alert-info mt-2 mb-4">';
         if (results.spillover_results.interpretation) {
+            spilloverHTML += '<div class="alert alert-info mt-2 mb-4">';
             spilloverHTML += `<p><strong>Interpretation:</strong> ${results.spillover_results.interpretation}</p>`;
+            spilloverHTML += '</div>';
         }
-        spilloverHTML += '</div>';
+        if (results.spillover_results.total_spillover_index !== undefined) {
+            spilloverHTML += `<div class="mb-3"><strong>Total Spillover Index:</strong> ${results.spillover_results.total_spillover_index.toFixed(2)}%</div>`;
+        }
         
         // Pairwise spillover matrix (after interpretation)
         if (results.spillover_results.pairwise_spillover) {
-            spilloverHTML += '<h5 class="mt-2">Pairwise Spillover Matrix</h5>';
-            spilloverHTML += '<p>Values show the percentage of forecast error variance of row i coming from innovations to column j.</p>';
+            spilloverHTML += `
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <button class="btn btn-link text-decoration-none w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePairwiseMatrix" aria-expanded="true" aria-controls="collapsePairwiseMatrix">
+                            <h5 class="mb-0">Pairwise Spillover Matrix</h5>
+                        </button>
+                    </div>
+                    <div id="collapsePairwiseMatrix" class="collapse show">
+                        <div class="card-body">
+                            <p>Values show the percentage of forecast error variance of row i coming from innovations to column j.</p>`;
             
             // Extract symbols from pairwise spillover data
             const symbols = Object.keys(results.spillover_results.pairwise_spillover);
@@ -1074,12 +1134,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 spilloverHTML += '</tbody></table>';
             }
+            
+            spilloverHTML += `</div></div></div>`;
         }
-        
         // Pairwise Spillover Relationships Table (R² and Significant Lags)
         if (results.spillover_results.pairwise_spillover_table || results.spillover_results.pairwise_spillover) {
-            spilloverHTML += '<h5 class="mt-4">Pairwise Spillover Relationships</h5>';
-            
+            spilloverHTML += `
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <button class="btn btn-link text-decoration-none w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePairwiseRelationships" aria-expanded="true" aria-controls="collapsePairwiseRelationships">
+                            <h5 class="mb-0">Pairwise Spillover Relationships</h5>
+                        </button>
+                    </div>
+                    <div id="collapsePairwiseRelationships" class="collapse show">
+                        <div class="card-body">`;
             // Add interpretation before the relationships table
             spilloverHTML += '<div class="alert alert-info mt-3 mb-3">';
             spilloverHTML += '<ul class="mb-0">';
@@ -1153,7 +1221,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 spilloverHTML += '</tbody></table>';
                 spilloverHTML += '</div>';
             }
+            
+            spilloverHTML += `</div></div></div>`;
         }
+        // Granger Causality Results
+        spilloverHTML += `
+            <div class="card mb-4">
+                <div class="card-header">
+                    <button class="btn btn-link text-decoration-none w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapseGrangerCausality" aria-expanded="true" aria-controls="collapseGrangerCausality">
+                        <h5 class="mb-0">Granger Causality Tests</h5>
+                    </button>
+                </div>
+                <div id="collapseGrangerCausality" class="collapse show">
+                    <div class="card-body" id="granger-causality-container">
+                        <div class="alert alert-info">Loading Granger causality results...</div>
+                    </div>
+                </div>
+            </div>`;
         
         spilloverContainer.innerHTML = spilloverHTML;
     } else {
