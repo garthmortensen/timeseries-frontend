@@ -62,6 +62,13 @@
 {% endblock %}
 
 {% block content %}
+<div class="d-flex justify-content-end align-items-start mb-3" style="gap: 0.5rem;">
+    <a href="http://localhost:8001/v1/graphql" class="btn btn-outline-secondary btn-sm" target="_blank" rel="noopener noreferrer">GraphQL</a>
+    <a href="http://localhost:8001/docs" class="btn btn-outline-secondary btn-sm" target="_blank" rel="noopener noreferrer">Swagger UI</a>
+    <a href="http://localhost:8001/redoc" class="btn btn-outline-secondary btn-sm" target="_blank" rel="noopener noreferrer">ReDoc</a>
+    <a href="http://localhost:8001/api/openapi.json" class="btn btn-outline-secondary btn-sm" target="_blank" rel="noopener noreferrer">OpenAPI Spec</a>
+</div>
+
 <h1 class="mb-4">Analysis Configuration</h1>
 
 <!-- Adds structured JSON-LD data to provide machine-readable information about the app to web crawlers. -->
