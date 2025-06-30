@@ -1319,6 +1319,35 @@
                     Maximum number of lags to test for VAR model selection. Higher values allow capturing longer-term relationships but require more data. For daily data, 5-10 lags are typical; for weekly/monthly data, consider 10-20 lags.
                 </div>
             </div>
+            
+            <!-- New enhanced spillover options -->
+            <div class="mb-3">
+                <label for="granger-significance" class="form-label">Granger Causality Significance Level</label>
+                <select class="form-select" id="granger-significance" name="granger_significance_level">
+                    <option value="0.01">1% (Very Strict)</option>
+                    <option value="0.05" selected>5% (Standard)</option>
+                    <option value="0.10">10% (Relaxed)</option>
+                </select>
+                <div class="parameter-help">
+                    Significance level for Granger causality tests. Lower values require stronger evidence of causality but may miss weaker relationships. 5% is the standard choice in most academic literature.
+                </div>
+            </div>
+            
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="include-granger" name="include_granger" checked>
+                <label class="form-check-label" for="include-granger">Include Granger Causality Analysis</label>
+                <div class="parameter-help">
+                    Performs Granger causality tests to determine directional predictive relationships between assets. Essential for understanding lead-lag relationships and market leadership patterns.
+                </div>
+            </div>
+            
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="include-fevd-details" name="include_fevd_details" checked>
+                <label class="form-check-label" for="include-fevd-details">Include FEVD Matrix Details</label>
+                <div class="parameter-help">
+                    Provides detailed Forecast Error Variance Decomposition matrix with row sums validation and horizon analysis. Useful for understanding the mathematical foundation of spillover calculations.
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1747,12 +1776,18 @@ let loadingMessageInterval;
             const spilloverMethod = document.getElementById('spillover-method').value;
             const varLagSelection = document.getElementById('var-lag-selection').value;
             const maxLags = parseInt(document.getElementById('max-lags').value);
+            const grangerSignificance = parseFloat(document.getElementById('granger-significance').value);
+            const includeGranger = document.getElementById('include-granger').checked;
+            const includeFevdDetails = document.getElementById('include-fevd-details').checked;
             
             data.spillover_params = {
                 forecast_horizon: parseInt(data.forecast_horizon) || 5,
                 method: spilloverMethod,
                 var_lag_selection_method: varLagSelection || 'aic',
-                max_lags: maxLags || 10
+                max_lags: maxLags || 10,
+                granger_significance_level: grangerSignificance || 0.05,
+                include_granger: includeGranger,
+                include_fevd_details: includeFevdDetails
             };
         }
         

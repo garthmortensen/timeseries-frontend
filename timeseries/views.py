@@ -123,6 +123,12 @@ def results(request):
     """
     return render(request, 'timeseries/results.html')
 
+def results_test(request):
+    """
+    Test version of results page for debugging JavaScript issues.
+    """
+    return render(request, 'timeseries/results_test.html')
+
 def debug_results(request):
     """
     Debug version of the results page with additional diagnostic information.

@@ -30,6 +30,15 @@ Implementation hosted at www.spilloverlab.com.
 - API integration with the backend pipeline
 - User authentication and saved analysis
 
+## Usage notes
+
+
+Use 250, 500 obs for ARCH, GARCH. 
+> Considering the size of biases and convergence errors, it is proposed that at least 250 observations are needed for ARCH(1) models and 500 observations for GARCH(1,1) models. [Small sample properties of GARCH estimates and persistence](https://www.tandfonline.com/doi/abs/10.1080/13518470500039436)
+
+
+
+
 ### Integration Overview
 
 ```mermaid
