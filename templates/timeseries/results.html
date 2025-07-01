@@ -127,32 +127,6 @@
                             </div>
                         </div>
                     </div>
-                    <!-- Pre-GARCH Series Plot -->
-                    <div class="card mb-4">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <button class="btn btn-link text-decoration-none w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePreGarchSeries" aria-expanded="true" aria-controls="collapsePreGarchSeries">
-                                <h5 class="card-title mb-0">Pre-GARCH Series</h5>
-                            </button>
-                        </div>
-                        <div id="collapsePreGarchSeries" class="collapse show">
-                            <div class="card-body">
-                                <div id="pre-garch-series-plot" style="height: 400px;"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Post-GARCH Series Plot -->
-                    <div class="card mb-4">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <button class="btn btn-link text-decoration-none w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePostGarchSeries" aria-expanded="true" aria-controls="collapsePostGarchSeries">
-                                <h5 class="card-title mb-0">Post-GARCH Series</h5>
-                            </button>
-                        </div>
-                        <div id="collapsePostGarchSeries" class="collapse show">
-                            <div class="card-body">
-                                <div id="post-garch-series-plot" style="height: 400px;"></div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -171,43 +145,44 @@
         
         <!-- ARIMA Tab -->
         <div class="tab-pane fade" id="arima" role="tabpanel" aria-labelledby="arima-tab">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">ARIMA Model Results</h5>
-                </div>
-                <div class="card-body" id="arima-results-cards">
-                    <!-- ARIMA symbol cards will be rendered here by JS as collapsible cards -->
-                </div>
-            </div>
+            <div id="arima-content"></div>
         </div>
-        
+
         <!-- GARCH Tab -->
         <div class="tab-pane fade" id="garch" role="tabpanel" aria-labelledby="garch-tab">
             <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">GARCH Model Results</h5>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <button class="btn btn-link text-decoration-none w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePreGarch" aria-expanded="true" aria-controls="collapsePreGarch">
+                        <h5 class="card-title mb-0">Pre-GARCH Series</h5>
+                    </button>
                 </div>
-                <div class="card-body" id="garch-results-cards">
-                    <!-- GARCH symbol cards will be rendered here by JS as collapsible cards -->
-                </div>
-            </div>
-        </div>
-        
-        <!-- Spillover Analysis Tab -->
-        <div class="tab-pane fade" id="spillover" role="tabpanel" aria-labelledby="spillover-tab">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Spillover Analysis Results</h5>
-                </div>
-                <div class="card-body">
-                    <div id="spillover-results-container">
-                        <!-- Will be filled dynamically if spillover analysis was enabled -->
+                <div id="collapsePreGarch" class="collapse show">
+                    <div class="card-body">
+                        <div id="pre-garch-series-plot" style="height: 400px;"></div>
                     </div>
                 </div>
             </div>
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <button class="btn btn-link text-decoration-none w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePostGarch" aria-expanded="true" aria-controls="collapsePostGarch">
+                        <h5 class="card-title mb-0">Post-GARCH Series</h5>
+                    </button>
+                </div>
+                <div id="collapsePostGarch" class="collapse show">
+                    <div class="card-body">
+                        <div id="post-garch-series-plot" style="height: 400px;"></div>
+                    </div>
+                </div>
+            </div>
+            <div id="garch-results-cards"></div>
         </div>
-        
-        <!-- Data Lineage Tab -->
+
+        <!-- Spillover Tab -->
+        <div class="tab-pane fade" id="spillover" role="tabpanel" aria-labelledby="spillover-tab">
+            <div id="spillover-results-container"></div>
+        </div>
+
+        <!-- Data Tab -->
         <div class="tab-pane fade" id="data" role="tabpanel" aria-labelledby="data-tab">
             <div class="card mb-4">
                 <div class="card-header">
