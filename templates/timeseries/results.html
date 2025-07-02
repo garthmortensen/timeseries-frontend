@@ -205,6 +205,18 @@
                                 Scaled for GARCH
                             </button>
                         </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="pre-garch-data-tab" data-bs-toggle="tab" data-bs-target="#pre-garch-data" 
+                                    type="button" role="tab" aria-controls="pre-garch-data" aria-selected="false">
+                                Pre-GARCH Data
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="post-garch-data-tab" data-bs-toggle="tab" data-bs-target="#post-garch-data" 
+                                    type="button" role="tab" aria-controls="post-garch-data" aria-selected="false">
+                                Post-GARCH Data
+                            </button>
+                        </li>
                     </ul>
                 </div>
                 <div class="card-body">
@@ -262,6 +274,50 @@
                             </div>
                             <div class="table-responsive">
                                 <table class="table table-striped table-hover" id="garch-data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <!-- Dynamically filled -->
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Dynamically filled -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Pre-GARCH Series Data -->
+                        <div class="tab-pane fade" id="pre-garch-data" role="tabpanel" aria-labelledby="pre-garch-data-tab">
+                            <div class="d-flex justify-content-end mb-3">
+                                <button class="btn btn-outline-primary" id="export-pre-garch-csv">
+                                    <i class="bi bi-download"></i> export .csv
+                                </button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover" id="pre-garch-data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <!-- Dynamically filled -->
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Dynamically filled -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Post-GARCH Series Data -->
+                        <div class="tab-pane fade" id="post-garch-data" role="tabpanel" aria-labelledby="post-garch-data-tab">
+                            <div class="d-flex justify-content-end mb-3">
+                                <button class="btn btn-outline-primary" id="export-post-garch-csv">
+                                    <i class="bi bi-download"></i> export .csv
+                                </button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover" id="post-garch-data-table">
                                     <thead>
                                         <tr>
                                             <th>Date</th>

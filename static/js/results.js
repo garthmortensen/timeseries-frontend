@@ -122,6 +122,77 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('no-results').style.display = 'none';
     document.getElementById('results-container').style.display = 'block';
     
+    // Handle URL parameters for direct tab navigation
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    
+    if (tabParam) {
+        console.log(`URL tab parameter detected: ${tabParam}`);
+        
+        // Handle data-specific tabs
+        if (tabParam === 'price-data' || tabParam === 'returns-data' || tabParam === 'garch-data' || tabParam === 'pre-garch-data' || tabParam === 'post-garch-data') {
+            // First activate the Data Lineage tab
+            const dataTab = document.getElementById('data-tab');
+            const dataTabContent = document.getElementById('data');
+            
+            if (dataTab && dataTabContent) {
+                // Deactivate all main tabs
+                document.querySelectorAll('#resultsTabs .nav-link').forEach(tab => tab.classList.remove('active'));
+                document.querySelectorAll('.tab-pane').forEach(pane => {
+                    pane.classList.remove('show', 'active');
+                });
+                
+                // Activate the data tab
+                dataTab.classList.add('active');
+                dataTabContent.classList.add('show', 'active');
+                
+                // Then activate the specific sub-tab
+                setTimeout(() => {
+                    const subTabId = tabParam + '-tab';
+                    const subContentId = tabParam;
+                    
+                    const subTab = document.getElementById(subTabId);
+                    const subContent = document.getElementById(subContentId);
+                    
+                    if (subTab && subContent) {
+                        // Deactivate all data sub-tabs
+                        document.querySelectorAll('#datasetTabs .nav-link').forEach(tab => tab.classList.remove('active'));
+                        document.querySelectorAll('#datasetTabContent .tab-pane').forEach(pane => {
+                            pane.classList.remove('show', 'active');
+                        });
+                        
+                        // Activate the specific sub-tab
+                        subTab.classList.add('active');
+                        subContent.classList.add('show', 'active');
+                        
+                        console.log(`Activated data sub-tab: ${tabParam}`);
+                    }
+                }, 100);
+            }
+        } else {
+            // Handle other main tabs (stationarity, arima, etc.)
+            const tabId = tabParam + '-tab';
+            const contentId = tabParam;
+            
+            const tab = document.getElementById(tabId);
+            const content = document.getElementById(contentId);
+            
+            if (tab && content) {
+                // Deactivate all tabs
+                document.querySelectorAll('#resultsTabs .nav-link').forEach(tab => tab.classList.remove('active'));
+                document.querySelectorAll('.tab-pane').forEach(pane => {
+                    pane.classList.remove('show', 'active');
+                });
+                
+                // Activate the specific tab
+                tab.classList.add('active');
+                content.classList.add('show', 'active');
+                
+                console.log(`Activated main tab: ${tabParam}`);
+            }
+        }
+    }
+
     // Helper function to transform array data into the format needed for plotting
     function transformArrayToPlotData(dataArray, preferredDateField = 'Date') {
         if (!dataArray || !Array.isArray(dataArray) || dataArray.length === 0) {
@@ -336,6 +407,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Populate Data Tables
     populateDataTables(results);
     
+    // Populate individual data tables for the Data Lineage tab
+    populateIndividualDataTables(results);
+    
     // Populate Series Statistics Tab
     populateSeriesStatsTab(results);
     
@@ -433,7 +507,7 @@ function populateStationarityTab(results) {
                         
                         <!-- Interpretation Section -->
                         <div class="alert ${isStationary ? 'alert-success' : 'alert-warning'} mb-4">
-                            <strong>Interpretation:</strong> ${interpretation}
+                            <strong>Interpretation:</strong> <div style="white-space: pre-wrap;">${interpretation}</div>
                         </div>
                         
                         <div class="row">
@@ -1234,14 +1308,16 @@ function createGarchForecastPlot(elementId, forecastData, symbol) {
     const plotData = [{
         x: Array.from({length: forecastData.length}, (_, i) => `Step ${i + 1}`),
         y: forecastData,
-        type: 'bar',
+        type: 'scatter',
+        mode: 'lines+markers',
         name: 'Volatility Forecast',
+        line: {
+            color: 'rgba(54, 162, 235, 1)',
+            width: 2
+        },
         marker: {
-            color: 'rgba(54, 162, 235, 0.7)',
-            line: {
-                color: 'rgba(54, 162, 235, 1)',
-                width: 1
-            }
+            color: 'rgba(54, 162, 235, 0.8)',
+            size: 6
         }
     }];
 
@@ -1577,4 +1653,168 @@ function createSeriesStatisticsSection(seriesStats) {
     
     html += '</tbody></table></div>';
     return html;
+}
+
+// Helper function to populate individual data tables for the Data Lineage tab
+function populateIndividualDataTables(results) {
+    console.log("Populating individual data tables...");
+    
+    // Define the mappings between data keys and table IDs
+    const tableConfigs = [
+        {
+            dataKey: 'original_data',
+            tableId: 'price-data-table',
+            name: 'Price Data'
+        },
+        {
+            dataKey: 'returns_data', 
+            tableId: 'returns-data-table',
+            name: 'Returns Data'
+        },
+        {
+            dataKey: 'scaled_data',
+            tableId: 'garch-data-table', 
+            name: 'Scaled Data for GARCH'
+        },
+        {
+            dataKey: 'pre_garch_data',
+            tableId: 'pre-garch-data-table',
+            name: 'Pre-GARCH Data'
+        },
+        {
+            dataKey: 'post_garch_data',
+            tableId: 'post-garch-data-table',
+            name: 'Post-GARCH Data'
+        }
+    ];
+    
+    tableConfigs.forEach(config => {
+        const data = results[config.dataKey];
+        const table = document.getElementById(config.tableId);
+        
+        if (!table) {
+            console.log(`Table ${config.tableId} not found`);
+            return;
+        }
+        
+        if (!data || !Array.isArray(data) || data.length === 0) {
+            console.log(`No ${config.name} available`);
+            const tbody = table.querySelector('tbody');
+            const thead = table.querySelector('thead tr');
+            if (tbody) tbody.innerHTML = '<tr><td colspan="100%" class="text-center text-muted">No data available</td></tr>';
+            if (thead) thead.innerHTML = '<th>No Data</th>';
+            return;
+        }
+        
+        console.log(`Populating ${config.name} table with ${data.length} rows`);
+        
+        // Get column headers from the first data row
+        const firstRow = data[0];
+        const headers = Object.keys(firstRow);
+        
+        // Populate table headers
+        const thead = table.querySelector('thead tr');
+        if (thead) {
+            thead.innerHTML = headers.map(header => `<th>${header}</th>`).join('');
+        }
+        
+        // Populate table body
+        const tbody = table.querySelector('tbody');
+        if (tbody) {
+            tbody.innerHTML = data.map(row => {
+                return '<tr>' + headers.map(header => {
+                    const value = row[header];
+                    let formattedValue;
+                    
+                    if (typeof value === 'number') {
+                        // Format numbers to 6 decimal places for data precision
+                        formattedValue = value.toFixed(6);
+                    } else if (typeof value === 'string' && header.toLowerCase().includes('date') || header === 'index') {
+                        // Format dates to show just the date part (remove time)
+                        formattedValue = value.split('T')[0];
+                    } else {
+                        formattedValue = value || 'N/A';
+                    }
+                    
+                    return `<td>${formattedValue}</td>`;
+                }).join('') + '</tr>';
+            }).join('');
+        }
+        
+        console.log(`Successfully populated ${config.name} table`);
+    });
+    
+    // Add export functionality for CSV downloads
+    setupDataTableExports(results);
+}
+
+// Helper function to setup CSV export functionality
+function setupDataTableExports(results) {
+    const exportConfigs = [
+        { buttonId: 'export-price-csv', dataKey: 'original_data', filename: 'price_series_data.csv' },
+        { buttonId: 'export-returns-csv', dataKey: 'returns_data', filename: 'returns_data.csv' },
+        { buttonId: 'export-garch-csv', dataKey: 'scaled_data', filename: 'scaled_garch_data.csv' },
+        { buttonId: 'export-pre-garch-csv', dataKey: 'pre_garch_data', filename: 'pre_garch_data.csv' },
+        { buttonId: 'export-post-garch-csv', dataKey: 'post_garch_data', filename: 'post_garch_data.csv' }
+    ];
+    
+    exportConfigs.forEach(config => {
+        const button = document.getElementById(config.buttonId);
+        if (!button) return;
+        
+        // Remove any existing event listeners
+        button.replaceWith(button.cloneNode(true));
+        const newButton = document.getElementById(config.buttonId);
+        
+        newButton.addEventListener('click', function() {
+            const data = results[config.dataKey];
+            if (!data || !Array.isArray(data) || data.length === 0) {
+                alert('No data available to export');
+                return;
+            }
+            
+            // Convert JSON data to CSV
+            const headers = Object.keys(data[0]);
+            const csvContent = [
+                headers.join(','), // Header row
+                ...data.map(row => 
+                    headers.map(header => {
+                        const value = row[header];
+                        // Handle dates and numbers appropriately for CSV
+                        if (typeof value === 'string' && (header.toLowerCase().includes('date') || header === 'index')) {
+                            return value.split('T')[0]; // Just the date part
+                        }
+                        return value;
+                    }).join(',')
+                )
+            ].join('\n');
+            
+            // Create and trigger download
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', config.filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+                       
+            // Show success feedback
+            const originalText = newButton.innerHTML;
+            newButton.innerHTML = '<i class="bi bi-check"></i> Downloaded!';
+            newButton.classList.remove('btn-outline-primary');
+            newButton.classList.add('btn-success');
+            
+            setTimeout(() => {
+                newButton.innerHTML = originalText;
+                newButton.classList.remove('btn-success');
+                newButton.classList.add('btn-outline-primary');
+            }, 2000);
+            
+            console.log(`Exported ${config.filename}`);
+        });
+    });
 }
