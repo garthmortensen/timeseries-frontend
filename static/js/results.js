@@ -489,7 +489,7 @@ function populateStationarityTab(results) {
         const pValue = symbolResult.p_value;
         const isStationary = symbolResult.is_stationary;
         const criticalValues = symbolResult.critical_values || {};
-        const interpretation = symbolResult.interpretation || 'No interpretation available';
+        const interpretation = symbolResult.interpretation || {};
         
         // Get series stats for this symbol
         const symbolStats = seriesStats && seriesStats[symbol] ? seriesStats[symbol] : null;
@@ -503,70 +503,168 @@ function populateStationarityTab(results) {
                     </button>
                 </div>
                 <div id="collapseStationarity${symbol.replace(/[^a-zA-Z0-9]/g, '')}" class="collapse show">
-                    <div class="card-body">
-                        
-                        <!-- Interpretation Section -->
+                    <div class="card-body">`;
+
+        // NEW: Comprehensive Interpretation Section
+        if (interpretation && typeof interpretation === 'object') {
+            html += `
+                        <!-- Comprehensive Educational Interpretation -->
                         <div class="alert ${isStationary ? 'alert-success' : 'alert-warning'} mb-4">
-                            <strong>Interpretation:</strong> <div style="white-space: pre-wrap;">${interpretation}</div>
-                        </div>
-                        
+                            <h6><strong>📚 What We're Testing:</strong></h6>
+                            <p>${interpretation.what_were_testing || 'Testing for stationarity in the time series data.'}</p>
+                            
+                            <h6><strong>🎯 Purpose:</strong></h6>
+                            <p>${interpretation.purpose || 'To determine if the series has stable statistical properties over time.'}</p>
+                            
+                            <h6><strong>💡 Key Concepts:</strong></h6>
+                            <ul>`;
+            
+            if (interpretation.key_ideas && Array.isArray(interpretation.key_ideas)) {
+                interpretation.key_ideas.forEach(idea => {
+                    html += `<li>${idea}</li>`;
+                });
+            } else {
+                html += `<li>Stationarity means constant mean, variance, and autocorrelation over time</li>
+                        <li>Non-stationary series can have trends, changing variance, or unit roots</li>`;
+            }
+            
+            html += `
+                            </ul>
+                            
+                            <h6><strong>📊 Test Results:</strong></h6>
+                            <div class="bg-light p-3 rounded mb-3">`;
+            
+            if (interpretation.results) {
+                html += `
+                                <p><strong>Bottom Line:</strong> ${interpretation.results.bottom_line || (isStationary ? 'Stationary' : 'Non-Stationary')}</p>
+                                <p><strong>Confidence:</strong> ${interpretation.results.confidence_level || 'N/A'}</p>
+                                <p><strong>Evidence Strength:</strong> ${interpretation.results.evidence_strength || 'N/A'}</p>
+                                <p><strong>Decision:</strong> ${interpretation.results.hypothesis_decision || 'See statistical details below'}</p>`;
+                
+                if (interpretation.results.statistical_interpretation) {
+                    html += `<p><strong>Statistical Details:</strong> ${interpretation.results.statistical_interpretation}</p>`;
+                }
+            }
+            
+            html += `
+                            </div>
+                            
+                            <h6><strong>🔍 What This Means:</strong></h6>
+                            <div class="bg-light p-3 rounded mb-3">`;
+            
+            if (interpretation.implications) {
+                html += `
+                                <p><strong>Practical Meaning:</strong> ${interpretation.implications.practical_meaning || 'Results provide guidance for further modeling steps.'}</p>
+                                <p><strong>Recommendations:</strong> ${interpretation.implications.recommendations || 'Consider results for next modeling steps.'}</p>`;
+                
+                if (interpretation.implications.limitations) {
+                    html += `<p><strong>Limitations:</strong> ${interpretation.implications.limitations}</p>`;
+                }
+            }
+            
+            html += `
+                            </div>
+                        </div>`;
+        } else {
+            // Fallback for old format
+            html += `
+                        <div class="alert ${isStationary ? 'alert-success' : 'alert-warning'} mb-4">
+                            <strong>Interpretation:</strong> <div style="white-space: pre-wrap;">${interpretation || 'Basic stationarity test completed.'}</div>
+                        </div>`;
+        }
+        
+        html += `
                         <div class="row">
                             <!-- Stationarity Test Results -->
                             <div class="col-md-6">
-                                <h6>Stationarity Test Results</h6>
+                                <h6>📈 Test Statistics</h6>
                                 <table class="table table-bordered table-sm">
                                     <tbody>
                                         <tr>
                                             <th>Is Stationary</th>
                                             <td>
                                                 <span class="badge ${isStationary ? 'bg-success' : 'bg-warning'}">
-                                                    ${isStationary ? 'Yes' : 'No'}
+                                                    ${isStationary ? 'Yes ✅' : 'No ❌'}
                                                 </span>
                                             </td>
                                         </tr>
                                         <tr>
                                             <th>ADF Statistic</th>
-                                            <td>${adfStatistic !== null && adfStatistic !== undefined ? adfStatistic.toFixed(4) : 'N/A'}</td>
+                                            <td>
+                                                <strong>${adfStatistic !== null && adfStatistic !== undefined ? adfStatistic.toFixed(4) : 'N/A'}</strong>`;
+        
+        // Add interpretation tooltip for ADF statistic
+        if (interpretation && interpretation.metrics && interpretation.metrics.test_statistic_explanation) {
+            html += `<br><small class="text-muted">${interpretation.metrics.test_statistic_explanation}</small>`;
+        }
+        
+        html += `
+                                            </td>
                                         </tr>
                                         <tr>
                                             <th>P-value</th>
-                                            <td>${pValue !== null && pValue !== undefined ? pValue.toFixed(6) : 'N/A'}</td>
+                                            <td>
+                                                <strong>${pValue !== null && pValue !== undefined ? pValue.toFixed(6) : 'N/A'}</strong>`;
+        
+        // Add significance level information
+        if (interpretation && interpretation.metrics && interpretation.metrics.significance_level) {
+            html += `<br><small class="text-muted">Significance: ${interpretation.metrics.significance_level}</small>`;
+        }
+        
+        html += `
+                                            </td>
                                         </tr>
                                     </tbody>
                                 </table>
                                 
-                                <h6>Critical Values</h6>
+                                <h6>🎯 Critical Values Comparison</h6>
                                 <table class="table table-bordered table-sm">
                                     <tbody>`;
         
-        // Add critical values with color coding
+        // Add critical values with enhanced color coding and explanations
         ['1%', '5%', '10%'].forEach(level => {
             const criticalValue = criticalValues[level];
             let cellClass = '';
             let passedTest = false;
+            let explanation = '';
+            
             if (adfStatistic && criticalValue) {
                 // For ADF test, stationarity is indicated when ADF statistic is MORE NEGATIVE than critical values
                 passedTest = adfStatistic < criticalValue;
                 cellClass = passedTest ? 'table-success' : 'table-danger';
+                explanation = passedTest ? 'Passes test at this level' : 'Does not pass at this level';
             }
+            
             html += `
                                         <tr class="${cellClass}">
                                             <th>Critical Value (${level})</th>
                                             <td>
-                                                ${criticalValue ? criticalValue.toFixed(4) : 'N/A'}
+                                                <strong>${criticalValue ? criticalValue.toFixed(4) : 'N/A'}</strong>
                                                 ${passedTest ? ' ✅' : (criticalValue && adfStatistic ? ' ❌' : '')}
+                                                ${explanation ? `<br><small class="text-muted">${explanation}</small>` : ''}
                                             </td>
                                         </tr>`;
         });
         
         html += `
                                     </tbody>
-                                </table>
+                                </table>`;
+
+        // Add unit root explanation if available
+        if (interpretation && interpretation.metrics && interpretation.metrics.unit_root_explanation) {
+            html += `
+                                <div class="alert alert-info mt-3">
+                                    <h6>🔬 Understanding Unit Roots:</h6>
+                                    <small>${interpretation.metrics.unit_root_explanation}</small>
+                                </div>`;
+        }
+
+        html += `
                             </div>
                             
                             <!-- Series Statistics -->
                             <div class="col-md-6">
-                                <h6>Series Statistics</h6>`;
+                                <h6>📊 Series Statistics</h6>`;
         
         if (symbolStats) {
             html += `
@@ -583,7 +681,7 @@ function populateStationarityTab(results) {
                                     </tbody>
                                 </table>
                                 
-                                <h6>Financial Metrics</h6>
+                                <h6>💰 Financial Metrics</h6>
                                 <table class="table table-bordered table-sm">
                                     <tbody>
                                         <tr><th>Annualized Vol</th><td>${symbolStats.annualized_vol !== undefined ? symbolStats.annualized_vol.toFixed(4) : 'N/A'}</td></tr>
@@ -600,11 +698,23 @@ function populateStationarityTab(results) {
         
         html += `
                             </div>
-                        </div>
-                        
+                        </div>`;
+
+        // Add methodology notes if available
+        if (interpretation && interpretation.implications && interpretation.implications.methodology_notes) {
+            html += `
+                        <div class="mt-4">
+                            <div class="alert alert-light">
+                                <h6>📚 Methodology Notes:</h6>
+                                <small>${interpretation.implications.methodology_notes}</small>
+                            </div>
+                        </div>`;
+        }
+        
+        html += `
                         <div class="mt-3">
                             <small class="text-muted">
-                                <strong>Note:</strong> The Augmented Dickey-Fuller (ADF) test checks for stationarity. 
+                                <strong>💡 Quick Reference:</strong> The Augmented Dickey-Fuller (ADF) test checks for stationarity. 
                                 A more negative ADF statistic (compared to critical values) indicates stronger evidence of stationarity.
                                 A p-value < 0.05 typically indicates stationarity at 95% confidence.
                             </small>
@@ -651,34 +761,121 @@ function populateArimaTab(results) {
 
         const summary = symbolResult.summary || {};
         const forecast = symbolResult.forecast || {};
-        const interpretation = symbolResult.interpretation || 'No interpretation available.';
+        const interpretation = symbolResult.interpretation || {};
 
         html += `
             <div class="card mb-3">
                 <div class="card-header">
                     <button class="btn btn-link text-decoration-none w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapseArima${symbol.replace(/[^a-zA-Z0-9]/g, '')}" aria-expanded="true" aria-controls="collapseArima${symbol.replace(/[^a-zA-Z0-9]/g, '')}">
-                        <h6 class="mb-0">${symbol} - ARIMA(${summary.model_specification || 'N/A'})</h6>
+                        <h6 class="mb-0">${symbol} - ARIMA ${summary.model_specification || 'Model'}</h6>
                     </button>
                 </div>
                 <div id="collapseArima${symbol.replace(/[^a-zA-Z0-9]/g, '')}" class="collapse show">
-                    <div class="card-body">
-                        <div class="alert alert-info">
-                            <strong>Interpretation:</strong> ${interpretation}
-                        </div>
+                    <div class="card-body">`;
 
+        // NEW: Comprehensive Educational Interpretation Section
+        if (interpretation && typeof interpretation === 'object') {
+            html += `
+                        <!-- Comprehensive Educational Interpretation -->
+                        <div class="alert alert-info mb-4">
+                            <h6><strong>📚 What We're Testing:</strong></h6>
+                            <p>${interpretation.what_were_testing || 'Fitting an ARIMA time series model to capture patterns and forecast future values.'}</p>
+                            
+                            <h6><strong>🎯 Purpose:</strong></h6>
+                            <p>${interpretation.purpose || 'To identify underlying patterns in time series data and make accurate forecasts.'}</p>
+                            
+                            <h6><strong>💡 Key Concepts:</strong></h6>
+                            <ul>`;
+            
+            if (interpretation.key_ideas && Array.isArray(interpretation.key_ideas)) {
+                interpretation.key_ideas.forEach(idea => {
+                    html += `<li>${idea}</li>`;
+                });
+            } else {
+                html += `<li>ARIMA combines autoregression (AR), differencing (I), and moving averages (MA)</li>
+                        <li>Model identifies patterns to forecast future values</li>`;
+            }
+            
+            html += `
+                            </ul>
+                            
+                            <h6><strong>📊 Model Results:</strong></h6>
+                            <div class="bg-light p-3 rounded mb-3">`;
+            
+            if (interpretation.results) {
+                html += `
+                                <p><strong>Bottom Line:</strong> ${interpretation.results.bottom_line || 'Model fitted successfully'}</p>
+                                <p><strong>Forecast Trend:</strong> ${interpretation.results.forecast_assessment || 'See forecast details below'}</p>
+                                <p><strong>Model Quality:</strong> ${interpretation.results.model_performance || 'See diagnostic details below'}</p>`;
+                
+                if (interpretation.results.bottom_line_detailed) {
+                    html += `<p><strong>Detailed Analysis:</strong> ${interpretation.results.bottom_line_detailed}</p>`;
+                }
+            }
+            
+            html += `
+                            </div>
+                            
+                            <h6><strong>🔮 Forecasting Insights:</strong></h6>
+                            <div class="bg-light p-3 rounded mb-3">`;
+            
+            if (interpretation.metrics) {
+                const metrics = interpretation.metrics;
+                html += `
+                                <p><strong>Model Order:</strong> ${metrics.model_order || summary.model_specification || 'N/A'}</p>
+                                <p><strong>Forecast Trend:</strong> ${metrics.forecast_trend || 'N/A'}</p>`;
+                
+                if (metrics.forecast_statistics) {
+                    const stats = metrics.forecast_statistics;
+                    html += `<p><strong>Forecast Stats:</strong> Mean: ${stats.mean ? stats.mean.toFixed(4) : 'N/A'}, Range: ${stats.range ? stats.range.toFixed(4) : 'N/A'}</p>`;
+                }
+                
+                if (metrics.model_explanation) {
+                    html += `<p><strong>Model Explanation:</strong> ${metrics.model_explanation}</p>`;
+                }
+            }
+            
+            html += `
+                            </div>
+                            
+                            <h6><strong>🔍 What This Means:</strong></h6>
+                            <div class="bg-light p-3 rounded mb-3">`;
+            
+            if (interpretation.implications) {
+                html += `
+                                <p><strong>Practical Meaning:</strong> ${interpretation.implications.practical_meaning || 'Model provides forecasts based on historical patterns.'}</p>
+                                <p><strong>Recommendations:</strong> ${interpretation.implications.recommendations || 'Use forecasts for planning purposes.'}</p>`;
+                
+                if (interpretation.implications.limitations) {
+                    html += `<p><strong>Limitations:</strong> ${interpretation.implications.limitations}</p>`;
+                }
+            }
+            
+            html += `
+                            </div>
+                        </div>`;
+        } else {
+            // Fallback for old format
+            html += `
+                        <div class="alert alert-info">
+                            <strong>Interpretation:</strong> ${interpretation || 'ARIMA model fitted successfully.'}
+                        </div>`;
+        }
+
+        html += `
                         <div class="row">
                             <div class="col-md-6">
-                                <h6>Model Summary</h6>
+                                <h6>📈 Model Summary</h6>
                                 <table class="table table-bordered table-sm">
                                     <tbody>
-                                        <tr><th>Model</th><td>${summary.model_specification || 'N/A'}</td></tr>
+                                        <tr><th>Model</th><td><strong>${summary.model_specification || 'N/A'}</strong></td></tr>
                                         <tr><th>Log Likelihood</th><td>${summary.log_likelihood ? summary.log_likelihood.toFixed(4) : 'N/A'}</td></tr>
                                         <tr><th>AIC</th><td>${summary.aic ? summary.aic.toFixed(4) : 'N/A'}</td></tr>
                                         <tr><th>BIC</th><td>${summary.bic ? summary.bic.toFixed(4) : 'N/A'}</td></tr>
                                     </tbody>
                                 </table>
 
-                                <h6>Parameters</h6>
+                                <h6>⚙️ Model Parameters</h6>
                                 <table class="table table-bordered table-sm">
                                     <thead>
                                         <tr>
@@ -698,12 +895,12 @@ function populateArimaTab(results) {
 
                 html += `
                                         <tr class="${pValue !== null && pValue < 0.05 ? 'table-success' : ''}">
-                                            <td>${param}</td>
+                                            <td><strong>${param}</strong></td>
                                             <td>${value ? value.toFixed(4) : 'N/A'}</td>
                                             <td>${pValue ? pValue.toFixed(4) : 'N/A'}</td>
                                             <td>
                                                 <span class="badge ${isSignificant ? 'bg-success' : 'bg-warning'}">
-                                                    ${significance}
+                                                    ${significance} ${isSignificant ? '✅' : '⚠️'}
                                                 </span>
                                             </td>
                                         </tr>`;
@@ -712,15 +909,68 @@ function populateArimaTab(results) {
 
         html += `
                                     </tbody>
-                                </table>
+                                </table>`;
+
+        // Add forecast summary table
+        if (forecast.point_forecasts && Array.isArray(forecast.point_forecasts)) {
+            html += `
+                                <h6>🔮 Forecast Summary</h6>
+                                <table class="table table-bordered table-sm">
+                                    <tbody>
+                                        <tr><th>Forecast Steps</th><td>${forecast.forecast_steps || forecast.point_forecasts.length}</td></tr>
+                                        <tr><th>First Value</th><td>${forecast.point_forecasts[0] ? forecast.point_forecasts[0].toFixed(4) : 'N/A'}</td></tr>
+                                        <tr><th>Last Value</th><td>${forecast.point_forecasts[forecast.point_forecasts.length - 1] ? forecast.point_forecasts[forecast.point_forecasts.length - 1].toFixed(4) : 'N/A'}</td></tr>
+                                        <tr><th>Method</th><td>${forecast.forecast_method || 'Maximum Likelihood'}</td></tr>
+                                    </tbody>
+                                </table>`;
+        }
+
+        html += `
                             </div>
                             <div class="col-md-6">
                                 <div id="arima-forecast-plot-${symbol.replace(/[^a-zA-Z0-9]/g, '')}"></div>
                             </div>
-                        </div>
+                        </div>`;
 
+        // Add component breakdown if available
+        if (interpretation && interpretation.metrics && interpretation.metrics.components_breakdown) {
+            html += `
+                        <div class="mt-4">
+                            <div class="alert alert-light">
+                                <h6>🔧 Model Components Breakdown:</h6>
+                                <div class="row">`;
+            
+            const components = interpretation.metrics.components_breakdown;
+            if (components.ar_interpretation) {
+                html += `<div class="col-md-4"><strong>AR Component:</strong><br><small>${components.ar_interpretation}</small></div>`;
+            }
+            if (components.i_interpretation) {
+                html += `<div class="col-md-4"><strong>I Component:</strong><br><small>${components.i_interpretation}</small></div>`;
+            }
+            if (components.ma_interpretation) {
+                html += `<div class="col-md-4"><strong>MA Component:</strong><br><small>${components.ma_interpretation}</small></div>`;
+            }
+            
+            html += `
+                                </div>
+                            </div>
+                        </div>`;
+        }
+
+        // Add methodology notes if available
+        if (interpretation && interpretation.implications && interpretation.implications.methodology_notes) {
+            html += `
+                        <div class="mt-4">
+                            <div class="alert alert-light">
+                                <h6>📚 Methodology Notes:</h6>
+                                <small>${interpretation.implications.methodology_notes}</small>
+                            </div>
+                        </div>`;
+        }
+
+        html += `
                         <div class="mt-3">
-                            <h6>Full Model Summary</h6>
+                            <h6>📋 Full Model Summary</h6>
                             <pre class="p-3 bg-light rounded" style="font-size: 0.85em;">${summary.full_summary || 'Not available'}</pre>
                         </div>
                     </div>
@@ -772,7 +1022,8 @@ function populateArimaTab(results) {
                     y: originalData.map(d => d.value),
                     type: 'scatter',
                     mode: 'lines',
-                    name: 'Original Data'
+                    name: 'Original Data',
+                    line: { color: 'blue', width: 2 }
                 },
                 {
                     x: fittedDates,
@@ -780,15 +1031,16 @@ function populateArimaTab(results) {
                     type: 'scatter',
                     mode: 'lines',
                     name: 'Fitted Values',
-                    line: { color: 'orange' }
+                    line: { color: 'orange', width: 2 }
                 },
                 {
                     x: forecastDates,
                     y: forecast.point_forecasts,
                     type: 'scatter',
-                    mode: 'lines',
+                    mode: 'lines+markers',
                     name: 'Forecast',
-                    line: { color: 'green', dash: 'dash' }
+                    line: { color: 'green', dash: 'dash', width: 2 },
+                    marker: { color: 'green', size: 6 }
                 }
             ];
 
@@ -856,8 +1108,8 @@ function populateGarchTab(results) {
         console.log(`Processing GARCH for ${symbol}:`, garchResult);
         
         const summary = garchResult.summary || 'No summary available';
-        const forecast = garchResult.forecast || [];
-        const interpretation = garchResult.interpretation || 'No interpretation available';
+        const forecast = garchResult.forecast || {};
+        const interpretation = garchResult.interpretation || {};
         
         html += `
             <div class="card mb-4">
@@ -867,22 +1119,190 @@ function populateGarchTab(results) {
                     </button>
                 </div>
                 <div id="collapseGarch${symbol.replace(/[^a-zA-Z0-9]/g, '')}" class="collapse show">
-                    <div class="card-body">
-                        
-                        <!-- Interpretation Section - styled like other tabs -->
-                        <div class="alert alert-info">
-                            <strong>Interpretation:</strong> ${interpretation}
-                        </div>
+                    <div class="card-body">`;
 
+        // NEW: Comprehensive Educational Interpretation Section
+        if (interpretation && typeof interpretation === 'object') {
+            html += `
+                        <!-- Comprehensive Educational Interpretation -->
+                        <div class="alert alert-info mb-4">
+                            <h6><strong>📚 What We're Testing:</strong></h6>
+                            <p>${interpretation.what_were_testing || 'Modeling time-varying volatility using GARCH to capture volatility clustering.'}</p>
+                            
+                            <h6><strong>🎯 Purpose:</strong></h6>
+                            <p>${interpretation.purpose || 'To understand how volatility evolves over time and forecast future risk levels.'}</p>
+                            
+                            <h6><strong>💡 Key Concepts:</strong></h6>
+                            <ul>`;
+            
+            if (interpretation.key_ideas && Array.isArray(interpretation.key_ideas)) {
+                interpretation.key_ideas.forEach(idea => {
+                    html += `<li>${idea}</li>`;
+                });
+            } else {
+                html += `<li>GARCH models conditional volatility that changes over time</li>
+                        <li>Captures volatility clustering - periods of high and low volatility</li>`;
+            }
+            
+            html += `
+                            </ul>
+                            
+                            <h6><strong>📊 Model Results:</strong></h6>
+                            <div class="bg-light p-3 rounded mb-3">`;
+            
+            if (interpretation.results) {
+                html += `
+                                <p><strong>Bottom Line:</strong> ${interpretation.results.bottom_line || 'Model fitted successfully'}</p>
+                                <p><strong>Volatility Trend:</strong> ${interpretation.results.volatility_assessment || 'See forecast details below'}</p>
+                                <p><strong>Persistence:</strong> ${interpretation.results.evidence_strength || 'See model parameters below'}</p>`;
+                
+                if (interpretation.results.bottom_line_detailed) {
+                    html += `<p><strong>Detailed Analysis:</strong> ${interpretation.results.bottom_line_detailed}</p>`;
+                }
+                
+                if (interpretation.results.shock_impact_analysis) {
+                    html += `<p><strong>Shock Impact:</strong> ${interpretation.results.shock_impact_analysis}</p>`;
+                }
+            }
+            
+            html += `
+                            </div>
+                            
+                            <h6><strong>🔮 Volatility Insights:</strong></h6>
+                            <div class="bg-light p-3 rounded mb-3">`;
+            
+            if (interpretation.metrics) {
+                const metrics = interpretation.metrics;
+                html += `
+                                <p><strong>Model Order:</strong> ${metrics.garch_order || 'GARCH(1,1)'}</p>
+                                <p><strong>Volatility Trend:</strong> ${metrics.volatility_trend || 'N/A'}</p>`;
+                
+                if (metrics.forecast_statistics) {
+                    const stats = metrics.forecast_statistics;
+                    html += `<p><strong>Current Level:</strong> ${stats.current_level ? stats.current_level.toFixed(4) : 'N/A'} (${stats.volatility_level || 'N/A'})</p>`;
+                    html += `<p><strong>Forecast Change:</strong> ${stats.change ? (stats.change * 100).toFixed(2) + '%' : 'N/A'}</p>`;
+                }
+                
+                if (metrics.garch_explanation) {
+                    html += `<p><strong>Model Explanation:</strong> ${metrics.garch_explanation}</p>`;
+                }
+                
+                if (metrics.clustering_explanation) {
+                    html += `<div class="mt-2"><small><strong>Volatility Clustering:</strong> ${metrics.clustering_explanation}</small></div>`;
+                }
+            }
+            
+            html += `
+                            </div>
+                            
+                            <h6><strong>🔍 What This Means:</strong></h6>
+                            <div class="bg-light p-3 rounded mb-3">`;
+            
+            if (interpretation.implications) {
+                html += `
+                                <p><strong>Practical Meaning:</strong> ${interpretation.implications.practical_meaning || 'Model provides volatility forecasts for risk management.'}</p>
+                                <p><strong>Risk Management:</strong> ${interpretation.implications.recommendations || 'Use forecasts for portfolio risk assessment.'}</p>`;
+                
+                if (interpretation.implications.limitations) {
+                    html += `<p><strong>Limitations:</strong> ${interpretation.implications.limitations}</p>`;
+                }
+            }
+            
+            html += `
+                            </div>
+                        </div>`;
+        } else {
+            // Fallback for old format
+            html += `
+                        <div class="alert alert-info">
+                            <h6><strong>GARCH Model Interpretation:</strong></h6>
+                            <p>${interpretation || 'GARCH model fitted to capture volatility clustering patterns.'}</p>
+                        </div>`;
+        }
+
+        html += `
                         <div class="row">
-                            <!-- Summary Section -->
+                            <!-- Model Summary Section -->
                             <div class="col-md-6">
-                                <h6>Model Summary</h6>
-                                <pre class="p-3 bg-light rounded">${summary}</pre>
+                                <h6>📈 Model Parameters</h6>`;
+
+        // Extract parameters from summary if available
+        if (typeof summary === 'string' && summary.includes('omega') && summary.includes('alpha') && summary.includes('beta')) {
+            // Try to parse parameters from the summary text for display
+            html += `
+                                <div class="alert alert-light">
+                                    <small><strong>Parameter Interpretation:</strong><br>
+                                    • ω (omega): Long-run variance baseline<br>
+                                    • α (alpha): Sensitivity to recent shocks<br>
+                                    • β (beta): Persistence of past volatility<br>
+                                    • Persistence = α + β (should be < 1 for stability)</small>
+                                </div>`;
+        }
+
+        // Add forecast summary table
+        if (forecast.point_forecasts && Array.isArray(forecast.point_forecasts)) {
+            html += `
+                                <h6>🔮 Forecast Summary</h6>
+                                <table class="table table-bordered table-sm">
+                                    <tbody>
+                                        <tr><th>Forecast Steps</th><td>${forecast.forecast_steps || forecast.point_forecasts.length}</td></tr>
+                                        <tr><th>First Value</th><td>${forecast.point_forecasts[0] ? forecast.point_forecasts[0].toFixed(4) : 'N/A'}</td></tr>
+                                        <tr><th>Last Value</th><td>${forecast.point_forecasts[forecast.point_forecasts.length - 1] ? forecast.point_forecasts[forecast.point_forecasts.length - 1].toFixed(4) : 'N/A'}</td></tr>
+                                        <tr><th>Method</th><td>${forecast.forecast_method || 'Maximum Likelihood'}</td></tr>
+                                    </tbody>
+                                </table>`;
+        }
+
+        html += `
                             </div>
                             <div class="col-md-6">
                                 <div id="garch-forecast-plot-${symbol.replace(/[^a-zA-Z0-9]/g, '')}"></div>
                             </div>
+                        </div>`;
+
+        // Add parameter breakdown if available
+        if (interpretation && interpretation.metrics && interpretation.metrics.parameters) {
+            html += `
+                        <div class="mt-4">
+                            <div class="alert alert-light">
+                                <h6>⚙️ Model Parameters Breakdown:</h6>
+                                <div class="row">`;
+            
+            const params = interpretation.metrics.parameters;
+            if (params.omega !== undefined) {
+                html += `<div class="col-md-4"><strong>Omega (ω):</strong><br><small>Baseline volatility: ${params.omega}</small></div>`;
+            }
+            if (params.alpha !== undefined) {
+                html += `<div class="col-md-4"><strong>Alpha (α):</strong><br><small>Shock sensitivity: ${params.alpha}</small></div>`;
+            }
+            if (params.beta !== undefined) {
+                html += `<div class="col-md-4"><strong>Beta (β):</strong><br><small>Volatility memory: ${params.beta}</small></div>`;
+            }
+            if (params.persistence !== undefined) {
+                html += `<div class="col-md-12 mt-2"><strong>Persistence (α+β):</strong> ${params.persistence} - ${params.persistence < 1 ? 'Stable ✅' : 'High/Unstable ⚠️'}</div>`;
+            }
+            
+            html += `
+                                </div>
+                            </div>
+                        </div>`;
+        }
+
+        // Add methodology notes if available
+        if (interpretation && interpretation.implications && interpretation.implications.methodology_notes) {
+            html += `
+                        <div class="mt-4">
+                            <div class="alert alert-light">
+                                <h6>📚 Methodology Notes:</h6>
+                                <small>${interpretation.implications.methodology_notes}</small>
+                            </div>
+                        </div>`;
+        }
+
+        html += `
+                        <div class="mt-3">
+                            <h6>📋 Full Model Summary</h6>
+                            <pre class="p-3 bg-light rounded" style="font-size: 0.75em; overflow-x: auto;">${summary.full_summary || 'Not available'}</pre>
                         </div>
                     </div>
                 </div>
@@ -1089,7 +1509,7 @@ function createGarchModelCard(symbol, garchResult) {
 }
 
 function createGarchResultCard(symbol, garchResult) {
-    const forecast = garchResult.forecast || [];
+    const forecast = garchResult.forecast || {};
     const summary = garchResult.summary || '';
     const interpretation = garchResult.interpretation || 'No interpretation available';
 
@@ -1126,13 +1546,22 @@ function createGarchResultCard(symbol, garchResult) {
                                 </thead>
                                 <tbody>`;
 
-        forecast.forEach((value, index) => {
+        forecast.slice(0, 5).forEach((value, index) => {
             cardContent += `
                                     <tr>
                                         <td>Step ${index + 1}</td>
                                         <td>${value.toFixed(6)}</td>
                                     </tr>`;
         });
+
+        if (forecast.length > 5) {
+            cardContent += `
+                                    <tr>
+                                        <td colspan="2" class="text-center text-muted">
+                                            <small>... and ${forecast.length - 5} more forecast periods</small>
+                                        </td>
+                                    </tr>`;
+        }
 
         cardContent += `
                                 </tbody>
@@ -1326,7 +1755,7 @@ function createGarchForecastPlot(elementId, forecastData, symbol) {
         xaxis: { title: 'Forecast Steps' },
         yaxis: { title: 'Conditional Volatility' },
         autosize: true,
-        margin: { l: 50, r: 20, b: 50, t: 50 }
+        margin: { l: 50, r: 50, b: 50, t: 80 }
     }, {
         responsive: true
     });
@@ -1492,9 +1921,9 @@ function populateSeriesStatsTab(results) {
             <tr>
                 <td><strong>${symbol}</strong></td>
                 <td>${stats.count || 'N/A'}</td>
-                <td>${stats.mean ? stats.mean.toFixed(4) : 'N/A'}</td>
-                <td>${stats.std ? stats.std.toFixed(4) : 'N/A'}</td>
-                <td>${stats.min ? stats.min.toFixed(4) : 'N/A'}</td>
+                <td>${stats.mean !== undefined ? stats.mean.toFixed(4) : 'N/A'}</td>
+                <td>${stats.std !== undefined ? stats.std.toFixed(4) : 'N/A'}</td>
+                <td>${stats.min !== undefined ? stats.min.toFixed(4) : 'N/A'}</td>
                 <td>${stats['25%'] ? stats['25%'].toFixed(4) : 'N/A'}</td>
                 <td>${stats['50%'] ? stats['50%'].toFixed(4) : 'N/A'}</td>
                 <td>${stats['75%'] ? stats['75%'].toFixed(4) : 'N/A'}</td>
@@ -1768,7 +2197,7 @@ function setupDataTableExports(results) {
         
         newButton.addEventListener('click', function() {
             const data = results[config.dataKey];
-            if (!data || !Array.isArray(data) || data.length === 0) {
+            if (!data || !Array.isArray(data) || data.length ===  0) {
                 alert('No data available to export');
                 return;
             }
