@@ -54,183 +54,445 @@
 </div>
 
 <div id="results-container" style="display: none;">
+    <!-- Main Navigation Tabs -->
     <ul class="nav nav-tabs mb-4" id="resultsTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="time-series-tab" data-bs-toggle="tab" data-bs-target="#time-series" 
-                    type="button" role="tab" aria-controls="time-series" aria-selected="true">
-                Time Series
+            <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" 
+                    type="button" role="tab" aria-controls="overview" aria-selected="true">
+                <i class="bi bi-speedometer2"></i> Overview
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="stationarity-tab" data-bs-toggle="tab" data-bs-target="#stationarity" 
-                    type="button" role="tab" aria-controls="stationarity" aria-selected="false">
-                Stationarity
+            <button class="nav-link" id="plots-tab" data-bs-toggle="tab" data-bs-target="#plots" 
+                    type="button" role="tab" aria-controls="plots" aria-selected="false">
+                <i class="bi bi-diagram-3"></i> Plots
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="arima-tab" data-bs-toggle="tab" data-bs-target="#arima" 
-                    type="button" role="tab" aria-controls="arima" aria-selected="false">
-                ARIMA
+            <button class="nav-link" id="statistical-tests-tab" data-bs-toggle="tab" data-bs-target="#statistical-tests" 
+                    type="button" role="tab" aria-controls="statistical-tests" aria-selected="false">
+                <i class="bi bi-graph-up"></i> Statistical Tests
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="garch-tab" data-bs-toggle="tab" data-bs-target="#garch" 
-                    type="button" role="tab" aria-controls="garch" aria-selected="false">
-                GARCH
+            <button class="nav-link" id="models-tab" data-bs-toggle="tab" data-bs-target="#models" 
+                    type="button" role="tab" aria-controls="models" aria-selected="false">
+                <i class="bi bi-cpu"></i> Models & Forecasts
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="spillover-tab" data-bs-toggle="tab" data-bs-target="#spillover" 
-                    type="button" role="tab" aria-controls="spillover" aria-selected="false">
-                Spillover Analysis
+            <button class="nav-link" id="spillover-analysis-tab" data-bs-toggle="tab" data-bs-target="#spillover-analysis" 
+                    type="button" role="tab" aria-controls="spillover-analysis" aria-selected="false">
+                <i class="bi bi-shuffle"></i> Spillover Analysis
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="data-tab" data-bs-toggle="tab" data-bs-target="#data" 
-                    type="button" role="tab" aria-controls="data" aria-selected="false">
-                Data Lineage
+            <button class="nav-link" id="raw-data-tab" data-bs-toggle="tab" data-bs-target="#raw-data" 
+                    type="button" role="tab" aria-controls="raw-data" aria-selected="false">
+                <i class="bi bi-table"></i> Raw Data
             </button>
         </li>
     </ul>
     
     <div class="tab-content" id="resultsTabsContent">
-        <!-- Time Series Tab -->
-        <div class="tab-pane fade show active" id="time-series" role="tabpanel" aria-labelledby="time-series-tab">
+        
+        <!-- Overview Tab -->
+        <div class="tab-pane fade show active" id="overview" role="tabpanel" aria-labelledby="overview-tab">
+            <div class="row">
+                <div class="col-md-8">
+                    <!-- Executive Summary Card -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0"><i class="bi bi-briefcase"></i> Executive Summary</h5>
+                        </div>
+                        <div class="card-body" id="executive-summary-content">
+                            <!-- Populated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <!-- Key Insights Card -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0"><i class="bi bi-lightbulb"></i> Key Insights</h5>
+                        </div>
+                        <div class="card-body" id="key-insights-content">
+                            <!-- Populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <!-- Analysis Summary Card -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0"><i class="bi bi-info-circle"></i> Analysis Summary</h5>
+                        </div>
+                        <div class="card-body" id="analysis-summary-content">
+                            <!-- Populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Plotted Transformations Tab -->
+        <div class="tab-pane fade" id="plots" role="tabpanel" aria-labelledby="plots-tab">
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0"><i class="bi bi-diagram-3"></i> Data Processing Pipeline</h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- Data flow diagram or visualization -->
+                            <div id="data-pipeline-visualization" style="height: 200px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Collapsible Data Sections -->
+            <div class="accordion" id="dataLineageAccordion">
+                <!-- Original Data -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingOriginalData">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOriginalData" aria-expanded="true" aria-controls="collapseOriginalData">
+                            <i class="bi bi-database me-2"></i> Original Price Data
+                        </button>
+                    </h2>
+                    <div id="collapseOriginalData" class="accordion-collapse collapse show" aria-labelledby="headingOriginalData" data-bs-parent="#dataLineageAccordion">
+                        <div class="accordion-body">
+                            <div id="original-data-plot" style="height: 400px;"></div>
+                            <div class="mt-3">
+                                <button class="btn btn-outline-primary btn-sm" id="view-original-data-table">
+                                    <i class="bi bi-table"></i> View Data Table
+                                </button>
+                                <button class="btn btn-outline-success btn-sm" id="export-original-data">
+                                    <i class="bi bi-download"></i> Export CSV
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Returns Data -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingReturnsData">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseReturnsData" aria-expanded="false" aria-controls="collapseReturnsData">
+                            <i class="bi bi-arrow-up-right me-2"></i> Returns Data
+                        </button>
+                    </h2>
+                    <div id="collapseReturnsData" class="accordion-collapse collapse" aria-labelledby="headingReturnsData" data-bs-parent="#dataLineageAccordion">
+                        <div class="accordion-body">
+                            <div id="returns-data-plot" style="height: 400px;"></div>
+                            <div class="mt-3">
+                                <button class="btn btn-outline-primary btn-sm" id="view-returns-data-table">
+                                    <i class="bi bi-table"></i> View Data Table
+                                </button>
+                                <button class="btn btn-outline-success btn-sm" id="export-returns-data">
+                                    <i class="bi bi-download"></i> Export CSV
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Scaled Data -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingScaledData">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseScaledData" aria-expanded="false" aria-controls="collapseScaledData">
+                            <i class="bi bi-arrows-expand me-2"></i> Scaled Data (for GARCH)
+                        </button>
+                    </h2>
+                    <div id="collapseScaledData" class="accordion-collapse collapse" aria-labelledby="headingScaledData" data-bs-parent="#dataLineageAccordion">
+                        <div class="accordion-body">
+                            <div id="scaled-data-plot" style="height: 400px;"></div>
+                            <div class="mt-3">
+                                <button class="btn btn-outline-primary btn-sm" id="view-scaled-data-table">
+                                    <i class="bi bi-table"></i> View Data Table
+                                </button>
+                                <button class="btn btn-outline-success btn-sm" id="export-scaled-data">
+                                    <i class="bi bi-download"></i> Export CSV
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Pre-GARCH Data -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingPreGarchData">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePreGarchData" aria-expanded="false" aria-controls="collapsePreGarchData">
+                            <i class="bi bi-arrow-left-circle me-2"></i> Pre-GARCH Data
+                        </button>
+                    </h2>
+                    <div id="collapsePreGarchData" class="accordion-collapse collapse" aria-labelledby="headingPreGarchData" data-bs-parent="#dataLineageAccordion">
+                        <div class="accordion-body">
+                            <div id="pre-garch-data-plot" style="height: 400px;"></div>
+                            <div class="mt-3">
+                                <button class="btn btn-outline-primary btn-sm" id="view-pre-garch-data-table">
+                                    <i class="bi bi-table"></i> View Data Table
+                                </button>
+                                <button class="btn btn-outline-success btn-sm" id="export-pre-garch-data">
+                                    <i class="bi bi-download"></i> Export CSV
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Post-GARCH Data -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingPostGarchData">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePostGarchData" aria-expanded="false" aria-controls="collapsePostGarchData">
+                            <i class="bi bi-arrow-right-circle me-2"></i> Post-GARCH Data
+                        </button>
+                    </h2>
+                    <div id="collapsePostGarchData" class="accordion-collapse collapse" aria-labelledby="headingPostGarchData" data-bs-parent="#dataLineageAccordion">
+                        <div class="accordion-body">
+                            <div id="post-garch-data-plot" style="height: 400px;"></div>
+                            <div class="mt-3">
+                                <button class="btn btn-outline-primary btn-sm" id="view-post-garch-data-table">
+                                    <i class="bi bi-table"></i> View Data Table
+                                </button>
+                                <button class="btn btn-outline-success btn-sm" id="export-post-garch-data">
+                                    <i class="bi bi-download"></i> Export CSV
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistical Tests Tab -->
+        <div class="tab-pane fade" id="statistical-tests" role="tabpanel" aria-labelledby="statistical-tests-tab">
+            <!-- Stationarity Tests -->
             <div class="card mb-4">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">Time Series Results</h5>
+                    <button class="btn btn-link text-decoration-none w-100 text-start p-0" type="button" data-bs-toggle="collapse" data-bs-target="#collapseStationarity" aria-expanded="true" aria-controls="collapseStationarity">
+                        <h5 class="card-title mb-0"><i class="bi bi-activity me-2"></i> Stationarity Tests (ADF)</h5>
+                    </button>
+                </div>
+                <div id="collapseStationarity" class="collapse show">
+                    <div class="card-body">
+                        <div id="stationarity-results-container">
+                            <!-- Per-symbol stationarity results -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Series Statistics -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <button class="btn btn-link text-decoration-none w-100 text-start p-0" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSeriesStats" aria-expanded="false" aria-controls="collapseSeriesStats">
+                        <h5 class="card-title mb-0"><i class="bi bi-bar-chart me-2"></i> Series Statistics</h5>
+                    </button>
+                </div>
+                <div id="collapseSeriesStats" class="collapse">
+                    <div class="card-body">
+                        <div id="series-statistics-container">
+                            <!-- Series statistics table -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Models & Forecasts Tab -->
+        <div class="tab-pane fade" id="models" role="tabpanel" aria-labelledby="models-tab">
+            <!-- ARIMA Models -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <button class="btn btn-link text-decoration-none w-100 text-start p-0" type="button" data-bs-toggle="collapse" data-bs-target="#collapseArima" aria-expanded="true" aria-controls="collapseArima">
+                        <h5 class="card-title mb-0"><i class="bi bi-graph-up-arrow me-2"></i> ARIMA Models</h5>
+                    </button>
+                </div>
+                <div id="collapseArima" class="collapse show">
+                    <div class="card-body">
+                        <div id="arima-results-container">
+                            <!-- Per-symbol ARIMA results with nested tabs -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- GARCH Models -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <button class="btn btn-link text-decoration-none w-100 text-start p-0" type="button" data-bs-toggle="collapse" data-bs-target="#collapseGarch" aria-expanded="false" aria-controls="collapseGarch">
+                        <h5 class="card-title mb-0"><i class="bi bi-lightning me-2"></i> GARCH Models</h5>
+                    </button>
+                </div>
+                <div id="collapseGarch" class="collapse">
+                    <div class="card-body">
+                        <div id="garch-results-container">
+                            <!-- Per-symbol GARCH results with nested tabs -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- VAR Model -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <button class="btn btn-link text-decoration-none w-100 text-start p-0" type="button" data-bs-toggle="collapse" data-bs-target="#collapseVar" aria-expanded="false" aria-controls="collapseVar">
+                        <h5 class="card-title mb-0"><i class="bi bi-vector-pen me-2"></i> VAR Model</h5>
+                    </button>
+                </div>
+                <div id="collapseVar" class="collapse">
+                    <div class="card-body">
+                        <div id="var-results-container">
+                            <!-- VAR model results -->
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6><i class="bi bi-gear"></i> Model Specification</h6>
+                                    <div id="var-model-specs"></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6><i class="bi bi-table"></i> FEVD Matrix</h6>
+                                    <div id="var-fevd-matrix"></div>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <h6><i class="bi bi-chat-text"></i> Interpretations</h6>
+                                <div id="var-interpretations"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Spillover Analysis Tab -->
+        <div class="tab-pane fade" id="spillover-analysis" role="tabpanel" aria-labelledby="spillover-analysis-tab">
+            <!-- Total Spillover Index -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="bi bi-speedometer me-2"></i> Total Spillover Index</h5>
                 </div>
                 <div class="card-body">
-                    <!-- Price Series Plot -->
-                    <div class="card mb-4">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <button class="btn btn-link text-decoration-none w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePriceSeries" aria-expanded="true" aria-controls="collapsePriceSeries">
-                                <h5 class="card-title mb-0">Price Series</h5>
-                            </button>
-                        </div>
-                        <div id="collapsePriceSeries" class="collapse show">
-                            <div class="card-body">
-                                <div id="price-series-plot" style="height: 400px;"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Returns Series Plot -->
-                    <div class="card mb-4">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <button class="btn btn-link text-decoration-none w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapseReturnsSeries" aria-expanded="true" aria-controls="collapseReturnsSeries">
-                                <h5 class="card-title mb-0">Returns Series</h5>
-                            </button>
-                        </div>
-                        <div id="collapseReturnsSeries" class="collapse show">
-                            <div class="card-body">
-                                <div id="returns-series-plot" style="height: 400px;"></div>
-                            </div>
-                        </div>
+                    <div id="total-spillover-container">
+                        <!-- Total spillover visualization and metrics -->
                     </div>
                 </div>
             </div>
-        </div>
-        
-        <!-- Stationarity Tab -->
-        <div class="tab-pane fade" id="stationarity" role="tabpanel" aria-labelledby="stationarity-tab">
+            
+            <!-- Directional Spillovers -->
             <div class="card mb-4">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">Stationarity Test Results</h5>
-                </div>
-                <div class="card-body" id="stationarity-content">
-                    <!-- Content will be loaded here -->
-                </div>
-            </div>
-        </div>
-        
-        <!-- ARIMA Tab -->
-        <div class="tab-pane fade" id="arima" role="tabpanel" aria-labelledby="arima-tab">
-            <div id="arima-content"></div>
-        </div>
-
-        <!-- GARCH Tab -->
-        <div class="tab-pane fade" id="garch" role="tabpanel" aria-labelledby="garch-tab">
-            <div class="card mb-4">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <button class="btn btn-link text-decoration-none w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePreGarch" aria-expanded="true" aria-controls="collapsePreGarch">
-                        <h5 class="card-title mb-0">Pre-GARCH Series</h5>
+                    <button class="btn btn-link text-decoration-none w-100 text-start p-0" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDirectionalSpillover" aria-expanded="true" aria-controls="collapseDirectionalSpillover">
+                        <h5 class="card-title mb-0"><i class="bi bi-arrow-left-right me-2"></i> Directional Spillovers</h5>
                     </button>
                 </div>
-                <div id="collapsePreGarch" class="collapse show">
+                <div id="collapseDirectionalSpillover" class="collapse show">
                     <div class="card-body">
-                        <div id="pre-garch-series-plot" style="height: 400px;"></div>
+                        <div id="directional-spillover-container">
+                            <!-- Directional spillover charts and tables -->
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="card mb-4">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <button class="btn btn-link text-decoration-none w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePostGarch" aria-expanded="true" aria-controls="collapsePostGarch">
-                        <h5 class="card-title mb-0">Post-GARCH Series</h5>
-                    </button>
-                </div>
-                <div id="collapsePostGarch" class="collapse show">
-                    <div class="card-body">
-                        <div id="post-garch-series-plot" style="height: 400px;"></div>
-                    </div>
-                </div>
-            </div>
-            <div id="garch-results-cards"></div>
-        </div>
-
-        <!-- Spillover Tab -->
-        <div class="tab-pane fade" id="spillover" role="tabpanel" aria-labelledby="spillover-tab">
-            <div id="spillover-results-container"></div>
-        </div>
-
-        <!-- Data Tab -->
-        <div class="tab-pane fade" id="data" role="tabpanel" aria-labelledby="data-tab">
+            
+            <!-- Net Spillovers -->
             <div class="card mb-4">
                 <div class="card-header">
-                    <ul class="nav nav-tabs card-header-tabs" id="datasetTabs" role="tablist">
+                    <button class="btn btn-link text-decoration-none w-100 text-start p-0" type="button" data-bs-toggle="collapse" data-bs-target="#collapseNetSpillover" aria-expanded="false" aria-controls="collapseNetSpillover">
+                        <h5 class="card-title mb-0"><i class="bi bi-plus-minus me-2"></i> Net Spillovers</h5>
+                    </button>
+                </div>
+                <div id="collapseNetSpillover" class="collapse">
+                    <div class="card-body">
+                        <div id="net-spillover-container">
+                            <!-- Net spillover visualization -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Pairwise Spillovers -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <button class="btn btn-link text-decoration-none w-100 text-start p-0" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePairwiseSpillover" aria-expanded="false" aria-controls="collapsePairwiseSpillover">
+                        <h5 class="card-title mb-0"><i class="bi bi-diagram-2 me-2"></i> Pairwise Spillovers</h5>
+                    </button>
+                </div>
+                <div id="collapsePairwiseSpillover" class="collapse">
+                    <div class="card-body">
+                        <div id="pairwise-spillover-container">
+                            <!-- Pairwise spillover table and heatmap -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Granger Causality -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <button class="btn btn-link text-decoration-none w-100 text-start p-0" type="button" data-bs-toggle="collapse" data-bs-target="#collapseGrangerCausality" aria-expanded="false" aria-controls="collapseGrangerCausality">
+                        <h5 class="card-title mb-0"><i class="bi bi-arrow-through-heart me-2"></i> Granger Causality</h5>
+                    </button>
+                </div>
+                <div id="collapseGrangerCausality" class="collapse">
+                    <div class="card-body">
+                        <div id="granger-causality-container">
+                            <!-- Granger causality results and interpretations -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Raw Data Tab -->
+        <div class="tab-pane fade" id="raw-data" role="tabpanel" aria-labelledby="raw-data-tab">
+            <div class="card">
+                <div class="card-header">
+                    <ul class="nav nav-tabs card-header-tabs" id="rawDataTabs" role="tablist">
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="price-data-tab" data-bs-toggle="tab" data-bs-target="#price-data" 
-                                    type="button" role="tab" aria-controls="price-data" aria-selected="true">
-                                Price Series
+                            <button class="nav-link active" id="original-raw-tab" data-bs-toggle="tab" data-bs-target="#original-raw" 
+                                    type="button" role="tab" aria-controls="original-raw" aria-selected="true">
+                                Original Data
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="returns-data-tab" data-bs-toggle="tab" data-bs-target="#returns-data" 
-                                    type="button" role="tab" aria-controls="returns-data" aria-selected="false">
-                                Returns Series
+                            <button class="nav-link" id="returns-raw-tab" data-bs-toggle="tab" data-bs-target="#returns-raw" 
+                                    type="button" role="tab" aria-controls="returns-raw" aria-selected="false">
+                                Returns Data
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="garch-data-tab" data-bs-toggle="tab" data-bs-target="#garch-data" 
-                                    type="button" role="tab" aria-controls="garch-data" aria-selected="false">
-                                Scaled for GARCH
+                            <button class="nav-link" id="scaled-raw-tab" data-bs-toggle="tab" data-bs-target="#scaled-raw" 
+                                    type="button" role="tab" aria-controls="scaled-raw" aria-selected="false">
+                                Scaled Data
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="pre-garch-data-tab" data-bs-toggle="tab" data-bs-target="#pre-garch-data" 
-                                    type="button" role="tab" aria-controls="pre-garch-data" aria-selected="false">
+                            <button class="nav-link" id="pre-garch-raw-tab" data-bs-toggle="tab" data-bs-target="#pre-garch-raw" 
+                                    type="button" role="tab" aria-controls="pre-garch-raw" aria-selected="false">
                                 Pre-GARCH Data
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="post-garch-data-tab" data-bs-toggle="tab" data-bs-target="#post-garch-data" 
-                                    type="button" role="tab" aria-controls="post-garch-data" aria-selected="false">
+                            <button class="nav-link" id="post-garch-raw-tab" data-bs-toggle="tab" data-bs-target="#post-garch-raw" 
+                                    type="button" role="tab" aria-controls="post-garch-raw" aria-selected="false">
                                 Post-GARCH Data
                             </button>
                         </li>
                     </ul>
                 </div>
                 <div class="card-body">
-                    <div class="tab-content" id="datasetTabContent">
-                        <!-- Price Series Data -->
-                        <div class="tab-pane fade show active" id="price-data" role="tabpanel" aria-labelledby="price-data-tab">
+                    <div class="tab-content" id="rawDataTabContent">
+                        <!-- Original Data Table -->
+                        <div class="tab-pane fade show active" id="original-raw" role="tabpanel" aria-labelledby="original-raw-tab">
                             <div class="d-flex justify-content-end mb-3">
-                                <button class="btn btn-outline-primary" id="export-price-csv">
-                                    <i class="bi bi-download"></i> export .csv
+                                <button class="btn btn-outline-primary" id="export-original-csv">
+                                    <i class="bi bi-download"></i> Export CSV
                                 </button>
                             </div>
                             <div class="table-responsive">
-                                <table class="table table-striped table-hover" id="price-data-table">
-                                    <thead>
+                                <table class="table table-striped table-hover table-sm" id="original-data-table">
+                                    <thead class="table-dark">
                                         <tr>
                                             <th>Date</th>
                                             <!-- Dynamically filled -->
@@ -243,16 +505,16 @@
                             </div>
                         </div>
                         
-                        <!-- Returns Series Data -->
-                        <div class="tab-pane fade" id="returns-data" role="tabpanel" aria-labelledby="returns-data-tab">
+                        <!-- Returns Data Table -->
+                        <div class="tab-pane fade" id="returns-raw" role="tabpanel" aria-labelledby="returns-raw-tab">
                             <div class="d-flex justify-content-end mb-3">
                                 <button class="btn btn-outline-primary" id="export-returns-csv">
-                                    <i class="bi bi-download"></i> export .csv
+                                    <i class="bi bi-download"></i> Export CSV
                                 </button>
                             </div>
                             <div class="table-responsive">
-                                <table class="table table-striped table-hover" id="returns-data-table">
-                                    <thead>
+                                <table class="table table-striped table-hover table-sm" id="returns-data-table">
+                                    <thead class="table-dark">
                                         <tr>
                                             <th>Date</th>
                                             <!-- Dynamically filled -->
@@ -265,16 +527,16 @@
                             </div>
                         </div>
                         
-                        <!-- GARCH Series Data -->
-                        <div class="tab-pane fade" id="garch-data" role="tabpanel" aria-labelledby="garch-data-tab">
+                        <!-- Scaled Data Table -->
+                        <div class="tab-pane fade" id="scaled-raw" role="tabpanel" aria-labelledby="scaled-raw-tab">
                             <div class="d-flex justify-content-end mb-3">
-                                <button class="btn btn-outline-primary" id="export-garch-csv">
-                                    <i class="bi bi-download"></i> export .csv
+                                <button class="btn btn-outline-primary" id="export-scaled-csv">
+                                    <i class="bi bi-download"></i> Export CSV
                                 </button>
                             </div>
                             <div class="table-responsive">
-                                <table class="table table-striped table-hover" id="garch-data-table">
-                                    <thead>
+                                <table class="table table-striped table-hover table-sm" id="scaled-data-table">
+                                    <thead class="table-dark">
                                         <tr>
                                             <th>Date</th>
                                             <!-- Dynamically filled -->
@@ -287,16 +549,16 @@
                             </div>
                         </div>
 
-                        <!-- Pre-GARCH Series Data -->
-                        <div class="tab-pane fade" id="pre-garch-data" role="tabpanel" aria-labelledby="pre-garch-data-tab">
+                        <!-- Pre-GARCH Data Table -->
+                        <div class="tab-pane fade" id="pre-garch-raw" role="tabpanel" aria-labelledby="pre-garch-raw-tab">
                             <div class="d-flex justify-content-end mb-3">
                                 <button class="btn btn-outline-primary" id="export-pre-garch-csv">
-                                    <i class="bi bi-download"></i> export .csv
+                                    <i class="bi bi-download"></i> Export CSV
                                 </button>
                             </div>
                             <div class="table-responsive">
-                                <table class="table table-striped table-hover" id="pre-garch-data-table">
-                                    <thead>
+                                <table class="table table-striped table-hover table-sm" id="pre-garch-data-table">
+                                    <thead class="table-dark">
                                         <tr>
                                             <th>Date</th>
                                             <!-- Dynamically filled -->
@@ -309,16 +571,16 @@
                             </div>
                         </div>
 
-                        <!-- Post-GARCH Series Data -->
-                        <div class="tab-pane fade" id="post-garch-data" role="tabpanel" aria-labelledby="post-garch-data-tab">
+                        <!-- Post-GARCH Data Table -->
+                        <div class="tab-pane fade" id="post-garch-raw" role="tabpanel" aria-labelledby="post-garch-raw-tab">
                             <div class="d-flex justify-content-end mb-3">
                                 <button class="btn btn-outline-primary" id="export-post-garch-csv">
-                                    <i class="bi bi-download"></i> export .csv
+                                    <i class="bi bi-download"></i> Export CSV
                                 </button>
                             </div>
                             <div class="table-responsive">
-                                <table class="table table-striped table-hover" id="post-garch-data-table">
-                                    <thead>
+                                <table class="table table-striped table-hover table-sm" id="post-garch-data-table">
+                                    <thead class="table-dark">
                                         <tr>
                                             <th>Date</th>
                                             <!-- Dynamically filled -->
