@@ -1,0 +1,105 @@
+all the JSON paths:
+
+Root Level Paths
+original_data (array of objects)
+returns_data (array of objects)
+scaled_data (array of objects)
+pre_garch_data (array of objects)
+post_garch_data (array of objects)
+stationarity_results (object)
+arima_results (object)
+garch_results (object)
+var_results (object)
+spillover_results (object)
+granger_causality_results (object)
+Data Arrays Paths
+Each data array contains objects with:
+
+[].index (timestamp)
+[].MSFT (numeric value)
+[].AAPL (numeric value)
+[].NEM.US (numeric value)
+Stationarity Results Paths
+stationarity_results.all_symbols_stationarity.all_symbols_stationarity.{SYMBOL}.adf_statistic
+stationarity_results.all_symbols_stationarity.all_symbols_stationarity.{SYMBOL}.p_value
+stationarity_results.all_symbols_stationarity.all_symbols_stationarity.{SYMBOL}.critical_values.1%
+stationarity_results.all_symbols_stationarity.all_symbols_stationarity.{SYMBOL}.critical_values.5%
+stationarity_results.all_symbols_stationarity.all_symbols_stationarity.{SYMBOL}.critical_values.10%
+stationarity_results.all_symbols_stationarity.all_symbols_stationarity.{SYMBOL}.is_stationary
+stationarity_results.all_symbols_stationarity.all_symbols_stationarity.{SYMBOL}.interpretation.executive_summary.*
+stationarity_results.all_symbols_stationarity.all_symbols_stationarity.{SYMBOL}.interpretation.key_findings.*
+stationarity_results.all_symbols_stationarity.all_symbols_stationarity.{SYMBOL}.interpretation.technical_details.*
+stationarity_results.all_symbols_stationarity.all_symbols_stationarity.{SYMBOL}.interpretation.background_context.*
+stationarity_results.series_stats.{SYMBOL}.n
+stationarity_results.series_stats.{SYMBOL}.mean
+stationarity_results.series_stats.{SYMBOL}.median
+stationarity_results.series_stats.{SYMBOL}.min
+stationarity_results.series_stats.{SYMBOL}.max
+stationarity_results.series_stats.{SYMBOL}.std
+stationarity_results.series_stats.{SYMBOL}.skew
+stationarity_results.series_stats.{SYMBOL}.kurt
+stationarity_results.series_stats.{SYMBOL}.annualized_vol
+ARIMA Results Paths
+arima_results.all_symbols_arima.{SYMBOL}.summary.model_specification
+arima_results.all_symbols_arima.{SYMBOL}.summary.sample_size
+arima_results.all_symbols_arima.{SYMBOL}.summary.log_likelihood
+arima_results.all_symbols_arima.{SYMBOL}.summary.aic
+arima_results.all_symbols_arima.{SYMBOL}.summary.bic
+arima_results.all_symbols_arima.{SYMBOL}.summary.hqic
+arima_results.all_symbols_arima.{SYMBOL}.summary.parameters.ar.L1
+arima_results.all_symbols_arima.{SYMBOL}.summary.parameters.ma.L1
+arima_results.all_symbols_arima.{SYMBOL}.summary.parameters.sigma2
+arima_results.all_symbols_arima.{SYMBOL}.summary.parameter_pvalues.*
+arima_results.all_symbols_arima.{SYMBOL}.summary.parameter_significance.*
+arima_results.all_symbols_arima.{SYMBOL}.summary.residual_statistics.*
+arima_results.all_symbols_arima.{SYMBOL}.summary.fitted_values.{TIMESTAMP}
+arima_results.all_symbols_arima.{SYMBOL}.summary.residuals.{TIMESTAMP}
+arima_results.all_symbols_arima.{SYMBOL}.summary.conditional_mean_filtering.*
+arima_results.all_symbols_arima.{SYMBOL}.summary.forecasting.*
+arima_results.all_symbols_arima.{SYMBOL}.summary.full_summary
+arima_results.all_symbols_arima.{SYMBOL}.forecast.point_forecasts[]
+arima_results.all_symbols_arima.{SYMBOL}.forecast.forecast_steps
+arima_results.all_symbols_arima.{SYMBOL}.forecast.model_specification
+arima_results.all_symbols_arima.{SYMBOL}.forecast.forecast_method
+arima_results.all_symbols_arima.{SYMBOL}.interpretation.* (same structure as stationarity)
+GARCH Results Paths
+garch_results.all_symbols_garch.{SYMBOL}.summary
+garch_results.all_symbols_garch.{SYMBOL}.forecast[]
+garch_results.all_symbols_garch.{SYMBOL}.interpretation.* (same structure as above)
+VAR Results Paths
+var_results.fitted_model
+var_results.selected_lag
+var_results.ic_used
+var_results.coefficients.{SYMBOL}
+var_results.granger_causality.test_results.{SYMBOL}_to_{SYMBOL}.causality_1pct
+var_results.granger_causality.test_results.{SYMBOL}_to_{SYMBOL}.causality_5pct
+var_results.granger_causality.test_results.{SYMBOL}_to_{SYMBOL}.p_values.{LAG}
+var_results.granger_causality.test_results.{SYMBOL}_to_{SYMBOL}.optimal_lag_1pct
+var_results.granger_causality.test_results.{SYMBOL}_to_{SYMBOL}.optimal_lag_5pct
+var_results.granger_causality.test_results.{SYMBOL}_to_{SYMBOL}.significance_summary.*
+var_results.granger_causality.methodology.*
+var_results.granger_causality.summary.*
+var_results.fevd_matrix[][]
+var_results.fevd_interpretation.{SYMBOL}
+var_results.interpretation
+Spillover Results Paths
+spillover_results.total_spillover_index
+spillover_results.directional_spillover.{SYMBOL}.to
+spillover_results.directional_spillover.{SYMBOL}.from
+spillover_results.net_spillover.{SYMBOL}
+spillover_results.pairwise_spillover.{SYMBOL}.{SYMBOL}
+spillover_results.interpretation
+spillover_results.pairwise_spillover_table[].from
+spillover_results.pairwise_spillover_table[].relationship
+spillover_results.pairwise_spillover_table[].r_squared
+spillover_results.pairwise_spillover_table[].r_squared_percent
+spillover_results.pairwise_spillover_table[].significant_lags[]
+spillover_results.pairwise_spillover_table[].significant_lags_text
+spillover_results.pairwise_spillover_table[].strength
+Granger Causality Results Paths
+granger_causality_results.causality_results.{SYMBOL}->{SYMBOL}.* (same structure as VAR granger_causality)
+granger_causality_results.interpretations.{SYMBOL}->{SYMBOL}
+granger_causality_results.metadata.max_lag
+granger_causality_results.metadata.n_pairs_tested
+granger_causality_results.metadata.significance_levels[]
+granger_causality_results.metadata.config_enabled

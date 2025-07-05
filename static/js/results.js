@@ -362,33 +362,103 @@ function initializeModelsTab() {
         
         Object.keys(models.arima).forEach(symbol => {
             const result = models.arima[symbol];
+            
+            // Extract model specification from fitted_model summary text
+            let modelSpec = 'Model specification not available';
+            if (result.fitted_model && typeof result.fitted_model === 'string') {
+                // Parse ARIMA model specification from the fitted_model summary
+                const summaryLines = result.fitted_model.split('\n');
+                const modelLine = summaryLines.find(line => line.includes('ARIMA'));
+                if (modelLine) {
+                    // Extract ARIMA(p,d,q) pattern
+                    const arimaMatch = modelLine.match(/ARIMA\(\d+,\d+,\d+\)/);
+                    if (arimaMatch) {
+                        modelSpec = arimaMatch[0];
+                    } else {
+                        // Fallback: use the entire line that mentions ARIMA
+                        modelSpec = modelLine.trim();
+                    }
+                }
+            }
+            
+            // Extract forecast information
+            let forecastInfo = 'No forecast available';
+            if (result.forecast) {
+                if (result.forecast.point_forecasts && Array.isArray(result.forecast.point_forecasts)) {
+                    forecastInfo = `${result.forecast.point_forecasts.length} forecast points`;
+                } else if (result.forecast.forecast_steps) {
+                    forecastInfo = `${result.forecast.forecast_steps} forecast steps`;
+                }
+                if (result.forecast.forecast_method) {
+                    forecastInfo += ` (${result.forecast.forecast_method})`;
+                }
+            }
+            
+            // Extract model fit statistics
+            let fitStats = '';
+            if (result.model_summary && result.model_summary.fit_statistics) {
+                const stats = result.model_summary.fit_statistics;
+                fitStats = `
+                    <div class="row mt-3">
+                        <div class="col-6"><strong>AIC:</strong> ${stats.aic?.toFixed(4) || 'N/A'}</div>
+                        <div class="col-6"><strong>BIC:</strong> ${stats.bic?.toFixed(4) || 'N/A'}</div>
+                        <div class="col-6"><strong>Log Likelihood:</strong> ${stats.log_likelihood?.toFixed(4) || 'N/A'}</div>
+                        <div class="col-6"><strong>HQIC:</strong> ${stats.hqic?.toFixed(4) || 'N/A'}</div>
+                    </div>
+                `;
+            }
+            
+            // Extract interpretation
+            let interpretation = '';
+            if (result.interpretation) {
+                if (typeof result.interpretation === 'string') {
+                    interpretation = result.interpretation;
+                } else if (result.interpretation.executive_summary) {
+                    interpretation = typeof result.interpretation.executive_summary === 'string' ? 
+                        result.interpretation.executive_summary : 
+                        JSON.stringify(result.interpretation.executive_summary);
+                }
+            }
+            
             arimaHtml += `
                 <div class="card mb-3">
-                    <div class="card-header">
+                    <div class="card-header d-flex justify-content-between align-items-center">
                         <h6 class="mb-0">ARIMA Model - ${symbol}</h6>
+                        <span class="badge bg-primary">Fitted</span>
                     </div>
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-6">
-                                <h6>Model Summary</h6>
-                                <pre class="small">${result.summary?.model_specification || 'No model specification available'}</pre>
+                                <h6>Model Specification</h6>
+                                <div class="bg-light p-2 rounded">
+                                    <code>${modelSpec}</code>
+                                </div>
+                                ${fitStats}
                             </div>
                             <div class="col-md-6">
-                                <h6>Forecast</h6>
-                                ${result.forecast?.point_forecasts ? 
-                                    `<p>Forecast steps: ${result.forecast.forecast_steps}</p>
-                                     <p>Method: ${result.forecast.forecast_method}</p>` : 
-                                    '<p class="text-muted">No forecast available</p>'
+                                <h6>Forecast Information</h6>
+                                <p>${forecastInfo}</p>
+                                ${result.forecast && result.forecast.confidence_intervals ? 
+                                    '<p><small class="text-muted">Includes confidence intervals</small></p>' : 
+                                    ''
                                 }
                             </div>
                         </div>
-                        ${result.interpretation ? `<div class="mt-3"><h6>Interpretation</h6><p class="small">${JSON.stringify(result.interpretation.executive_summary || {})}</p></div>` : ''}
+                        ${interpretation ? 
+                            `<div class="mt-3">
+                                <h6>Model Interpretation</h6>
+                                <div class="alert alert-info">
+                                    <small>${interpretation}</small>
+                                </div>
+                            </div>` : 
+                            ''
+                        }
                     </div>
                 </div>
             `;
         });
         
-        arimaContainer.innerHTML = arimaHtml || '<p class="text-muted">No ARIMA results available.</p>';
+        arimaContainer.innerHTML = arimaHtml || '<div class="alert alert-warning">No ARIMA results available.</div>';
     }
     
     // Initialize GARCH results
@@ -398,32 +468,127 @@ function initializeModelsTab() {
         
         Object.keys(models.garch).forEach(symbol => {
             const result = models.garch[symbol];
+            
+            // Extract model specification from fitted_model summary text
+            let modelSpec = 'Model specification not available';
+            if (result.fitted_model && typeof result.fitted_model === 'string') {
+                // Parse GARCH model specification from the fitted_model summary
+                const summaryLines = result.fitted_model.split('\n');
+                
+                // Look for GARCH model specification in various formats
+                const garchLine = summaryLines.find(line => 
+                    line.includes('GARCH') || 
+                    line.includes('Constant Variance') ||
+                    line.includes('Model:')
+                );
+                
+                if (garchLine) {
+                    // Extract GARCH(p,q) pattern
+                    const garchMatch = garchLine.match(/GARCH\(\d+,\d+\)/);
+                    if (garchMatch) {
+                        modelSpec = garchMatch[0];
+                    } else {
+                        // Look for other patterns like "GARCH Model Results"
+                        if (garchLine.includes('GARCH')) {
+                            modelSpec = garchLine.trim();
+                        } else {
+                            // Fallback: construct from the fact it's a GARCH model
+                            modelSpec = 'GARCH Model';
+                        }
+                    }
+                } else {
+                    // If no specific GARCH line found, assume it's a GARCH(1,1)
+                    modelSpec = 'GARCH(1,1)';
+                }
+            }
+            
+            // Extract volatility forecast information
+            let volForecastInfo = 'No volatility forecast available';
+            if (result.forecast) {
+                if (Array.isArray(result.forecast) && result.forecast.length > 0) {
+                    volForecastInfo = `${result.forecast.length} volatility forecast points`;
+                } else if (result.forecast.volatility_forecast) {
+                    volForecastInfo = `Volatility forecast available`;
+                }
+            }
+            
+            // Extract model parameters
+            let parameters = '';
+            if (result.model_summary && result.model_summary.parameters) {
+                const params = result.model_summary.parameters;
+                parameters = `
+                    <div class="row mt-3">
+                        ${Object.keys(params).map(param => 
+                            `<div class="col-6"><strong>${param}:</strong> ${params[param]?.toFixed(4) || 'N/A'}</div>`
+                        ).join('')}
+                    </div>
+                `;
+            }
+            
+            // Extract fit statistics
+            let fitStats = '';
+            if (result.model_summary && result.model_summary.fit_statistics) {
+                const stats = result.model_summary.fit_statistics;
+                fitStats = `
+                    <div class="row mt-3">
+                        <div class="col-6"><strong>Log Likelihood:</strong> ${stats.log_likelihood?.toFixed(4) || 'N/A'}</div>
+                        <div class="col-6"><strong>AIC:</strong> ${stats.aic?.toFixed(4) || 'N/A'}</div>
+                    </div>
+                `;
+            }
+            
+            // Extract interpretation
+            let interpretation = '';
+            if (result.interpretation) {
+                if (typeof result.interpretation === 'string') {
+                    interpretation = result.interpretation;
+                } else if (result.interpretation.executive_summary) {
+                    interpretation = typeof result.interpretation.executive_summary === 'string' ? 
+                        result.interpretation.executive_summary : 
+                        JSON.stringify(result.interpretation.executive_summary);
+                }
+            }
+            
             garchHtml += `
                 <div class="card mb-3">
-                    <div class="card-header">
+                    <div class="card-header d-flex justify-content-between align-items-center">
                         <h6 class="mb-0">GARCH Model - ${symbol}</h6>
+                        <span class="badge bg-success">Fitted</span>
                     </div>
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-6">
-                                <h6>Model Summary</h6>
-                                <pre class="small">${result.summary || 'No model summary available'}</pre>
+                                <h6>Model Specification</h6>
+                                <div class="bg-light p-2 rounded">
+                                    <code>${modelSpec}</code>
+                                </div>
+                                ${parameters}
+                                ${fitStats}
                             </div>
                             <div class="col-md-6">
                                 <h6>Volatility Forecast</h6>
+                                <p>${volForecastInfo}</p>
                                 ${result.forecast && result.forecast.length > 0 ? 
-                                    `<p>Forecast points: ${result.forecast.length}</p>` : 
-                                    '<p class="text-muted">No volatility forecast available</p>'
+                                    `<p><small class="text-muted">Latest forecast: ${result.forecast[result.forecast.length - 1]?.toFixed(6) || 'N/A'}</small></p>` : 
+                                    ''
                                 }
                             </div>
                         </div>
-                        ${result.interpretation ? `<div class="mt-3"><h6>Interpretation</h6><p class="small">${JSON.stringify(result.interpretation.executive_summary || {})}</p></div>` : ''}
+                        ${interpretation ? 
+                            `<div class="mt-3">
+                                <h6>Model Interpretation</h6>
+                                <div class="alert alert-info">
+                                    <small>${interpretation}</small>
+                                </div>
+                            </div>` : 
+                            ''
+                        }
                     </div>
                 </div>
             `;
         });
         
-        garchContainer.innerHTML = garchHtml || '<p class="text-muted">No GARCH results available.</p>';
+        garchContainer.innerHTML = garchHtml || '<div class="alert alert-warning">No GARCH results available.</div>';
     }
     
     // Initialize VAR results
@@ -726,44 +891,235 @@ function handleUrlNavigation() {
 }
 
 function processResultsClientSide(rawResults) {
-    // Simplified client-side processing as fallback
+    // Enhanced client-side processing to extract real data from API response
     console.log("Processing results client-side");
+    console.log("Raw results keys:", Object.keys(rawResults));
     
-    return {
+    // Extract stationarity test results
+    let stationarityResults = {};
+    let seriesStatistics = {};
+    
+    if (rawResults.stationarity_results) {
+        console.log("Found stationarity_results in raw data");
+        
+        // Extract stationarity test results from nested structure
+        if (rawResults.stationarity_results.all_symbols_stationarity) {
+            const stationarityData = rawResults.stationarity_results.all_symbols_stationarity;
+            
+            // Handle both direct and nested structures
+            const actualStationarityData = stationarityData.all_symbols_stationarity || stationarityData;
+            
+            if (actualStationarityData && typeof actualStationarityData === 'object') {
+                console.log("Processing stationarity data for symbols:", Object.keys(actualStationarityData));
+                stationarityResults = actualStationarityData;
+            }
+        }
+        
+        // Extract series statistics
+        if (rawResults.stationarity_results.series_stats) {
+            console.log("Found series_stats in raw data");
+            seriesStatistics = rawResults.stationarity_results.series_stats;
+        }
+    }
+    
+    // Extract spillover analysis results
+    let spilloverAnalysis = {
+        total_spillover: {},
+        directional_spillover: {},
+        net_spillover: {},
+        pairwise_spillover: {},
+        pairwise_spillover_table: [],
+        granger_causality: {}
+    };
+    
+    if (rawResults.spillover_results) {
+        console.log("Found spillover_results in raw data");
+        
+        // Total spillover index
+        if (rawResults.spillover_results.total_spillover_index !== undefined) {
+            spilloverAnalysis.total_spillover = {
+                index: rawResults.spillover_results.total_spillover_index,
+                interpretation: rawResults.spillover_results.total_spillover_interpretation || ''
+            };
+        }
+        
+        // Directional spillovers
+        if (rawResults.spillover_results.directional_spillover) {
+            spilloverAnalysis.directional_spillover = rawResults.spillover_results.directional_spillover;
+        }
+        
+        // Net spillovers
+        if (rawResults.spillover_results.net_spillover) {
+            spilloverAnalysis.net_spillover = rawResults.spillover_results.net_spillover;
+        }
+        
+        // Pairwise spillovers (use the transformed data from the response)
+        if (rawResults.spillover_results.pairwise_spillover_table) {
+            spilloverAnalysis.pairwise_spillover_table = rawResults.spillover_results.pairwise_spillover_table;
+        }
+        
+        // Granger causality
+        if (rawResults.granger_causality_results) {
+            spilloverAnalysis.granger_causality = rawResults.granger_causality_results;
+        }
+    }
+    
+    // Extract model results - Fix the nested structure extraction
+    let models = { arima: {}, garch: {}, var: {} };
+    
+    // Extract ARIMA results from nested structure
+    if (rawResults.arima_results) {
+        console.log("Found ARIMA results in raw data");
+        console.log("ARIMA results structure:", Object.keys(rawResults.arima_results));
+        
+        // Check for nested structure: results.all_symbols_arima
+        if (rawResults.arima_results.results && rawResults.arima_results.results.all_symbols_arima) {
+            console.log("Extracting ARIMA results from nested structure");
+            models.arima = rawResults.arima_results.results.all_symbols_arima;
+        } else if (rawResults.arima_results.all_symbols_arima) {
+            console.log("Extracting ARIMA results from direct structure");
+            models.arima = rawResults.arima_results.all_symbols_arima;
+        } else {
+            // Fallback to direct assignment
+            models.arima = rawResults.arima_results;
+        }
+    }
+    
+    // Extract GARCH results from nested structure
+    if (rawResults.garch_results) {
+        console.log("Found GARCH results in raw data");
+        console.log("GARCH results structure:", Object.keys(rawResults.garch_results));
+        
+        // Check for nested structure: results.all_symbols_garch
+        if (rawResults.garch_results.results && rawResults.garch_results.results.all_symbols_garch) {
+            console.log("Extracting GARCH results from nested structure");
+            models.garch = rawResults.garch_results.results.all_symbols_garch;
+        } else if (rawResults.garch_results.all_symbols_garch) {
+            console.log("Extracting GARCH results from direct structure");
+            models.garch = rawResults.garch_results.all_symbols_garch;
+        } else {
+            // Fallback to direct assignment
+            models.garch = rawResults.garch_results;
+        }
+    }
+    
+    // Extract VAR results
+    if (rawResults.var_results) {
+        console.log("Found VAR results in raw data");
+        models.var = rawResults.var_results;
+    }
+    
+    console.log("Final extracted models:", {
+        arima_symbols: Object.keys(models.arima),
+        garch_symbols: Object.keys(models.garch),
+        var_available: Object.keys(models.var).length > 0
+    });
+    
+    // Extract raw data tables
+    let rawData = {};
+    const dataTypes = ['original_data', 'returns_data', 'scaled_data', 'pre_garch_data', 'post_garch_data'];
+    
+    dataTypes.forEach(dataType => {
+        if (rawResults[dataType] && Array.isArray(rawResults[dataType])) {
+            console.log(`Found ${dataType} with ${rawResults[dataType].length} records`);
+            
+            // Convert array of objects to table format
+            const dataArray = rawResults[dataType];
+            if (dataArray.length > 0) {
+                const headers = Object.keys(dataArray[0]);
+                const rows = dataArray.map(row => headers.map(header => row[header] || ''));
+                
+                rawData[dataType] = {
+                    headers: headers,
+                    rows: rows
+                };
+            }
+        }
+    });
+    
+    // Create data lineage information
+    let dataLineage = {
+        pipeline_stages: [],
+        data_sets: rawData
+    };
+    
+    dataTypes.forEach(dataType => {
+        const hasData = rawResults[dataType] && Array.isArray(rawResults[dataType]) && rawResults[dataType].length > 0;
+        const recordCount = hasData ? rawResults[dataType].length : 0;
+        
+        dataLineage.pipeline_stages.push({
+            name: dataType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+            data_available: hasData,
+            record_count: recordCount
+        });
+    });
+    
+    // Extract symbols from the data
+    let symbols = rawResults.symbols || [];
+    if (symbols.length === 0 && rawResults.original_data && rawResults.original_data.length > 0) {
+        // Extract symbols from data headers, excluding 'index' or timestamp columns
+        const headers = Object.keys(rawResults.original_data[0]);
+        symbols = headers.filter(header => !['index', 'timestamp', 'date'].includes(header.toLowerCase()));
+    }
+    
+    const processedData = {
         overview: {
             executive_summary: {
-                symbols_analyzed: rawResults.symbols?.length || 0,
-                symbols_list: rawResults.symbols?.join(', ') || 'Unknown',
+                symbols_analyzed: symbols.length,
+                symbols_list: symbols.join(', '),
                 analysis_date: new Date().toISOString(),
-                key_findings: ['Client-side processing active']
+                key_findings: [
+                    `Analysis completed for ${symbols.length} symbols`,
+                    stationarityResults && Object.keys(stationarityResults).length > 0 ? 'Stationarity tests completed' : 'No stationarity tests available',
+                    spilloverAnalysis.total_spillover.index !== undefined ? `Total spillover index: ${(spilloverAnalysis.total_spillover.index * 100).toFixed(1)}%` : 'No spillover analysis available'
+                ].filter(finding => !finding.includes('No '))
             },
-            key_insights: ['Raw data available for analysis'],
+            key_insights: [
+                'Time series analysis pipeline executed',
+                spilloverAnalysis.granger_causality && Object.keys(spilloverAnalysis.granger_causality).length > 0 ? 'Granger causality relationships detected' : null,
+                Object.keys(models.arima).length > 0 ? 'ARIMA models fitted' : null,
+                Object.keys(models.garch).length > 0 ? 'GARCH models fitted' : null
+            ].filter(insight => insight !== null),
             analysis_summary: {
-                models_fitted: Object.keys(rawResults).filter(key => key.includes('results')),
-                tests_performed: ['Basic processing'],
-                data_points: 0,
-                time_period: 'Unknown'
-            },
-            data_quality: {
-                completeness: 'Unknown',
-                missing_values: 0,
-                consistency: 'Unknown'
+                data_points: rawResults.original_data ? rawResults.original_data.length : 0,
+                time_period: rawResults.original_data && rawResults.original_data.length > 0 ? 
+                    `${rawResults.original_data.length} observations` : 'Unknown',
+                models_fitted: [
+                    Object.keys(models.arima).length > 0 ? 'ARIMA' : null,
+                    Object.keys(models.garch).length > 0 ? 'GARCH' : null,
+                    Object.keys(models.var).length > 0 ? 'VAR' : null
+                ].filter(model => model !== null),
+                tests_performed: [
+                    Object.keys(stationarityResults).length > 0 ? 'Stationarity Tests' : null,
+                    spilloverAnalysis.granger_causality && Object.keys(spilloverAnalysis.granger_causality).length > 0 ? 'Granger Causality' : null,
+                    spilloverAnalysis.total_spillover.index !== undefined ? 'Spillover Analysis' : null
+                ].filter(test => test !== null)
             }
         },
-        data_lineage: { pipeline_stages: [], data_sets: {} },
-        statistical_tests: { stationarity: {}, series_statistics: {} },
-        models: { arima: {}, garch: {}, var: {} },
-        spillover_analysis: { 
-            total_spillover: {},
-            directional_spillover: {},
-            net_spillover: {},
-            pairwise_spillover: {},
-            granger_causality: {}
+        statistical_tests: {
+            stationarity: stationarityResults,
+            series_statistics: seriesStatistics
         },
-        raw_data: {},
-        symbols: rawResults.symbols || [],
-        has_data: true
+        models: models,
+        spillover_analysis: spilloverAnalysis,
+        data_lineage: dataLineage,
+        raw_data: rawData
     };
+    
+    console.log("Client-side processing complete. Processed structure:", {
+        overview: !!processedData.overview,
+        statistical_tests: !!processedData.statistical_tests,
+        models: {
+            arima: Object.keys(processedData.models.arima).length,
+            garch: Object.keys(processedData.models.garch).length,
+            var: Object.keys(processedData.models.var).length
+        },
+        spillover_analysis: !!processedData.spillover_analysis,
+        data_lineage: !!processedData.data_lineage,
+        raw_data: Object.keys(processedData.raw_data).length
+    });
+    
+    return processedData;
 }
 
 console.log("Results page JavaScript loaded successfully");

@@ -137,16 +137,13 @@
 
         <!-- Plotted Transformations Tab -->
         <div class="tab-pane fade" id="plots" role="tabpanel" aria-labelledby="plots-tab">
+            {% if plots %}
             <div class="row mb-4">
                 <div class="col-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="card-title mb-0"><i class="bi bi-diagram-3"></i> Data Processing Pipeline</h5>
-                        </div>
-                        <div class="card-body">
-                            <!-- Data flow diagram or visualization -->
-                            <div id="data-pipeline-visualization" style="height: 200px;"></div>
-                        </div>
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Interactive Charts:</strong> All plots are generated server-side using Plotly and are fully interactive. 
+                        You can zoom, pan, hover for details, and toggle series on/off by clicking the legend.
                     </div>
                 </div>
             </div>
@@ -162,7 +159,17 @@
                     </h2>
                     <div id="collapseOriginalData" class="accordion-collapse collapse show" aria-labelledby="headingOriginalData" data-bs-parent="#dataLineageAccordion">
                         <div class="accordion-body">
-                            <div id="original-data-plot" style="height: 400px;"></div>
+                            {% if plots.original_data %}
+                            <div id="original-data-plot-container"></div>
+                            <script>
+                                var originalDataPlot = {{ plots.original_data|safe }};
+                                Plotly.newPlot('original-data-plot-container', originalDataPlot.data, originalDataPlot.layout, {responsive: true});
+                            </script>
+                            {% else %}
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle"></i> Original price data plot not available.
+                            </div>
+                            {% endif %}
                             <div class="mt-3">
                                 <button class="btn btn-outline-primary btn-sm" id="view-original-data-table">
                                     <i class="bi bi-table"></i> View Data Table
@@ -184,7 +191,17 @@
                     </h2>
                     <div id="collapseReturnsData" class="accordion-collapse collapse" aria-labelledby="headingReturnsData" data-bs-parent="#dataLineageAccordion">
                         <div class="accordion-body">
-                            <div id="returns-data-plot" style="height: 400px;"></div>
+                            {% if plots.returns_data %}
+                            <div id="returns-data-plot-container"></div>
+                            <script>
+                                var returnsDataPlot = {{ plots.returns_data|safe }};
+                                Plotly.newPlot('returns-data-plot-container', returnsDataPlot.data, returnsDataPlot.layout, {responsive: true});
+                            </script>
+                            {% else %}
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle"></i> Returns data plot not available.
+                            </div>
+                            {% endif %}
                             <div class="mt-3">
                                 <button class="btn btn-outline-primary btn-sm" id="view-returns-data-table">
                                     <i class="bi bi-table"></i> View Data Table
@@ -206,7 +223,17 @@
                     </h2>
                     <div id="collapseScaledData" class="accordion-collapse collapse" aria-labelledby="headingScaledData" data-bs-parent="#dataLineageAccordion">
                         <div class="accordion-body">
-                            <div id="scaled-data-plot" style="height: 400px;"></div>
+                            {% if plots.scaled_data %}
+                            <div id="scaled-data-plot-container"></div>
+                            <script>
+                                var scaledDataPlot = {{ plots.scaled_data|safe }};
+                                Plotly.newPlot('scaled-data-plot-container', scaledDataPlot.data, scaledDataPlot.layout, {responsive: true});
+                            </script>
+                            {% else %}
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle"></i> Scaled data plot not available.
+                            </div>
+                            {% endif %}
                             <div class="mt-3">
                                 <button class="btn btn-outline-primary btn-sm" id="view-scaled-data-table">
                                     <i class="bi bi-table"></i> View Data Table
@@ -219,50 +246,100 @@
                     </div>
                 </div>
                 
-                <!-- Pre-GARCH Data -->
+                <!-- ARIMA Forecasts -->
                 <div class="accordion-item">
-                    <h2 class="accordion-header" id="headingPreGarchData">
-                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePreGarchData" aria-expanded="false" aria-controls="collapsePreGarchData">
-                            <i class="bi bi-arrow-left-circle me-2"></i> Pre-GARCH Data
+                    <h2 class="accordion-header" id="headingArimaForecast">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseArimaForecast" aria-expanded="false" aria-controls="collapseArimaForecast">
+                            <i class="bi bi-graph-up-arrow me-2"></i> ARIMA Forecasts
                         </button>
                     </h2>
-                    <div id="collapsePreGarchData" class="accordion-collapse collapse" aria-labelledby="headingPreGarchData" data-bs-parent="#dataLineageAccordion">
+                    <div id="collapseArimaForecast" class="accordion-collapse collapse" aria-labelledby="headingArimaForecast" data-bs-parent="#dataLineageAccordion">
                         <div class="accordion-body">
-                            <div id="pre-garch-data-plot" style="height: 400px;"></div>
+                            {% if plots.arima_forecast %}
+                            <div id="arima-forecast-plot-container"></div>
+                            <script>
+                                var arimaForecastPlot = {{ plots.arima_forecast|safe }};
+                                Plotly.newPlot('arima-forecast-plot-container', arimaForecastPlot.data, arimaForecastPlot.layout, {responsive: true});
+                            </script>
+                            {% else %}
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle"></i> ARIMA forecast plot not available.
+                            </div>
+                            {% endif %}
                             <div class="mt-3">
-                                <button class="btn btn-outline-primary btn-sm" id="view-pre-garch-data-table">
-                                    <i class="bi bi-table"></i> View Data Table
-                                </button>
-                                <button class="btn btn-outline-success btn-sm" id="export-pre-garch-data">
-                                    <i class="bi bi-download"></i> Export CSV
+                                <button class="btn btn-outline-info btn-sm">
+                                    <i class="bi bi-info-circle"></i> ARIMA forecasts show predicted future values with confidence intervals
                                 </button>
                             </div>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Post-GARCH Data -->
+                <!-- GARCH Volatility -->
                 <div class="accordion-item">
-                    <h2 class="accordion-header" id="headingPostGarchData">
-                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePostGarchData" aria-expanded="false" aria-controls="collapsePostGarchData">
-                            <i class="bi bi-arrow-right-circle me-2"></i> Post-GARCH Data
+                    <h2 class="accordion-header" id="headingGarchVolatility">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseGarchVolatility" aria-expanded="false" aria-controls="collapseGarchVolatility">
+                            <i class="bi bi-lightning me-2"></i> GARCH Volatility Forecasts
                         </button>
                     </h2>
-                    <div id="collapsePostGarchData" class="accordion-collapse collapse" aria-labelledby="headingPostGarchData" data-bs-parent="#dataLineageAccordion">
+                    <div id="collapseGarchVolatility" class="accordion-collapse collapse" aria-labelledby="headingGarchVolatility" data-bs-parent="#dataLineageAccordion">
                         <div class="accordion-body">
-                            <div id="post-garch-data-plot" style="height: 400px;"></div>
+                            {% if plots.garch_volatility %}
+                            <div id="garch-volatility-plot-container"></div>
+                            <script>
+                                var garchVolatilityPlot = {{ plots.garch_volatility|safe }};
+                                Plotly.newPlot('garch-volatility-plot-container', garchVolatilityPlot.data, garchVolatilityPlot.layout, {responsive: true});
+                            </script>
+                            {% else %}
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle"></i> GARCH volatility plot not available.
+                            </div>
+                            {% endif %}
                             <div class="mt-3">
-                                <button class="btn btn-outline-primary btn-sm" id="view-post-garch-data-table">
-                                    <i class="bi bi-table"></i> View Data Table
+                                <button class="btn btn-outline-info btn-sm">
+                                    <i class="bi bi-info-circle"></i> GARCH volatility forecasts show expected risk levels over time
                                 </button>
-                                <button class="btn btn-outline-success btn-sm" id="export-post-garch-data">
-                                    <i class="bi bi-download"></i> Export CSV
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Spillover Analysis -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="headingSpilloverPlot">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSpilloverPlot" aria-expanded="false" aria-controls="collapseSpilloverPlot">
+                            <i class="bi bi-shuffle me-2"></i> Spillover Analysis
+                        </button>
+                    </h2>
+                    <div id="collapseSpilloverPlot" class="accordion-collapse collapse" aria-labelledby="headingSpilloverPlot" data-bs-parent="#dataLineageAccordion">
+                        <div class="accordion-body">
+                            {% if plots.spillover_heatmap %}
+                            <div id="spillover-heatmap-plot-container"></div>
+                            <script>
+                                var spilloverHeatmapPlot = {{ plots.spillover_heatmap|safe }};
+                                Plotly.newPlot('spillover-heatmap-plot-container', spilloverHeatmapPlot.data, spilloverHeatmapPlot.layout, {responsive: true});
+                            </script>
+                            {% else %}
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle"></i> Spillover analysis plot not available.
+                            </div>
+                            {% endif %}
+                            <div class="mt-3">
+                                <button class="btn btn-outline-info btn-sm">
+                                    <i class="bi bi-info-circle"></i> Spillover analysis shows how shocks spread between assets
                                 </button>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+            {% else %}
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle"></i>
+                <strong>No plots available:</strong> Server-side plot generation failed or no data was provided.
+                <br><small>Please check the Raw Data tab to see if analysis results are available.</small>
+            </div>
+            {% endif %}
         </div>
 
         <!-- Statistical Tests Tab -->

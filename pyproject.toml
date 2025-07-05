@@ -16,6 +16,10 @@ dependencies = [
     "django-csp>=3.8",
     "python-dotenv>=1.1.0",
     "requests>=2.32.4",
+    # Data science and plotting dependencies
+    "plotly>=5.18.0",
+    "pandas>=2.1.0",
+    "numpy>=1.24.0",
 ]
 
 [project.optional-dependencies]

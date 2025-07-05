@@ -17,18 +17,37 @@ gunicorn==23.0.0
     # via timeseries-frontend
 idna==3.10
     # via requests
+narwhals==1.45.0
+    # via plotly
+numpy==2.3.1
+    # via
+    #   pandas
+    #   timeseries-frontend
 packaging==25.0
     # via
     #   django-csp
     #   gunicorn
+    #   plotly
+pandas==2.3.0
+    # via timeseries-frontend
+plotly==6.2.0
+    # via timeseries-frontend
+python-dateutil==2.9.0.post0
+    # via pandas
 python-dotenv==1.1.0
     # via timeseries-frontend
+pytz==2025.2
+    # via pandas
 requests==2.32.4
     # via timeseries-frontend
+six==1.17.0
+    # via python-dateutil
 sqlparse==0.5.3
     # via django
-tzdata==2025.2 ; sys_platform == 'win32'
-    # via django
+tzdata==2025.2
+    # via
+    #   django
+    #   pandas
 urllib3==2.5.0
     # via requests
 whitenoise==6.9.0
