@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial Django project setup
 - Basic spillover analysis interface
 - Google Cloud Run deployment configuration
+## frontend-v0.8.0 (2025-07-05)
+
+### Feat
+
+- **results**: add model interpretations
+
 ## frontend-v0.7.0 (2025-07-03)
 
 ### Feat
