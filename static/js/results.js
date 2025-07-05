@@ -363,9 +363,19 @@ function initializeModelsTab() {
         Object.keys(models.arima).forEach(symbol => {
             const result = models.arima[symbol];
             
-            // Extract model specification from fitted_model summary text
+            // Extract model specification - use structured data first, fallback to text parsing
             let modelSpec = 'Model specification not available';
-            if (result.fitted_model && typeof result.fitted_model === 'string') {
+            
+            // Try to get from structured summary.model_specification
+            if (result.summary && result.summary.model_specification) {
+                modelSpec = result.summary.model_specification;
+            }
+            // Try to get from forecast.model_specification
+            else if (result.forecast && result.forecast.model_specification) {
+                modelSpec = result.forecast.model_specification;
+            }
+            // Fallback to text parsing from fitted_model
+            else if (result.fitted_model && typeof result.fitted_model === 'string') {
                 // Parse ARIMA model specification from the fitted_model summary
                 const summaryLines = result.fitted_model.split('\n');
                 const modelLine = summaryLines.find(line => line.includes('ARIMA'));
