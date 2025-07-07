@@ -1,0 +1,26 @@
+<div class="card">
+    <div class="card-header">
+        <h2>Spillover Analysis</h2>
+    </div>
+    <div class="card-body">
+        <p>{{ spillover.interpretation }}</p>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>From</th>
+                    <th>To</th>
+                    <th>Spillover</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in spillover.pairwise_spillover_table %}
+                <tr>
+                    <td>{{ item.from }}</td>
+                    <td>{{ item.relationship }}</td>
+                    <td>{{ item.r_squared_percent }}%</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>

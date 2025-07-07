@@ -14,7 +14,9 @@ urlpatterns = [
     path('analysis/', views.analysis, name='analysis'),
     path('results/', views.results, name='results'),
     path('results/test/', views.results_test, name='results_test'),  # Add test route
+    path('results/<uuid:session_id>/', views.results, name='results'),
     path('about/', views.about, name='about'),
+    path('iterate/', views.iterate, name='iterate'),
     # Generic API proxy - captures the rest of the path and passes it to the view
     path('api_proxy/<path:api_path>', views.api_proxy, name='api_proxy'),
     # Specific API proxy endpoints (if you want to keep them for non-JS or specific logic)

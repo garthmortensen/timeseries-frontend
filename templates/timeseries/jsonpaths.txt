@@ -1,8 +1,7 @@
-all the JSON paths:
-
 Root Level Paths
+execution_configuration (object)
 original_data (array of objects)
-returns_data (array of objects)
+returns_data (array of objects) 
 scaled_data (array of objects)
 pre_garch_data (array of objects)
 post_garch_data (array of objects)
@@ -12,33 +11,48 @@ garch_results (object)
 var_results (object)
 spillover_results (object)
 granger_causality_results (object)
-Data Arrays Paths
-Each data array contains objects with:
 
-[].index (timestamp)
-[].MSFT (numeric value)
-[].AAPL (numeric value)
-[].NEM.US (numeric value)
+Execution Configuration Paths
+execution_configuration.data_source.synthetic_random_seed
+execution_configuration.data_processing.stationarity_test_p_value_threshold
+execution_configuration.model_configurations
+execution_configuration.spillover_configuration.var_max_lags
+execution_configuration.execution_metadata
+
+Data Arrays Paths
+original_data[].{SYMBOL} (e.g., NEM.US)
+returns_data[].index (timestamp)
+returns_data[].MSFT (numeric value)
+returns_data[].AAPL (numeric value)
+returns_data[].NEM.US (numeric value)
+scaled_data[].index (timestamp)
+scaled_data[].MSFT (numeric value)
+scaled_data[].AAPL (numeric value)
+scaled_data[].NEM.US (numeric value)
+pre_garch_data[].index (timestamp)
+pre_garch_data[].MSFT (numeric value)
+pre_garch_data[].AAPL (numeric value)
+pre_garch_data[].NEM.US (numeric value)
+post_garch_data[].index (timestamp)
+post_garch_data[].MSFT (numeric value)
+post_garch_data[].AAPL (numeric value)
+post_garch_data[].NEM.US (numeric value)
+
 Stationarity Results Paths
-stationarity_results.all_symbols_stationarity.all_symbols_stationarity.{SYMBOL}.adf_statistic
-stationarity_results.all_symbols_stationarity.all_symbols_stationarity.{SYMBOL}.p_value
-stationarity_results.all_symbols_stationarity.all_symbols_stationarity.{SYMBOL}.critical_values.1%
-stationarity_results.all_symbols_stationarity.all_symbols_stationarity.{SYMBOL}.critical_values.5%
-stationarity_results.all_symbols_stationarity.all_symbols_stationarity.{SYMBOL}.critical_values.10%
-stationarity_results.all_symbols_stationarity.all_symbols_stationarity.{SYMBOL}.is_stationary
-stationarity_results.all_symbols_stationarity.all_symbols_stationarity.{SYMBOL}.interpretation.executive_summary.*
-stationarity_results.all_symbols_stationarity.all_symbols_stationarity.{SYMBOL}.interpretation.key_findings.*
-stationarity_results.all_symbols_stationarity.all_symbols_stationarity.{SYMBOL}.interpretation.technical_details.*
-stationarity_results.all_symbols_stationarity.all_symbols_stationarity.{SYMBOL}.interpretation.background_context.*
+stationarity_results.all_symbols_stationarity.all_symbols_stationarity.{SYMBOL}.interpretation.*
 stationarity_results.series_stats.{SYMBOL}.n
 stationarity_results.series_stats.{SYMBOL}.mean
 stationarity_results.series_stats.{SYMBOL}.median
 stationarity_results.series_stats.{SYMBOL}.min
 stationarity_results.series_stats.{SYMBOL}.max
 stationarity_results.series_stats.{SYMBOL}.std
+stationarity_results.series_stats.{SYMBOL}.var
 stationarity_results.series_stats.{SYMBOL}.skew
 stationarity_results.series_stats.{SYMBOL}.kurt
 stationarity_results.series_stats.{SYMBOL}.annualized_vol
+stationarity_results.series_stats.{SYMBOL}.annualized_return
+stationarity_results.series_stats.{SYMBOL}.sharpe_approx
+
 ARIMA Results Paths
 arima_results.all_symbols_arima.{SYMBOL}.summary.model_specification
 arima_results.all_symbols_arima.{SYMBOL}.summary.sample_size
@@ -46,26 +60,113 @@ arima_results.all_symbols_arima.{SYMBOL}.summary.log_likelihood
 arima_results.all_symbols_arima.{SYMBOL}.summary.aic
 arima_results.all_symbols_arima.{SYMBOL}.summary.bic
 arima_results.all_symbols_arima.{SYMBOL}.summary.hqic
-arima_results.all_symbols_arima.{SYMBOL}.summary.parameters.ar.L1
-arima_results.all_symbols_arima.{SYMBOL}.summary.parameters.ma.L1
-arima_results.all_symbols_arima.{SYMBOL}.summary.parameters.sigma2
-arima_results.all_symbols_arima.{SYMBOL}.summary.parameter_pvalues.*
-arima_results.all_symbols_arima.{SYMBOL}.summary.parameter_significance.*
-arima_results.all_symbols_arima.{SYMBOL}.summary.residual_statistics.*
+arima_results.all_symbols_arima.{SYMBOL}.summary.parameters.{PARAM}
+arima_results.all_symbols_arima.{SYMBOL}.summary.parameter_pvalues.{PARAM}
+arima_results.all_symbols_arima.{SYMBOL}.summary.parameter_significance.{PARAM}
+arima_results.all_symbols_arima.{SYMBOL}.summary.residual_statistics.ljung_box_test
+arima_results.all_symbols_arima.{SYMBOL}.summary.residual_statistics.jarque_bera_test
+arima_results.all_symbols_arima.{SYMBOL}.summary.residual_statistics.mean
+arima_results.all_symbols_arima.{SYMBOL}.summary.residual_statistics.variance
+arima_results.all_symbols_arima.{SYMBOL}.summary.residual_statistics.min
+arima_results.all_symbols_arima.{SYMBOL}.summary.residual_statistics.max
+arima_results.all_symbols_arima.{SYMBOL}.summary.residual_statistics.autocorrelation_lag1
 arima_results.all_symbols_arima.{SYMBOL}.summary.fitted_values.{TIMESTAMP}
 arima_results.all_symbols_arima.{SYMBOL}.summary.residuals.{TIMESTAMP}
-arima_results.all_symbols_arima.{SYMBOL}.summary.conditional_mean_filtering.*
-arima_results.all_symbols_arima.{SYMBOL}.summary.forecasting.*
+arima_results.all_symbols_arima.{SYMBOL}.summary.conditional_mean_filtering.purpose
+arima_results.all_symbols_arima.{SYMBOL}.summary.conditional_mean_filtering.filtered_series.{TIMESTAMP}
+arima_results.all_symbols_arima.{SYMBOL}.summary.conditional_mean_filtering.mean_component_removed.{TIMESTAMP}
+arima_results.all_symbols_arima.{SYMBOL}.summary.conditional_mean_filtering.residual_properties.mean
+arima_results.all_symbols_arima.{SYMBOL}.summary.conditional_mean_filtering.residual_properties.std
+arima_results.all_symbols_arima.{SYMBOL}.summary.conditional_mean_filtering.residual_properties.skewness
+arima_results.all_symbols_arima.{SYMBOL}.summary.conditional_mean_filtering.residual_properties.kurtosis
+arima_results.all_symbols_arima.{SYMBOL}.summary.forecasting.method
+arima_results.all_symbols_arima.{SYMBOL}.summary.forecasting.forecast_steps
+arima_results.all_symbols_arima.{SYMBOL}.summary.forecasting.point_forecasts[]
+arima_results.all_symbols_arima.{SYMBOL}.summary.forecasting.confidence_intervals.lower_bound[]
+arima_results.all_symbols_arima.{SYMBOL}.summary.forecasting.confidence_intervals.upper_bound[]
+arima_results.all_symbols_arima.{SYMBOL}.summary.forecasting.confidence_intervals.confidence_level
 arima_results.all_symbols_arima.{SYMBOL}.summary.full_summary
 arima_results.all_symbols_arima.{SYMBOL}.forecast.point_forecasts[]
 arima_results.all_symbols_arima.{SYMBOL}.forecast.forecast_steps
 arima_results.all_symbols_arima.{SYMBOL}.forecast.model_specification
 arima_results.all_symbols_arima.{SYMBOL}.forecast.forecast_method
-arima_results.all_symbols_arima.{SYMBOL}.interpretation.* (same structure as stationarity)
+arima_results.all_symbols_arima.{SYMBOL}.interpretation.executive_summary.bottom_line
+arima_results.all_symbols_arima.{SYMBOL}.interpretation.executive_summary.business_impact
+arima_results.all_symbols_arima.{SYMBOL}.interpretation.executive_summary.recommendation
+arima_results.all_symbols_arima.{SYMBOL}.interpretation.executive_summary.justification
+arima_results.all_symbols_arima.{SYMBOL}.interpretation.key_findings.forecast_trend.direction
+arima_results.all_symbols_arima.{SYMBOL}.interpretation.key_findings.forecast_trend.magnitude
+arima_results.all_symbols_arima.{SYMBOL}.interpretation.key_findings.forecast_trend.confidence
+arima_results.all_symbols_arima.{SYMBOL}.interpretation.key_findings.forecast_trend.justification
+arima_results.all_symbols_arima.{SYMBOL}.interpretation.key_findings.model_performance.quality
+arima_results.all_symbols_arima.{SYMBOL}.interpretation.key_findings.model_performance.accuracy
+arima_results.all_symbols_arima.{SYMBOL}.interpretation.key_findings.model_performance.justification
+arima_results.all_symbols_arima.{SYMBOL}.interpretation.key_findings.forecast_statistics.mean_forecast
+arima_results.all_symbols_arima.{SYMBOL}.interpretation.key_findings.forecast_statistics.forecast_range
+arima_results.all_symbols_arima.{SYMBOL}.interpretation.key_findings.forecast_statistics.volatility
+arima_results.all_symbols_arima.{SYMBOL}.interpretation.key_findings.forecast_statistics.justification
+arima_results.all_symbols_arima.{SYMBOL}.interpretation.key_findings.business_impact.assessment
+arima_results.all_symbols_arima.{SYMBOL}.interpretation.key_findings.business_impact.justification
+arima_results.all_symbols_arima.{SYMBOL}.interpretation.technical_details.model_specification.order
+arima_results.all_symbols_arima.{SYMBOL}.interpretation.technical_details.model_specification.ar_component
+arima_results.all_symbols_arima.{SYMBOL}.interpretation.technical_details.model_specification.differencing
+arima_results.all_symbols_arima.{SYMBOL}.interpretation.technical_details.model_specification.ma_component
+arima_results.all_symbols_arima.{SYMBOL}.interpretation.technical_details.model_specification.justification
+arima_results.all_symbols_arima.{SYMBOL}.interpretation.technical_details.forecast_mechanics.prediction_method
+arima_results.all_symbols_arima.{SYMBOL}.interpretation.technical_details.forecast_mechanics.memory_length
+arima_results.all_symbols_arima.{SYMBOL}.interpretation.technical_details.forecast_mechanics.stationarity
+arima_results.all_symbols_arima.{SYMBOL}.interpretation.technical_details.accuracy_metrics.mae
+arima_results.all_symbols_arima.{SYMBOL}.interpretation.technical_details.accuracy_metrics.rmse
+arima_results.all_symbols_arima.{SYMBOL}.interpretation.technical_details.accuracy_metrics.mean_error
+arima_results.all_symbols_arima.{SYMBOL}.interpretation.background_context.what_is_arima
+arima_results.all_symbols_arima.{SYMBOL}.interpretation.background_context.why_it_matters
+arima_results.all_symbols_arima.{SYMBOL}.interpretation.background_context.model_assumptions
+arima_results.all_symbols_arima.{SYMBOL}.interpretation.background_context.limitations
+arima_results.all_symbols_arima.{SYMBOL}.interpretation.background_context.interpretation_guide
+
 GARCH Results Paths
 garch_results.all_symbols_garch.{SYMBOL}.summary
 garch_results.all_symbols_garch.{SYMBOL}.forecast[]
-garch_results.all_symbols_garch.{SYMBOL}.interpretation.* (same structure as above)
+garch_results.all_symbols_garch.{SYMBOL}.interpretation.executive_summary.bottom_line
+garch_results.all_symbols_garch.{SYMBOL}.interpretation.executive_summary.business_impact
+garch_results.all_symbols_garch.{SYMBOL}.interpretation.executive_summary.recommendation
+garch_results.all_symbols_garch.{SYMBOL}.interpretation.executive_summary.justification
+garch_results.all_symbols_garch.{SYMBOL}.interpretation.key_findings.volatility_trend.direction
+garch_results.all_symbols_garch.{SYMBOL}.interpretation.key_findings.volatility_trend.magnitude
+garch_results.all_symbols_garch.{SYMBOL}.interpretation.key_findings.volatility_trend.current_level
+garch_results.all_symbols_garch.{SYMBOL}.interpretation.key_findings.volatility_trend.justification
+garch_results.all_symbols_garch.{SYMBOL}.interpretation.key_findings.persistence_metrics.persistence
+garch_results.all_symbols_garch.{SYMBOL}.interpretation.key_findings.persistence_metrics.description
+garch_results.all_symbols_garch.{SYMBOL}.interpretation.key_findings.persistence_metrics.interpretation
+garch_results.all_symbols_garch.{SYMBOL}.interpretation.key_findings.persistence_metrics.justification
+garch_results.all_symbols_garch.{SYMBOL}.interpretation.key_findings.forecast_confidence.level
+garch_results.all_symbols_garch.{SYMBOL}.interpretation.key_findings.forecast_confidence.reliability
+garch_results.all_symbols_garch.{SYMBOL}.interpretation.key_findings.forecast_confidence.justification
+garch_results.all_symbols_garch.{SYMBOL}.interpretation.key_findings.volatility_level.classification
+garch_results.all_symbols_garch.{SYMBOL}.interpretation.key_findings.volatility_level.justification
+garch_results.all_symbols_garch.{SYMBOL}.interpretation.key_findings.business_impact.assessment
+garch_results.all_symbols_garch.{SYMBOL}.interpretation.key_findings.business_impact.justification
+garch_results.all_symbols_garch.{SYMBOL}.interpretation.technical_details.model_specification.order
+garch_results.all_symbols_garch.{SYMBOL}.interpretation.technical_details.model_specification.omega
+garch_results.all_symbols_garch.{SYMBOL}.interpretation.technical_details.model_specification.alpha
+garch_results.all_symbols_garch.{SYMBOL}.interpretation.technical_details.model_specification.beta
+garch_results.all_symbols_garch.{SYMBOL}.interpretation.technical_details.model_specification.justification
+garch_results.all_symbols_garch.{SYMBOL}.interpretation.technical_details.volatility_mechanics.equation
+garch_results.all_symbols_garch.{SYMBOL}.interpretation.technical_details.volatility_mechanics.persistence
+garch_results.all_symbols_garch.{SYMBOL}.interpretation.technical_details.volatility_mechanics.half_life
+garch_results.all_symbols_garch.{SYMBOL}.interpretation.technical_details.volatility_mechanics.unconditional_variance
+garch_results.all_symbols_garch.{SYMBOL}.interpretation.technical_details.volatility_mechanics.justification
+garch_results.all_symbols_garch.{SYMBOL}.interpretation.technical_details.forecast_statistics.mean_forecast
+garch_results.all_symbols_garch.{SYMBOL}.interpretation.technical_details.forecast_statistics.forecast_volatility
+garch_results.all_symbols_garch.{SYMBOL}.interpretation.technical_details.forecast_statistics.forecast_range
+garch_results.all_symbols_garch.{SYMBOL}.interpretation.technical_details.forecast_statistics.total_change
+garch_results.all_symbols_garch.{SYMBOL}.interpretation.background_context.what_is_garch
+garch_results.all_symbols_garch.{SYMBOL}.interpretation.background_context.why_it_matters
+garch_results.all_symbols_garch.{SYMBOL}.interpretation.background_context.volatility_clustering
+garch_results.all_symbols_garch.{SYMBOL}.interpretation.background_context.model_components
+garch_results.all_symbols_garch.{SYMBOL}.interpretation.background_context.persistence_implications
+garch_results.all_symbols_garch.{SYMBOL}.interpretation.background_context.limitations
+
 VAR Results Paths
 var_results.fitted_model
 var_results.selected_lag
@@ -76,12 +177,20 @@ var_results.granger_causality.test_results.{SYMBOL}_to_{SYMBOL}.causality_5pct
 var_results.granger_causality.test_results.{SYMBOL}_to_{SYMBOL}.p_values.{LAG}
 var_results.granger_causality.test_results.{SYMBOL}_to_{SYMBOL}.optimal_lag_1pct
 var_results.granger_causality.test_results.{SYMBOL}_to_{SYMBOL}.optimal_lag_5pct
-var_results.granger_causality.test_results.{SYMBOL}_to_{SYMBOL}.significance_summary.*
-var_results.granger_causality.methodology.*
-var_results.granger_causality.summary.*
+var_results.granger_causality.test_results.{SYMBOL}_to_{SYMBOL}.significance_summary.significant_at_1pct
+var_results.granger_causality.test_results.{SYMBOL}_to_{SYMBOL}.significance_summary.significant_at_5pct
+var_results.granger_causality.test_results.{SYMBOL}_to_{SYMBOL}.significance_summary.min_p_value
+var_results.granger_causality.methodology.max_lag_tested
+var_results.granger_causality.methodology.significance_levels[]
+var_results.granger_causality.methodology.test_statistic
+var_results.granger_causality.methodology.null_hypothesis
+var_results.granger_causality.summary.total_pairs_tested
+var_results.granger_causality.summary.significant_at_1pct
+var_results.granger_causality.summary.significant_at_5pct
 var_results.fevd_matrix[][]
 var_results.fevd_interpretation.{SYMBOL}
 var_results.interpretation
+
 Spillover Results Paths
 spillover_results.total_spillover_index
 spillover_results.directional_spillover.{SYMBOL}.to
@@ -96,8 +205,16 @@ spillover_results.pairwise_spillover_table[].r_squared_percent
 spillover_results.pairwise_spillover_table[].significant_lags[]
 spillover_results.pairwise_spillover_table[].significant_lags_text
 spillover_results.pairwise_spillover_table[].strength
+
 Granger Causality Results Paths
-granger_causality_results.causality_results.{SYMBOL}->{SYMBOL}.* (same structure as VAR granger_causality)
+granger_causality_results.causality_results.{SYMBOL}->{SYMBOL}.causality_1pct
+granger_causality_results.causality_results.{SYMBOL}->{SYMBOL}.causality_5pct
+granger_causality_results.causality_results.{SYMBOL}->{SYMBOL}.p_values.{LAG}
+granger_causality_results.causality_results.{SYMBOL}->{SYMBOL}.optimal_lag_1pct
+granger_causality_results.causality_results.{SYMBOL}->{SYMBOL}.optimal_lag_5pct
+granger_causality_results.causality_results.{SYMBOL}->{SYMBOL}.significance_summary.significant_at_1pct
+granger_causality_results.causality_results.{SYMBOL}->{SYMBOL}.significance_summary.significant_at_5pct
+granger_causality_results.causality_results.{SYMBOL}->{SYMBOL}.significance_summary.min_p_value
 granger_causality_results.interpretations.{SYMBOL}->{SYMBOL}
 granger_causality_results.metadata.max_lag
 granger_causality_results.metadata.n_pairs_tested

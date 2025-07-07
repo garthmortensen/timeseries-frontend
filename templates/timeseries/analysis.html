@@ -96,11 +96,16 @@
     <strong>Choose Your Own Analysis</strong> below to explore market dynamics, forecast volatility, and uncover contagion paths.
 </div>
 
-<form id="analysis-form" method="post" action="{% url 'timeseries:run_pipeline' %}">
+<form id="analysis-form" method="post" action="{% url 'timeseries:run_pipeline' %}" enctype="multipart/form-data">
     {% csrf_token %}
         
     <div class="form-section">
         <h3 class="section-header">Define Data Source</h3>
+        
+        <div id="iterated-file-display" class="alert alert-info" style="display: none;">
+            Continuing iteration with file: <strong id="iterated-filename"></strong>.
+            To use a different file, please select it below.
+        </div>
         
         <div class="guide-text">
             Use synthetic data for testing or actual market data.
@@ -1803,124 +1808,43 @@ let loadingMessageInterval;
         console.log("Sending data to API:", data);
         
         // Send the AJAX request
-        fetch('/api_proxy/api/v1/run_pipeline/', { // Changed to use the new proxy endpoint
+        fetch("{% url 'timeseries:run_pipeline' %}", {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': data.csrfmiddlewaretoken
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify(data)
         })
         .then(response => {
             if (!response.ok) {
-                return response.json().then(err => {
-                    throw new Error(`API Error: ${JSON.stringify(err)}`);
-                });
+                throw new Error('Network response was not ok');
             }
             return response.json();
         })
         .then(responseData => {
-            // Stop loading message cycle
-            stopLoadingMessageCycle();
-            
-            // Log the response data
-            console.log("API Response received:", responseData);
-            
-            // Transform spillover data for better frontend display
-            if (responseData.spillover_results) {
-                console.log("=== SPILLOVER DATA TRANSFORMATION ===");
-                
-                // Transform pairwise spillover data for table display
-                if (responseData.spillover_results.pairwise_spillover) {
-                    const pairwiseData = [];
-                    Object.entries(responseData.spillover_results.pairwise_spillover).forEach(([pair, data]) => {
-                        const [from, to] = pair.split('_to_');
-                        // Ensure significant_lags exists and is an array
-                        const significantLags = data.significant_lags || [];
-                        pairwiseData.push({
-                            from: from,
-                            to: to,
-                            relationship: pair,
-                            r_squared: data.r_squared || 0,
-                            r_squared_percent: ((data.r_squared || 0) * 100).toFixed(2),
-                            significant_lags: significantLags,
-                            significant_lags_text: significantLags.length > 0 ? significantLags.join(', ') : 'None',
-                            strength: (data.r_squared || 0) > 0.25 ? 'Strong' : (data.r_squared || 0) > 0.10 ? 'Moderate' : 'Weak'
-                        });
-                    });
-                    
-                    // Sort by R² value (strongest first)
-                    pairwiseData.sort((a, b) => b.r_squared - a.r_squared);
-                    
-                    // Add transformed data to spillover results
-                    responseData.spillover_results.pairwise_spillover_table = pairwiseData;
-                    
-                    console.log("Transformed pairwise spillover data:", pairwiseData);
-                }
-                
-                console.log("=== END SPILLOVER DATA TRANSFORMATION ===");
+            if (responseData.task_id) {
+                window.location.href = `/timeseries/results?task_id=${responseData.task_id}`;
+            } else {
+                // Stop the loading animation and re-enable the form if there's an error
+                stopLoadingMessageCycle();
+                loadingIndicator.style.display = 'none';
+                pageTitle.style.display = 'block';
+                marketIntroText.style.display = 'block';
+                form.style.display = 'block';
+                alert('Error: Could not get task ID from the server. ' + (responseData.error || ''));
             }
-            
-            try {
-                // Process original_data to ensure it has the correct structure
-                if (responseData.original_data && !Array.isArray(responseData.original_data)) {
-                    // Convert from nested object to array of objects if needed
-                    const tempArray = [];
-                    const dateField = 'Date';
-                    
-                    for (const dateStr in responseData.original_data) {
-                        if (responseData.original_data.hasOwnProperty(dateStr)) {
-                            const dataPoint = responseData.original_data[dateStr];
-                            dataPoint[dateField] = dateStr;
-                            tempArray.push(dataPoint);
-                        }
-                    }
-                    
-                    // Sort by date
-                    tempArray.sort((a, b) => new Date(a[dateField]) - new Date(b[dateField]));
-                    responseData.original_data = tempArray;
-                }
-                
-                // Similarly, check and process other data arrays if needed
-                ['returns_data', 'scaled_data', 'pre_garch_data', 'post_garch_data'].forEach(field => {
-                    if (responseData[field] && !Array.isArray(responseData[field])) {
-                        const tempArray = [];
-                        const dateField = 'Date';
-                        
-                        for (const dateStr in responseData[field]) {
-                            if (responseData[field].hasOwnProperty(dateStr)) {
-                                const dataPoint = responseData[field][dateStr];
-                                dataPoint[dateField] = dateStr;
-                                tempArray.push(dataPoint);
-                            }
-                        }
-                        
-                        // Sort by date
-                        tempArray.sort((a, b) => new Date(a[dateField]) - new Date(b[dateField]));
-                        responseData[field] = tempArray;
-                    }
-                });
-                
-                // Attempt to save to sessionStorage
-                sessionStorage.setItem('analysisResults', JSON.stringify(responseData));
-                console.log("Successfully saved to sessionStorage");
-            } catch (error) {
-                console.error("Error processing data or saving to sessionStorage:", error);
-            }
-            
-            // Redirect to results page
-            window.location.href = '/results/';
         })
         .catch(error => {
-            console.error('Error:', error);
-            // Stop loading message cycle
+            // Stop the loading animation and re-enable the form
             stopLoadingMessageCycle();
-            // Show proper error message and restore form
             loadingIndicator.style.display = 'none';
             pageTitle.style.display = 'block';
             marketIntroText.style.display = 'block';
             form.style.display = 'block';
-            alert(`Error running analysis: ${error.message}`);
+            
+            console.error('Error running analysis:', error);
+            alert(`An error occurred while starting the analysis: ${error.message}`);
         });
     });
 

@@ -1,0 +1,102 @@
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="bi bi-arrows-angle-expand me-2"></i>Spillover Analysis</h5>
+        <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#spilloverInfo" aria-expanded="false" aria-controls="spilloverInfo">
+            <i class="bi bi-info-circle"></i> What is this?
+        </button>
+    </div>
+    <div class="collapse" id="spilloverInfo">
+        <div class="card-body bg-light">
+            <p class="small mb-0">
+                Spillover analysis, based on the work of Diebold and Yilmaz, measures how shocks in one time series are transmitted to others in a system. It helps quantify the degree of interconnectedness and systemic risk. The table shows the percentage of forecast error variance for one series that comes from shocks to another series.
+            </p>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if spillover_results and spillover_results.results %}
+            <div class="row">
+                <div class="col-md-6">
+                    <h6><i class="bi bi-table me-2"></i>Pairwise Spillover Table</h6>
+                    <p class="small text-muted">Shows the directional spillover from one asset (From) to another (To).</p>
+                    <table class="table table-sm table-bordered table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>From</th>
+                                <th>To</th>
+                                <th class="text-end">Spillover (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in spillover_results.results.pairwise_spillover_table %}
+                            <tr>
+                                <td>{{ item.from }}</td>
+                                <td>{{ item.to }}</td>
+                                <td class="text-end">{{ item.spillover|floatformat:2 }}%</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h6><i class="bi bi-bar-chart-line me-2"></i>System-wide Spillover</h6>
+                     <p class="small text-muted">Key metrics summarizing the overall interconnectedness of the system.</p>
+                    <ul class="list-group">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <strong>Total Spillover Index</strong>
+                            <span class="badge bg-primary rounded-pill">{{ spillover_results.results.total_spillover_index|floatformat:2 }}%</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <strong>Average Directional Spillover</strong>
+                            <span class="badge bg-secondary rounded-pill">{{ spillover_results.results.average_directional_spillover|floatformat:2 }}%</span>
+                        </li>
+                    </ul>
+
+                    <h6 class="mt-4"><i class="bi bi-graph-up me-2"></i>Net Contributors & Receivers</h6>
+                    <p class="small text-muted">Assets that are net transmitters or receivers of shocks.</p>
+                    <ul class="nav nav-tabs nav-fill nav-pills mb-3" id="spillover-net-tabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="net-contributors-tab" data-bs-toggle="tab" data-bs-target="#net-contributors" type="button" role="tab" aria-controls="net-contributors" aria-selected="true">Top Contributors</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="net-receivers-tab" data-bs-toggle="tab" data-bs-target="#net-receivers" type="button" role="tab" aria-controls="net-receivers" aria-selected="false">Top Receivers</button>
+                        </li>
+                    </ul>
+                    <div class="tab-content" id="spillover-net-tabs-content">
+                        <div class="tab-pane fade show active" id="net-contributors" role="tabpanel" aria-labelledby="net-contributors-tab">
+                            <ul class="list-group list-group-flush">
+                                {% for item in spillover_results.results.net_contributors %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    {{ item.symbol }}
+                                    <span class="badge bg-success rounded-pill">+{{ item.net_spillover|floatformat:2 }}%</span>
+                                </li>
+                                {% empty %}
+                                <li class="list-group-item">No significant contributors.</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="tab-pane fade" id="net-receivers" role="tabpanel" aria-labelledby="net-receivers-tab">
+                             <ul class="list-group list-group-flush">
+                                {% for item in spillover_results.results.net_receivers %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    {{ item.symbol }}
+                                    <span class="badge bg-danger rounded-pill">{{ item.net_spillover|floatformat:2 }}%</span>
+                                </li>
+                                {% empty %}
+                                <li class="list-group-item">No significant receivers.</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4">
+                <h6><i class="bi bi-chat-right-text me-2"></i>Interpretation</h6>
+                <p class="card-text small fst-italic bg-light p-2 rounded">{{ spillover_results.results.interpretation }}</p>
+            </div>
+        {% else %}
+            <div class="alert alert-warning" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>Spillover analysis results are not available.
+            </div>
+        {% endif %}
+    </div>
+</div>

@@ -17,87 +17,85 @@ import json
 import logging
 import requests
 import pprint
-from django.shortcuts import render
-from django.http import JsonResponse, HttpResponse
+from django.shortcuts import render, redirect
+from django.http import JsonResponse, HttpRequest, HttpResponse
+from django.views.decorators.http import require_http_methods
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
+from .results_processor import ResultsProcessor
+from django.urls import reverse
+from .models import AnalysisSession
+import uuid
 
 # Get a logger instance specific to this module
 logger = logging.getLogger(__name__)
 
-@csrf_exempt
-def api_proxy(request, api_path):
-    """
-    A generic proxy view to forward requests to the backend API.
-    It captures the part of the URL after /api_proxy/ and appends it to settings.TIMESERIES_API_URL.
-    """
-    # Remove trailing slash from api_path if present, to align with common FastAPI route definitions
-    processed_api_path = api_path.rstrip('/')
-    api_url = f"{settings.TIMESERIES_API_URL}/{processed_api_path}"
-    method = request.method
 
-    headers = {
-        'Content-Type': request.headers.get('Content-Type', 'application/json'),
-        'Accept': request.headers.get('Accept', 'application/json'),
-    }
-    # Add any other headers you might need to forward, e.g., Authorization
+def _proxy_request(request: HttpRequest, path: str) -> tuple[int, str]:
+    """
+    Helper function to forward requests to the backend API.
+    """
+    api_url = f"{settings.API_BASE_URL}/{path}"
+    method = request.method
+    logger.info(f"Proxying {method} request to {api_url}")
 
     try:
-        logger.info(f"API Proxy: Method={method}, Original_Request_Path={request.path}, Processed_API_Path={processed_api_path}, Constructed_Target_URL={api_url}")
-
-        if method == 'POST':
-            # Try to load JSON data, if fails, use raw body
-            try:
-                data = json.loads(request.body)
-            except json.JSONDecodeError:
-                data = request.body
-            logger.info(f"Proxying POST request to {api_url} with data:")
-            logger.info(pprint.pformat(data, indent=2))
-            # Explicitly set allow_redirects=True (which is the default) to be clear
-            response = requests.post(api_url, json=data if isinstance(data, dict) else None, data=data if not isinstance(data, dict) else None, headers=headers, timeout=settings.API_TIMEOUT_SECONDS if hasattr(settings, 'API_TIMEOUT_SECONDS') else 60, allow_redirects=True)
-            logger.info(f"Proxy: Backend POST to {api_url} initially returned status {response.status_code}")
-            if response.history:
-                for i, resp_in_history in enumerate(response.history):
-                    logger.info(f"Proxy: Redirect history [{i}]: {resp_in_history.status_code} {resp_in_history.request.method} -> {resp_in_history.url}")
-            logger.info(f"Proxy: Final URL after potential redirects: {response.url}, Final Status: {response.status_code}, Final Method of original request: {response.request.method}")
-
-        elif method == 'GET':
-            logger.info(f"Proxying GET request to {api_url} with params: {request.GET}")
-            response = requests.get(api_url, params=request.GET, headers=headers, timeout=settings.API_TIMEOUT_SECONDS if hasattr(settings, 'API_TIMEOUT_SECONDS') else 60, allow_redirects=True)
-            logger.info(f"Proxy: Backend GET to {api_url} initially returned status {response.status_code}")
-            if response.history:
-                for i, resp_in_history in enumerate(response.history):
-                    logger.info(f"Proxy: Redirect history [{i}]: {resp_in_history.status_code} {resp_in_history.request.method} -> {resp_in_history.url}")
-            logger.info(f"Proxy: Final URL after potential redirects: {response.url}, Final Status: {response.status_code}, Final Method of original request: {response.request.method}")
-        else:
-            return JsonResponse({'error': f'Unsupported method: {method}'}, status=405)
-
-        response.raise_for_status() # Raise an exception for HTTP errors (4xx or 5xx)
-
-        # Try to return JSON if the content type suggests it, otherwise raw content
-        if 'application/json' in response.headers.get('Content-Type', ''):
-            return JsonResponse(response.json(), status=response.status_code)
-        else:
-            return HttpResponse(response.content, status=response.status_code, content_type=response.headers.get('Content-Type'))
-
-    except requests.exceptions.Timeout:
-        logger.error(f"Timeout error when proxying request to {api_url}")
-        return JsonResponse({'error': 'The request to the backend API timed out.'}, status=504)
-    except requests.exceptions.ConnectionError:
-        logger.error(f"Connection error when proxying request to {api_url}")
-        return JsonResponse({'error': 'Could not connect to the backend API.'}, status=503)
+        response = requests.request(
+            method,
+            api_url,
+            headers={key: value for key, value in request.headers.items() if key.lower() in ['content-type', 'accept', 'authorization']},
+            data=request.body,
+            timeout=30
+        )
+        response.raise_for_status()
+        return response.status_code, response.text
     except requests.exceptions.RequestException as e:
-        logger.error(f"Error proxying request to {api_url}: {e}")
-        # Attempt to return the actual error from the backend if available
-        if e.response is not None:
+        logger.error(f"API request to {api_url} failed: {e}")
+        return 500, str(e)
+
+
+@csrf_exempt
+@require_http_methods(["GET", "POST"])
+def run_pipeline(request: HttpRequest) -> HttpResponse:
+    if request.method == 'POST':
+        status_code, response_text = _proxy_request(request, 'run_pipeline')
+        if status_code == 200:
             try:
-                return JsonResponse(e.response.json(), status=e.response.status_code)
+                data = json.loads(response_text)
+                task_id = data.get("task_id")
+                if task_id:
+                    return JsonResponse({"task_id": task_id})
+                else:
+                    return JsonResponse({"error": "task_id not in response"}, status=500)
             except json.JSONDecodeError:
-                return HttpResponse(e.response.text, status=e.response.status_code, content_type=e.response.headers.get('Content-Type'))
-        return JsonResponse({'error': str(e)}, status=500)
-    except Exception as e:
-        logger.exception(f"Unexpected error in API proxy view: {str(e)}")
-        return JsonResponse({'error': f'An unexpected error occurred: {str(e)}'}, status=500)
+                return JsonResponse({"error": "Invalid JSON response from API"}, status=500)
+        return JsonResponse({"error": response_text}, status=status_code)
+
+    elif request.method == 'GET':
+        task_id = request.GET.get('task_id')
+        if not task_id:
+            return JsonResponse({"status": "error", "message": "task_id is required"}, status=400)
+
+        status_code, response_text = _proxy_request(request, f'results/{task_id}')
+
+        if status_code == 200:
+            try:
+                data = json.loads(response_text)
+                processor = ResultsProcessor(data)
+                if processor.is_ready():
+                    return JsonResponse({
+                        "status": "completed",
+                        "data": processor.get_processed_results()
+                    })
+                else:
+                    return JsonResponse({"status": "pending"})
+            except json.JSONDecodeError:
+                return JsonResponse({"status": "error", "message": "Invalid JSON response"}, status=500)
+        elif status_code == 202:
+             return JsonResponse({"status": "pending"})
+        else:
+            return JsonResponse({"status": "error", "message": response_text}, status=status_code)
+
 
 def index(request):
     """
@@ -117,99 +115,37 @@ def about(request):
     """
     return render(request, 'timeseries/about.html')
 
-def results(request):
-    """
-    Results page displaying analysis output and visualizations.
-    """
-    return render(request, 'timeseries/results.html')
 
-def results_test(request):
-    """
-    Test version of results page for debugging JavaScript issues.
-    """
-    return render(request, 'timeseries/results_test.html')
+def results(request: HttpRequest) -> HttpResponse:
+    task_id = request.GET.get('task_id')
+    return render(request, 'timeseries/results.html', {'task_id': task_id})
 
-def debug_results(request):
-    """
-    Debug version of the results page with additional diagnostic information.
-    """
-    return render(request, 'timeseries/debug_results.html')
 
-@csrf_exempt
-def run_pipeline(request):
+def api_proxy(request: HttpRequest, path: str) -> HttpResponse:
     """
-    Proxy API endpoint that forwards the pipeline execution request to the FastAPI backend.
-    
-    The API returns:
-    - Historical time series data
-    - Stationarity test results
-    - ARIMA model summary and forecast
-    - GARCH model summary and forecast
+    A generic proxy view to forward requests to the backend API.
+    It captures the part of the URL after /api_proxy/ and appends it to settings.TIMESERIES_API_URL.
     """
-    if request.method != 'POST':
-        return JsonResponse({'error': 'Only POST method is allowed'}, status=405)
-    
+    response = _proxy_request(request, path)
+
+    if isinstance(response, (HttpResponse, JsonResponse)):
+        return response
+
     try:
-        # Get the request payload
-        payload = json.loads(request.body)
-        
-        # Log the request
-        logger.info(f"Forwarding pipeline request to backend with payload:")
-        logger.info(pprint.pformat(payload, indent=2))
-        
-        # Forward the request to the FastAPI backend
-        api_url = f"{settings.TIMESERIES_API_URL}/api/v1/run_pipeline"
-        logger.info(f"Sending request to: {api_url}")
-        
-        response = requests.post(api_url, json=payload, timeout=60)  # Increased timeout for larger data
-        
-        # Check the response status code
-        if response.status_code == 200:
-            # Log success and response data structure 
-            response_data = response.json()
-            logger.info("Pipeline executed successfully")
-            logger.info("Response keys: %s", response_data.keys())
-            
-            # Log specific details about the data structure
-            if 'data' in response_data:
-                logger.info("'data' key exists in response")
-                logger.info("'data' type: %s", type(response_data['data']))
-                if isinstance(response_data['data'], dict):
-                    logger.info("'data' keys: %s", response_data['data'].keys())
-                    # Log sample data for first symbol if available
-                    if response_data['data'] and len(response_data['data']) > 0:
-                        first_symbol = list(response_data['data'].keys())[0]
-                        logger.info("First symbol: %s", first_symbol)
-                        sample_data = response_data['data'][first_symbol]
-                        logger.info("Sample data type: %s", type(sample_data))
-                        if isinstance(sample_data, dict) and sample_data:
-                            first_date = list(sample_data.keys())[0]
-                            logger.info("First date: %s, value: %s", first_date, sample_data[first_date])
-            else:
-                logger.info("'data' key NOT found in response")
-            
-            # Log ARIMA and GARCH forecast availability
-            logger.info("ARIMA forecast available: %s", 'arima_forecast' in response_data)
-            if 'arima_forecast' in response_data:
-                logger.info("ARIMA forecast length: %s", len(response_data['arima_forecast']))
-            
-            logger.info("GARCH forecast available: %s", 'garch_forecast' in response_data)
-            if 'garch_forecast' in response_data:
-                logger.info("GARCH forecast length: %s", len(response_data['garch_forecast']))
-            
-            # Log stationarity results availability
-            logger.info("Stationarity results available: %s", 'stationarity_results' in response_data)
-            
-            return JsonResponse(response_data)
+        if 'application/json' in response.headers.get('Content-Type', ''):
+            return JsonResponse(response.json(), status=response.status_code)
         else:
-            # Log error and return the error response
-            logger.error(f"Pipeline execution failed: {response.status_code} - {response.text}")
-            return JsonResponse({'error': response.text}, status=response.status_code)
-    
+            return HttpResponse(response.content, status=response.status_code, content_type=response.headers.get('Content-Type'))
+    except requests.exceptions.Timeout:
+        logger.error(f"Timeout error when proxying request to {request.path}")
+        return JsonResponse({'error': 'The request to the backend API timed out.'}, status=504)
+    except requests.exceptions.ConnectionError:
+        logger.error(f"Connection error when proxying request to {request.path}")
+        return JsonResponse({'error': 'Could not connect to the backend API.'}, status=503)
     except Exception as e:
-        # Log exception and return error response
-        logger.exception(f"Error running pipeline: {str(e)}")
-        return JsonResponse({'error': str(e)}, status=500)
+        logger.exception(f"Unexpected error in API proxy view: {str(e)}")
+        return JsonResponse({'error': f'An unexpected error occurred: {str(e)}'}, status=500)
+
 
 # Add diagnostic endpoint for debugging
 @csrf_exempt
@@ -301,3 +237,37 @@ def debug_data(request):
     except Exception as e:
         logger.exception("Error in debug endpoint")
         return HttpResponse(f"Error: {str(e)}")
+
+def results_test(request):
+    return HttpResponse("This is a test response.")
+
+def chart_data(request):
+    """
+    View to handle requests for chart data.
+    """
+    # For now, just return a simple JSON response
+    return JsonResponse({
+        "status": "success",
+        "data": {
+            "labels": ["January", "February", "March", "April"],
+            "datasets": [
+                {
+                    "label": "Sample Data",
+                    "data": [10, 20, 30, 40],
+                    "fill": False,
+                    "borderColor": "rgb(75, 192, 192)",
+                    "tension": 0.1
+                }
+            ]
+        }
+    })
+
+def iterate(request):
+    if request.method == 'POST':
+        previous_session_id = request.POST.get('session_id')
+        # Here you would add logic to retrieve the parameters from the previous session
+        # and set them up for the new analysis page.
+        # For now, we'll just redirect to the analysis page.
+        return redirect(reverse('timeseries:analysis'))
+    # If it's not a POST request, just redirect to the main page or show an error.
+    return redirect(reverse('timeseries:index'))

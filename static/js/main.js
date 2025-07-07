@@ -67,7 +67,118 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+
+    // Pre-populate analysis form if iteration data is available
+    if (window.location.pathname === '/analysis/' || window.location.pathname === '/timeseries/analysis/') {
+        prepopulateAnalysisForm();
+    }
 });
+
+/**
+ * Pre-populates the analysis form with data from sessionStorage.
+ */
+function prepopulateAnalysisForm() {
+    const analysisConfigString = sessionStorage.getItem('analysisConfig');
+    if (analysisConfigString) {
+        console.log("Found analysis config in sessionStorage. Pre-populating form.");
+        const config = JSON.parse(analysisConfigString);
+
+        // Pre-populate the form fields based on the config
+        
+        // Handle file display
+        if (config.fileName) {
+            const fileDisplay = document.getElementById('iterated-file-display');
+            const fileNameElement = document.getElementById('iterated-filename');
+            const fileUploadSection = document.getElementById('file-upload-section');
+            if (fileDisplay && fileNameElement && fileUploadSection) {
+                fileNameElement.textContent = config.fileName;
+                fileDisplay.style.display = 'block';
+                // Hide the file upload input to prevent confusion
+                fileUploadSection.style.display = 'none';
+            }
+        }
+
+        // Pre-populate other form fields...
+        // Make sure to handle all the different input types: text, number, radio, select
+
+        // Data Source and Symbol
+        if (config.data_source) {
+            const radio = document.querySelector(`input[name="data_source"][value="${config.data_source}"]`);
+            if (radio) {
+                radio.checked = true;
+                radio.dispatchEvent(new Event('change')); // Trigger UI updates
+            }
+        }
+
+        if (config.symbol_list) {
+            const radio = document.querySelector(`input[name="symbol_list"][value="${config.symbol_list}"]`);
+            if (radio) {
+                radio.checked = true;
+                radio.dispatchEvent(new Event('change'));
+            }
+        }
+        
+        if (config.manual_symbol) {
+            const manualSymbolInput = document.getElementById('manual_symbol');
+            if (manualSymbolInput) {
+                manualSymbolInput.value = config.manual_symbol;
+            }
+        }
+
+        // Dates
+        if (config.start_date) {
+            document.getElementById('start_date').value = config.start_date;
+        }
+        if (config.end_date) {
+            document.getElementById('end_date').value = config.end_date;
+        }
+
+        // Preprocessing
+        if (config.preprocess && Array.isArray(config.preprocess)) {
+            config.preprocess.forEach(step => {
+                const checkbox = document.getElementById(`preprocess_${step}`);
+                if (checkbox) {
+                    checkbox.checked = true;
+                }
+            });
+        }
+
+        // Model Parameters
+        if (config.arima_params) {
+            document.getElementById('p_value').value = config.arima_params.p;
+            document.getElementById('d_value').value = config.arima_params.d;
+            document.getElementById('q_value').value = config.arima_params.q;
+        }
+        if (config.garch_params) {
+            document.getElementById('garch_p').value = config.garch_params.p;
+            document.getElementById('garch_q').value = config.garch_params.q;
+        }
+        if (config.var_lags) {
+            document.getElementById('lags').value = config.var_lags;
+        }
+        if (config.forecast_steps) {
+            document.getElementById('forecast_steps').value = config.forecast_steps;
+        }
+        if (config.spillover_lags) {
+            document.getElementById('spillover_lags').value = config.spillover_lags;
+        }
+
+        // Clear the stored config so it's not used again on a normal page load
+        sessionStorage.removeItem('analysisConfig');
+        console.log("Cleared analysisConfig from sessionStorage.");
+    } else {
+        console.log("No analysis config found in sessionStorage.");
+        // Ensure the iterated file display is hidden if no config is found
+        const fileDisplay = document.getElementById('iterated-file-display');
+        if (fileDisplay) {
+            fileDisplay.style.display = 'none';
+        }
+        const fileUploadSection = document.getElementById('file-upload-section');
+        if (fileUploadSection) {
+            fileUploadSection.style.display = 'block';
+        }
+    }
+}
 
 /**
  * Get the current tab from URL parameters

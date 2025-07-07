@@ -138,7 +138,7 @@ class ResultsProcessor:
     
     def process_arima_results(self) -> Dict[str, Any]:
         """
-        Process ARIMA model results.
+        Process ARIMA model results including interpretations.
         
         Returns:
             Dictionary with processed ARIMA results
@@ -147,9 +147,23 @@ class ResultsProcessor:
             return {}
         
         raw_arima = self.raw_results['arima_results']
+        
+        # Handle deeply nested structure - check for all_symbols_arima
+        arima_data = raw_arima
+        if 'all_symbols_arima' in raw_arima:
+            arima_data = raw_arima['all_symbols_arima']
+            # Check for double nesting (all_symbols_arima.all_symbols_arima)
+            if 'all_symbols_arima' in arima_data:
+                arima_data = arima_data['all_symbols_arima']
+        elif 'results' in raw_arima and 'all_symbols_arima' in raw_arima['results']:
+            arima_data = raw_arima['results']['all_symbols_arima']
+        
+        logger.info(f"ARIMA data extraction: found {len(arima_data)} symbols")
+        logger.info(f"ARIMA data symbols: {list(arima_data.keys())}")
+        
         processed = {
             'summary': {
-                'models_fitted': len(raw_arima),
+                'models_fitted': len(arima_data),
                 'best_model': None,
                 'average_aic': 0
             },
@@ -159,30 +173,153 @@ class ResultsProcessor:
         total_aic = 0
         best_aic = float('inf')
         
-        for symbol, result in raw_arima.items():
-            aic = result.get('aic', float('inf'))
-            bic = result.get('bic', float('inf'))
-            order = result.get('order', [0, 0, 0])
+        for symbol, result in arima_data.items():
+            logger.info(f"Processing ARIMA result for {symbol}")
+            logger.info(f"Result structure keys: {list(result.keys()) if isinstance(result, dict) else 'Not a dict'}")
+            
+            # Extract summary information
+            summary = result.get('summary', {})
+            forecast = result.get('forecast', {})
+            interpretation = result.get('interpretation', {})
+            
+            logger.info(f"Found interpretation for {symbol}: {bool(interpretation)}")
+            if interpretation:
+                logger.info(f"Interpretation keys: {list(interpretation.keys())}")
+            
+            aic = summary.get('aic', float('inf'))
+            bic = summary.get('bic', float('inf'))
+            model_spec = summary.get('model_specification', 'Unknown')
+            
+            # Parse model order from specification (e.g., "ARIMA(1,1,1)")
+            order = [0, 0, 0]
+            if model_spec and 'ARIMA' in model_spec:
+                try:
+                    # Extract numbers from ARIMA(p,d,q) format
+                    import re
+                    match = re.search(r'ARIMA\\((\\d+),(\\d+),(\\d+)\\)', model_spec)
+                    if match:
+                        order = [int(match.group(1)), int(match.group(2)), int(match.group(3))]
+                except:
+                    pass
+            
+            # Process interpretation sections
+            processed_interpretation = self._process_arima_interpretation(interpretation)
             
             processed['results'][symbol] = {
                 'order': order,
+                'model_specification': model_spec,
                 'aic': aic,
                 'bic': bic,
-                'forecast': result.get('forecast', []),
-                'forecast_se': result.get('forecast_se', []),
+                'log_likelihood': summary.get('log_likelihood'),
+                'hqic': summary.get('hqic'),
+                'sample_size': summary.get('sample_size'),
+                'parameters': summary.get('parameters', {}),
+                'parameter_pvalues': summary.get('parameter_pvalues', {}),
+                'parameter_significance': summary.get('parameter_significance', {}),
+                'residual_statistics': summary.get('residual_statistics', {}),
+                'forecast': {
+                    'point_forecasts': forecast.get('point_forecasts', []),
+                    'forecast_steps': forecast.get('forecast_steps', 0),
+                    'forecast_method': forecast.get('forecast_method', 'Unknown'),
+                    'confidence_intervals': forecast.get('confidence_intervals', {})
+                },
+                'interpretation': processed_interpretation,
                 'model_summary': f"ARIMA({order[0]},{order[1]},{order[2]})"
             }
             
-            total_aic += aic
+            total_aic += aic if aic != float('inf') else 0
             if aic < best_aic:
                 best_aic = aic
                 processed['summary']['best_model'] = symbol
         
-        if len(raw_arima) > 0:
-            processed['summary']['average_aic'] = total_aic / len(raw_arima)
+        if len(arima_data) > 0:
+            valid_aics = [aic for aic in [processed['results'][s]['aic'] for s in processed['results']] if aic != float('inf')]
+            if valid_aics:
+                processed['summary']['average_aic'] = sum(valid_aics) / len(valid_aics)
+        
+        logger.info(f"ARIMA processing complete: {len(processed['results'])} models processed")
+        return processed
+    
+    def _process_arima_interpretation(self, interpretation: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Process ARIMA interpretation section into structured format.
+        
+        Args:
+            interpretation: Raw interpretation dictionary from API
+            
+        Returns:
+            Structured interpretation data
+        """
+        if not interpretation:
+            return {}
+        
+        processed = {
+            'executive_summary': {},
+            'key_findings': {},
+            'technical_details': {},
+            'business_context': {}
+        }
+        
+        # Process executive summary
+        exec_summary = interpretation.get('executive_summary', {})
+        if exec_summary:
+            processed['executive_summary'] = {
+                'bottom_line': exec_summary.get('bottom_line', ''),
+                'business_impact': exec_summary.get('business_impact', ''),
+                'recommendation': exec_summary.get('recommendation', ''),
+                'justification': exec_summary.get('justification', ''),
+                'confidence': exec_summary.get('confidence', 'Unknown')
+            }
+        
+        # Process key findings
+        key_findings = interpretation.get('key_findings', {})
+        if key_findings:
+            processed['key_findings'] = {
+                'forecast_trend': self._extract_finding_text(key_findings.get('forecast_trend', {})),
+                'model_performance': self._extract_finding_text(key_findings.get('model_performance', {})),
+                'forecast_statistics': self._extract_finding_text(key_findings.get('forecast_statistics', {})),
+                'business_impact': self._extract_finding_text(key_findings.get('business_impact', {}))
+            }
+        
+        # Process technical details
+        tech_details = interpretation.get('technical_details', {})
+        if tech_details:
+            processed['technical_details'] = {
+                'model_specification': self._extract_finding_text(tech_details.get('model_specification', {})),
+                'forecast_mechanics': tech_details.get('forecast_mechanics', {}),
+                'accuracy_metrics': tech_details.get('accuracy_metrics', {}),
+                'stationarity': tech_details.get('forecast_mechanics', {}).get('stationarity', 'Unknown')
+            }
+        
+        # Process background context
+        background = interpretation.get('background_context', {})
+        if background:
+            processed['business_context'] = {
+                'what_is_arima': background.get('what_is_arima', ''),
+                'why_it_matters': background.get('why_it_matters', ''),
+                'model_assumptions': background.get('model_assumptions', ''),
+                'limitations': background.get('limitations', ''),
+                'interpretation_guide': background.get('interpretation_guide', '')
+            }
         
         return processed
     
+    def _extract_finding_text(self, finding_dict: Dict[str, Any]) -> str:
+        """
+        Extract justification text from finding dictionary.
+        
+        Args:
+            finding_dict: Dictionary containing finding information
+            
+        Returns:
+            Justification text or empty string
+        """
+        if isinstance(finding_dict, dict):
+            return finding_dict.get('justification', '')
+        elif isinstance(finding_dict, str):
+            return finding_dict
+        return ''
+
     def process_garch_results(self) -> Dict[str, Any]:
         """
         Process GARCH model results.
@@ -216,16 +353,30 @@ class ResultsProcessor:
                 'beta': beta,
                 'persistence': persistence,
                 'volatility_forecast': result.get('volatility_forecast', []),
-                'model_summary': f"GARCH(1,1) - ω={omega:.6f}, α={alpha:.3f}, β={beta:.3f}"
+                'summary_text': result.get('summary', ''),
+                'interpretation': self._process_garch_interpretation(result.get('interpretation', {}))
             }
             
             total_persistence += persistence
         
         if len(raw_garch) > 0:
             processed['summary']['average_persistence'] = total_persistence / len(raw_garch)
-        
+            
         return processed
-    
+
+    def _process_garch_interpretation(self, interpretation: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Process GARCH interpretation section into structured format.
+        """
+        if not interpretation:
+            return {}
+        
+        # Simplified processing for now, can be expanded
+        return {
+            'executive_summary': interpretation.get('executive_summary', {}).get('justification', ''),
+            'key_findings': interpretation.get('key_findings', {})
+        }
+
     def process_spillover_results(self) -> Dict[str, Any]:
         """
         Process spillover analysis results.
@@ -237,143 +388,38 @@ class ResultsProcessor:
             return {}
         
         raw_spillover = self.raw_results['spillover_results']
+        
         processed = {
-            'total_spillover': raw_spillover.get('total_spillover', 0),
-            'spillover_matrix': raw_spillover.get('spillover_matrix', {}),
-            'summary': {
-                'highest_transmitter': None,
-                'highest_receiver': None,
-                'highest_spillover_pair': None
-            }
+            'total_spillover_index': raw_spillover.get('total_spillover_index'),
+            'directional_spillover': raw_spillover.get('directional_spillover'),
+            'net_spillover': raw_spillover.get('net_spillover'),
+            'pairwise_spillover': raw_spillover.get('pairwise_spillover'),
+            'interpretation': raw_spillover.get('interpretation'),
+            'pairwise_spillover_table': raw_spillover.get('pairwise_spillover_table')
         }
-        
-        spillover_matrix = processed['spillover_matrix']
-        
-        if spillover_matrix:
-            # Find highest transmitter (highest row sum excluding diagonal)
-            max_transmission = 0
-            max_transmitter = None
-            
-            # Find highest receiver (highest column sum excluding diagonal)
-            max_reception = 0
-            max_receiver = None
-            
-            # Find highest spillover pair
-            max_spillover = 0
-            max_pair = None
-            
-            for from_symbol in spillover_matrix:
-                transmission_sum = 0
-                for to_symbol in spillover_matrix[from_symbol]:
-                    spillover_value = spillover_matrix[from_symbol][to_symbol]
-                    
-                    if from_symbol != to_symbol:  # Exclude diagonal
-                        transmission_sum += spillover_value
-                        
-                        if spillover_value > max_spillover:
-                            max_spillover = spillover_value
-                            max_pair = (from_symbol, to_symbol)
-                
-                if transmission_sum > max_transmission:
-                    max_transmission = transmission_sum
-                    max_transmitter = from_symbol
-            
-            # Calculate reception for each symbol
-            for to_symbol in self.symbols:
-                reception_sum = 0
-                for from_symbol in spillover_matrix:
-                    if to_symbol in spillover_matrix[from_symbol] and from_symbol != to_symbol:
-                        reception_sum += spillover_matrix[from_symbol][to_symbol]
-                
-                if reception_sum > max_reception:
-                    max_reception = reception_sum
-                    max_receiver = to_symbol
-            
-            processed['summary']['highest_transmitter'] = max_transmitter
-            processed['summary']['highest_receiver'] = max_receiver
-            processed['summary']['highest_spillover_pair'] = max_pair
         
         return processed
-    
-    def create_data_lineage(self) -> Dict[str, Any]:
+
+    def process_all(self) -> Dict[str, Any]:
         """
-        Create data lineage showing transformation pipeline.
-        
-        Returns:
-            Dictionary with data lineage information
-        """
-        pipeline_stages = [
-            {
-                'name': 'Original Data',
-                'description': 'Raw price data',
-                'data_available': 'data' in self.raw_results,
-                'record_count': len(self.symbols) if 'data' in self.raw_results else 0
-            },
-            {
-                'name': 'Returns Data',
-                'description': 'Calculated returns',
-                'data_available': 'data' in self.raw_results,
-                'record_count': len(self.symbols) if 'data' in self.raw_results else 0
-            },
-            {
-                'name': 'Stationarity Tests',
-                'description': 'ADF test results',
-                'data_available': 'stationarity_results' in self.raw_results,
-                'record_count': len(self.raw_results.get('stationarity_results', {}))
-            },
-            {
-                'name': 'ARIMA Models',
-                'description': 'Time series forecasting',
-                'data_available': 'arima_results' in self.raw_results,
-                'record_count': len(self.raw_results.get('arima_results', {}))
-            },
-            {
-                'name': 'GARCH Models',
-                'description': 'Volatility modeling',
-                'data_available': 'garch_results' in self.raw_results,
-                'record_count': len(self.raw_results.get('garch_results', {}))
-            },
-            {
-                'name': 'Spillover Analysis',
-                'description': 'Cross-asset spillovers',
-                'data_available': 'spillover_results' in self.raw_results,
-                'record_count': 1 if 'spillover_results' in self.raw_results else 0
-            }
-        ]
-        
-        return {
-            'pipeline_stages': pipeline_stages,
-            'total_stages': len(pipeline_stages),
-            'completed_stages': len([s for s in pipeline_stages if s['data_available']])
-        }
-    
-    def process_all_results(self) -> Dict[str, Any]:
-        """
-        Process all results and return comprehensive structured data.
+        Process all sections of the time series analysis results and return comprehensive structured data.
         
         Returns:
             Dictionary with all processed results
         """
-        logger.info("Processing all analysis results...")
+        logger.info("Starting to process all results")
         
-        processed_results = {
-            'metadata': {
-                'processing_timestamp': datetime.now().isoformat(),
-                'symbols_analyzed': self.symbols,
-                'total_symbols': len(self.symbols)
-            },
-            'time_series_data': self.process_time_series_data(),
-            'stationarity_results': self.process_stationarity_results(),
-            'arima_results': self.process_arima_results(),
-            'garch_results': self.process_garch_results(),
-            'spillover_results': self.process_spillover_results(),
-            'data_lineage': self.create_data_lineage()
+        processed_data = {
+            'time_series': self.process_time_series_data(),
+            'stationarity': self.process_stationarity_results(),
+            'arima': self.process_arima_results(),
+            'garch': self.process_garch_results(),
+            'spillover': self.process_spillover_results(),
+            'metadata': self.raw_results.get('execution_metadata', {})
         }
         
-        logger.info("Results processing completed successfully")
-        logger.info("Processed sections: %s", list(processed_results.keys()))
-        
-        return processed_results
+        logger.info("Finished processing all results")
+        return processed_data
 
 
 def create_summary_statistics(processed_results: Dict[str, Any]) -> Dict[str, Any]:
