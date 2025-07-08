@@ -24,7 +24,6 @@ from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from .results_processor import ResultsProcessor
 from django.urls import reverse
-from .models import AnalysisSession
 import uuid
 
 # Get a logger instance specific to this module
@@ -35,7 +34,7 @@ def _proxy_request(request: HttpRequest, path: str) -> tuple[int, str]:
     """
     Helper function to forward requests to the backend API.
     """
-    api_url = f"{settings.API_BASE_URL}/{path}"
+    api_url = f"{settings.TIMESERIES_API_URL}/api/v1/{path}"
     method = request.method
     logger.info(f"Proxying {method} request to {api_url}")
 
