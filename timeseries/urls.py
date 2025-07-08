@@ -6,6 +6,7 @@ URL patterns for the timeseries app.
 """
 from django.urls import path
 from . import views
+from .views.pipeline_proxy import run_pipeline_proxy
 
 app_name = 'timeseries'
 
@@ -21,8 +22,7 @@ urlpatterns = [
     path('api_proxy/<path:api_path>', views.api_proxy, name='api_proxy'),
     # Specific API proxy endpoints (if you want to keep them for non-JS or specific logic)
     # Ensure no trailing slash for consistency with FastAPI backend
-    path('api/run_pipeline', views.run_pipeline, name='run_pipeline'),
+    path('api/run_pipeline', run_pipeline_proxy, name='run_pipeline'),
     # Debug endpoints
     path('debug/api-data', views.debug_data, name='debug_data'), # Removed trailing slash
-    path('debug/results', views.debug_results, name='debug_results'), # Removed trailing slash
 ]
