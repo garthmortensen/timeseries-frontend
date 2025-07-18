@@ -1823,17 +1823,22 @@ let loadingMessageInterval;
             return response.json();
         })
         .then(responseData => {
-            if (responseData.task_id) {
-                window.location.href = `/timeseries/results?task_id=${responseData.task_id}`;
-            } else {
-                // Stop the loading animation and re-enable the form if there's an error
-                stopLoadingMessageCycle();
+            stopLoadingMessageCycle();
+            
+            if (responseData.error) {
+                // Only restore the form if there's an error
                 loadingIndicator.style.display = 'none';
                 pageTitle.style.display = 'block';
                 marketIntroText.style.display = 'block';
                 form.style.display = 'block';
-                alert('Error: Could not get task ID from the server. ' + (responseData.error || ''));
+                alert('Error: ' + responseData.error);
+                return;
             }
+
+            // Store the results in sessionStorage and redirect to results page
+            // Do NOT restore the analysis page elements - go directly to results
+            sessionStorage.setItem('analysisResults', JSON.stringify(responseData));
+            window.location.href = '/results/';
         })
         .catch(error => {
             // Stop the loading animation and re-enable the form

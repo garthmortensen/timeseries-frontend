@@ -485,18 +485,15 @@
 
         <!-- Models & Forecasts Tab -->
         <div class="tab-pane fade {% if active_tab == 'models' %}show active{% endif %}" id="models" role="tabpanel" aria-labelledby="models-tab">
-            {% include 'timeseries/fragments/models_and_forecasts.html' %}
         </div>
 
         {% if spillover_results %}
         <div class="tab-pane fade {% if active_tab == 'spillover' %}show active{% endif %}" id="spillover" role="tabpanel" aria-labelledby="spillover-tab">
-            {% include 'timeseries/fragments/spillover_analysis.html' %}
         </div>
         {% endif %}
 
         <!-- Granger Causality Tab -->
         <div class="tab-pane fade {% if active_tab == 'granger-causality' %}show active{% endif %}" id="granger-causality" role="tabpanel" aria-labelledby="granger-causality-tab">
-            {% include 'timeseries/fragments/granger_causality.html' %}
         </div>
 
         <!-- Raw Data Tab -->
@@ -535,7 +532,86 @@
 </div>
 
 <script>
-    const taskId = "{{ task_id }}";
+    // Get results from sessionStorage instead of Django context
+    const analysisResults = sessionStorage.getItem('analysisResults');
+    let resultsData = null;
+    
+    if (analysisResults) {
+        try {
+            resultsData = JSON.parse(analysisResults);
+            // Show results container and hide no-results message
+            document.getElementById('results-container').style.display = 'block';
+            document.getElementById('no-results').style.display = 'none';
+            
+            // Populate the page with results data
+            populateResultsPage(resultsData);
+        } catch (error) {
+            console.error('Error parsing analysis results:', error);
+            document.getElementById('no-results').style.display = 'block';
+            document.getElementById('results-container').style.display = 'none';
+        }
+    } else {
+        // No results found in sessionStorage
+        document.getElementById('no-results').style.display = 'block';
+        document.getElementById('results-container').style.display = 'none';
+    }
+    
+    function populateResultsPage(data) {
+        // Populate various sections with the results data
+        // This function will need to be implemented based on your data structure
+        console.log('Analysis results:', data);
+        
+        // For now, just display the raw JSON in the raw data tab
+        const rawDataContainer = document.getElementById('raw-data-container');
+        if (rawDataContainer) {
+            rawDataContainer.innerHTML = `<pre style="background-color: #f8f9fa; padding: 1rem; border-radius: 0.375rem;">${JSON.stringify(data, null, 2)}</pre>`;
+        }
+        
+        // Set up download functionality
+        setupDownloadFunctionality(data);
+    }
+    
+    function setupDownloadFunctionality(data) {
+        const downloadBtn = document.getElementById('download-api-response-btn');
+        const viewBtn = document.getElementById('view-api-response-btn');
+        const copyBtn = document.getElementById('copy-json-btn');
+        
+        if (downloadBtn) {
+            downloadBtn.addEventListener('click', function() {
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `analysis_results_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            });
+        }
+        
+        if (viewBtn) {
+            viewBtn.addEventListener('click', function() {
+                const jsonContent = document.getElementById('json-content');
+                if (jsonContent) {
+                    jsonContent.textContent = JSON.stringify(data, null, 2);
+                }
+                const modal = new bootstrap.Modal(document.getElementById('jsonModal'));
+                modal.show();
+            });
+        }
+        
+        if (copyBtn) {
+            copyBtn.addEventListener('click', function() {
+                const jsonContent = document.getElementById('json-content').textContent;
+                navigator.clipboard.writeText(jsonContent).then(() => {
+                    copyBtn.textContent = 'Copied!';
+                    setTimeout(() => {
+                        copyBtn.textContent = 'Copy to Clipboard';
+                    }, 2000);
+                });
+            });
+        }
+    }
 </script>
-<script src="{% static 'js/results.js' %}"></script>
 {% endblock %}

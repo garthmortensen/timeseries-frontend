@@ -116,8 +116,8 @@ def about(request):
 
 
 def results(request: HttpRequest) -> HttpResponse:
-    task_id = request.GET.get('task_id')
-    return render(request, 'timeseries/results.html', {'task_id': task_id})
+    # No longer need task_id parameter since we're using sessionStorage
+    return render(request, 'timeseries/results.html')
 
 
 def api_proxy(request: HttpRequest, path: str) -> HttpResponse:
@@ -270,3 +270,74 @@ def iterate(request):
         return redirect(reverse('timeseries:analysis'))
     # If it's not a POST request, just redirect to the main page or show an error.
     return redirect(reverse('timeseries:index'))
+
+@csrf_exempt
+def run_pipeline_proxy(request):
+    if request.method == "POST":
+        # Support both JSON and form POSTs
+        if request.content_type and "application/json" in request.content_type:
+            try:
+                data = json.loads(request.body)
+            except Exception:
+                data = {}
+        else:
+            data = request.POST
+        print("[DEBUG] Incoming POST data:", data)
+        # Only use the expected fields, prefer nested params if present
+        symbols = data.get("symbols", [])
+        if isinstance(symbols, str):
+            symbols = [s.strip() for s in symbols.split(",") if s.strip()]
+        anchor_prices = data.get("synthetic_anchor_prices", [])
+        if isinstance(anchor_prices, str):
+            anchor_prices = [float(x.strip()) for x in anchor_prices.split(",") if x.strip()]
+        elif isinstance(anchor_prices, list):
+            anchor_prices = [float(x) for x in anchor_prices]
+        else:
+            anchor_prices = []
+        payload = {
+            "source_actual_or_synthetic_data": data.get("source_actual_or_synthetic_data", "synthetic"),
+            "symbols": symbols,
+            "synthetic_anchor_prices": anchor_prices,
+            "data_start_date": data.get("data_start_date"),
+            "data_end_date": data.get("data_end_date"),
+            "scaling_method": data.get("scaling_method", "standardize"),
+            "arima_params": data.get("arima_params", {
+                "p": int(data.get("arima_p", 1)),
+                "d": int(data.get("arima_d", 1)),
+                "q": int(data.get("arima_q", 1)),
+                "forecast_steps": int(data.get("arima_forecast_steps", 10)),
+            }),
+            "garch_params": data.get("garch_params", {
+                "p": int(data.get("garch_p", 1)),
+                "q": int(data.get("garch_q", 1)),
+                "dist": data.get("garch_dist", "t"),
+                "forecast_steps": 3,
+            }),
+            "spillover_enabled": data.get("spillover_enabled") is True or data.get("enable_spillover") == "on",
+            "spillover_params": data.get("spillover_params", {
+                "method": data.get("spillover_method", "diebold_yilmaz"),
+                "forecast_horizon": int(data.get("forecast_horizon", 5)),
+                "window_size": None,
+                "var_lag_selection_method": data.get("var_lag_selection_method", "aic"),
+                "max_lags": int(data.get("max_lags", 10)),
+                "granger_significance_level": float(data.get("granger_significance_level", 0.05)),
+                "include_granger": data.get("include_granger") == "on" or data.get("include_granger") is True,
+                "include_fevd_details": data.get("include_fevd_details") == "on" or data.get("include_fevd_details") is True,
+            })
+        }
+        # Remove any keys not in the backend model
+        allowed_keys = {
+            "source_actual_or_synthetic_data", "symbols", "synthetic_anchor_prices",
+            "data_start_date", "data_end_date", "scaling_method",
+            "arima_params", "garch_params", "spillover_enabled", "spillover_params"
+        }
+        payload = {k: v for k, v in payload.items() if k in allowed_keys}
+        print("[DEBUG] Payload sent to backend:", payload)
+        response = requests.post("http://localhost:8001/api/v1/run_pipeline", json=payload)
+        # Always return JSON to the frontend (for AJAX/JS handling)
+        try:
+            return JsonResponse(response.json(), status=response.status_code)
+        except Exception:
+            return JsonResponse({"error": response.text}, status=response.status_code)
+    else:
+        return HttpResponseRedirect(reverse("timeseries:analysis"))

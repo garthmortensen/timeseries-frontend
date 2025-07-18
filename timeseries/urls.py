@@ -6,7 +6,7 @@ URL patterns for the timeseries app.
 """
 from django.urls import path
 from . import views
-from .views.pipeline_proxy import run_pipeline_proxy
+from .views import run_pipeline_proxy
 
 app_name = 'timeseries'
 
@@ -15,7 +15,6 @@ urlpatterns = [
     path('analysis/', views.analysis, name='analysis'),
     path('results/', views.results, name='results'),
     path('results/test/', views.results_test, name='results_test'),  # Add test route
-    path('results/<uuid:session_id>/', views.results, name='results'),
     path('about/', views.about, name='about'),
     path('iterate/', views.iterate, name='iterate'),
     # Generic API proxy - captures the rest of the path and passes it to the view
