@@ -116,8 +116,41 @@ def about(request):
 
 
 def results(request: HttpRequest) -> HttpResponse:
-    # No longer need task_id parameter since we're using sessionStorage
-    return render(request, 'timeseries/results.html')
+    """
+    Results page that displays processed analysis results from Django session.
+    No longer relies on client-side JavaScript parsing.
+    """
+    # Get processed results from session
+    processed_results = request.session.get('analysis_results')
+    raw_results = request.session.get('analysis_raw_results')
+    
+    if not processed_results:
+        # No results found, redirect to analysis page
+        return render(request, 'timeseries/results.html', {
+            'no_results': True,
+            'error_message': 'No analysis results found. Please run an analysis first.'
+        })
+    
+    # Prepare context for template
+    context = {
+        'results_available': True,
+        'processed_results': processed_results,
+        'raw_results': raw_results,
+        'symbols': processed_results.get('symbols', []),
+        'executive_summary': processed_results.get('executive_summary', {}),
+        'execution_configuration': processed_results.get('execution_configuration', {}),
+        'data_arrays': processed_results.get('data_arrays', {}),
+        'stationarity_results': processed_results.get('stationarity_results', {}),
+        'arima_results': processed_results.get('arima_results', {}),
+        'garch_results': processed_results.get('garch_results', {}),
+        'var_results': processed_results.get('var_results', {}),
+        'spillover_results': processed_results.get('spillover_results', {}),
+        'granger_causality_results': processed_results.get('granger_causality_results', {}),
+        'spillover_enabled': bool(processed_results.get('spillover_results')),
+        'active_tab': 'overview'  # Default active tab
+    }
+    
+    return render(request, 'timeseries/results.html', context)
 
 
 def api_proxy(request: HttpRequest, path: str) -> HttpResponse:
@@ -282,11 +315,14 @@ def run_pipeline_proxy(request):
                 data = {}
         else:
             data = request.POST
-        print("[DEBUG] Incoming POST data:", data)
-        # Only use the expected fields, prefer nested params if present
+        
+        logger.info("[DEBUG] Incoming POST data received")
+        
+        # Process form data into API payload
         symbols = data.get("symbols", [])
         if isinstance(symbols, str):
             symbols = [s.strip() for s in symbols.split(",") if s.strip()]
+            
         anchor_prices = data.get("synthetic_anchor_prices", [])
         if isinstance(anchor_prices, str):
             anchor_prices = [float(x.strip()) for x in anchor_prices.split(",") if x.strip()]
@@ -294,6 +330,7 @@ def run_pipeline_proxy(request):
             anchor_prices = [float(x) for x in anchor_prices]
         else:
             anchor_prices = []
+            
         payload = {
             "source_actual_or_synthetic_data": data.get("source_actual_or_synthetic_data", "synthetic"),
             "symbols": symbols,
@@ -325,19 +362,63 @@ def run_pipeline_proxy(request):
                 "include_fevd_details": data.get("include_fevd_details") == "on" or data.get("include_fevd_details") is True,
             })
         }
-        # Remove any keys not in the backend model
+        
+        # Clean payload
         allowed_keys = {
             "source_actual_or_synthetic_data", "symbols", "synthetic_anchor_prices",
             "data_start_date", "data_end_date", "scaling_method",
             "arima_params", "garch_params", "spillover_enabled", "spillover_params"
         }
         payload = {k: v for k, v in payload.items() if k in allowed_keys}
-        print("[DEBUG] Payload sent to backend:", payload)
-        response = requests.post("http://localhost:8001/api/v1/run_pipeline", json=payload)
-        # Always return JSON to the frontend (for AJAX/JS handling)
+        
+        logger.info("[DEBUG] Sending payload to API")
+        
         try:
-            return JsonResponse(response.json(), status=response.status_code)
-        except Exception:
-            return JsonResponse({"error": response.text}, status=response.status_code)
+            # Call the API
+            response = requests.post("http://localhost:8001/api/v1/run_pipeline", json=payload, timeout=120)
+            
+            if response.status_code == 200:
+                # Parse and process the API response server-side
+                api_results = response.json()
+                logger.info("API call successful, processing results server-side")
+                
+                # Process the results using our ResultsProcessor
+                processor = ResultsProcessor(api_results)
+                processed_results = processor.process_all()
+                
+                # Store processed results in session for the results page
+                request.session['analysis_results'] = processed_results
+                request.session['analysis_raw_results'] = api_results
+                
+                # Return JSON response indicating success and redirect URL
+                return JsonResponse({
+                    "status": "success",
+                    "redirect_url": reverse('timeseries:results')
+                })
+            else:
+                logger.error(f"API call failed with status {response.status_code}")
+                return JsonResponse({
+                    "status": "error", 
+                    "error": response.text
+                }, status=response.status_code)
+                
+        except requests.exceptions.Timeout:
+            logger.error("API request timed out")
+            return JsonResponse({
+                "status": "error",
+                "error": "The analysis request timed out. Please try again with a smaller dataset or shorter time range."
+            }, status=504)
+        except requests.exceptions.ConnectionError:
+            logger.error("Failed to connect to API")
+            return JsonResponse({
+                "status": "error",
+                "error": "Could not connect to the analysis API. Please check that the backend service is running."
+            }, status=503)
+        except Exception as e:
+            logger.exception("Unexpected error during API call")
+            return JsonResponse({
+                "status": "error",
+                "error": f"An unexpected error occurred: {str(e)}"
+            }, status=500)
     else:
-        return HttpResponseRedirect(reverse("timeseries:analysis"))
+        return redirect(reverse("timeseries:analysis"))

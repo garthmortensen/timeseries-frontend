@@ -2,7 +2,7 @@
 # === FILE META OPENING ===
 # file: ./timeseries-frontend/templates/timeseries/results.html
 # role: frontend
-# desc: main results page template that displays interactive charts and analysis results with tabbed navigation
+# desc: main results page template that displays server-side processed analysis results with minimal JavaScript
 # === FILE META CLOSING ===
 -->
 
@@ -15,603 +15,618 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="mb-0">Analysis Results</h1>
     <div class="btn-group" role="group">
-        <button id="download-api-response-btn" class="btn btn-outline-primary">
-            <i class="bi bi-download"></i> Download Full API Response
+        <button id="download-results-btn" class="btn btn-outline-primary">
+            <i class="bi bi-download"></i> Download Results JSON
         </button>
-        <button id="view-api-response-btn" class="btn btn-outline-secondary">
-            <i class="bi bi-eye"></i> View Raw JSON
-        </button>
+        <a href="{% url 'timeseries:analysis' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> New Analysis
+        </a>
     </div>
 </div>
 
-<!-- view JSON payload -->
-<div class="modal fade" id="jsonModal" tabindex="-1" aria-labelledby="jsonModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="jsonModalLabel">Raw API Response</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <small class="text-muted">
-                        This is the complete JSON response from the API.
-                    </small>
-                </div>
-                <pre id="json-content" style="max-height: 60vh; overflow: auto; background-color: #e6e9ed; padding: 1rem; border-radius: 0.375rem; font-size: 0.875rem;"></pre>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" id="copy-json-btn">Copy to Clipboard</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div id="no-results" class="alert alert-warning" style="display: none;">
-    <p>No analysis results found. Please run an analysis first.</p>
+{% if no_results %}
+<div class="alert alert-warning">
+    <h4><i class="bi bi-exclamation-triangle"></i> No Results Found</h4>
+    <p>{{ error_message }}</p>
     <a href="{% url 'timeseries:analysis' %}" class="btn btn-primary">Go to Analysis</a>
 </div>
+{% else %}
 
-<div id="loading-indicator" class="text-center" style="display: none;">
-    <p id="loading-text">Running analysis, please wait...</p>
-    <div class="spinner-border" role="status">
-        <span class="visually-hidden">Loading...</span>
-    </div>
-</div>
+<!-- Main Navigation Tabs -->
+<ul class="nav nav-tabs mb-4" id="resultsTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link {% if active_tab == 'overview' %}active{% endif %}" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" 
+                type="button" role="tab" aria-controls="overview" aria-selected="{% if active_tab == 'overview' %}true{% else %}false{% endif %}">
+            <i class="bi bi-speedometer2"></i> Overview
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link {% if active_tab == 'execution-config' %}active{% endif %}" id="execution-config-tab" data-bs-toggle="tab" data-bs-target="#execution-config" 
+                type="button" role="tab" aria-controls="execution-config" aria-selected="{% if active_tab == 'execution-config' %}true{% else %}false{% endif %}">
+            <i class="bi bi-gear"></i> Configuration
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link {% if active_tab == 'statistical-tests' %}active{% endif %}" id="statistical-tests-tab" data-bs-toggle="tab" data-bs-target="#statistical-tests" 
+                type="button" role="tab" aria-controls="statistical-tests" aria-selected="{% if active_tab == 'statistical-tests' %}true{% else %}false{% endif %}">
+            <i class="bi bi-graph-up"></i> Statistical Tests
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link {% if active_tab == 'models' %}active{% endif %}" id="models-tab" data-bs-toggle="tab" data-bs-target="#models" 
+                type="button" role="tab" aria-controls="models" aria-selected="{% if active_tab == 'models' %}true{% else %}false{% endif %}">
+            <i class="bi bi-cpu"></i> ARIMA & GARCH
+        </button>
+    </li>
+    {% if spillover_enabled %}
+    <li class="nav-item" role="presentation">
+        <button class="nav-link {% if active_tab == 'spillover' %}active{% endif %}" id="spillover-tab" data-bs-toggle="tab" data-bs-target="#spillover" 
+                type="button" role="tab" aria-controls="spillover" aria-selected="{% if active_tab == 'spillover' %}true{% else %}false{% endif %}">
+            <i class="bi bi-arrows-angle-expand"></i> Spillover Analysis
+        </button>
+    </li>
+    {% endif %}
+    <li class="nav-item" role="presentation">
+        <button class="nav-link {% if active_tab == 'granger-causality' %}active{% endif %}" id="granger-causality-tab" data-bs-toggle="tab" data-bs-target="#granger-causality"
+                type="button" role="tab" aria-controls="granger-causality" aria-selected="{% if active_tab == 'granger-causality' %}true{% else %}false{% endif %}">
+            <i class="bi bi-arrow-through-heart"></i> Granger Causality
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link {% if active_tab == 'raw-data' %}active{% endif %}" id="raw-data-tab" data-bs-toggle="tab" data-bs-target="#raw-data-pane" 
+                type="button" role="tab" aria-controls="raw-data-pane" aria-selected="{% if active_tab == 'raw-data' %}true{% else %}false{% endif %}">
+            <i class="bi bi-table"></i> Raw Data
+        </button>
+    </li>
+</ul>
 
-<div id="results-container" style="display: none;">
-    <!-- Main Navigation Tabs -->
-    <ul class="nav nav-tabs mb-4" id="resultsTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-            <button class="nav-link {% if active_tab == 'overview' %}active{% endif %}" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" 
-                    type="button" role="tab" aria-controls="overview" aria-selected="{% if active_tab == 'overview' %}true{% else %}false{% endif %}">
-                <i class="bi bi-speedometer2"></i> Overview
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link {% if active_tab == 'execution-config' %}active{% endif %}" id="execution-config-tab" data-bs-toggle="tab" data-bs-target="#execution-config" 
-                    type="button" role="tab" aria-controls="execution-config" aria-selected="{% if active_tab == 'execution-config' %}true{% else %}false{% endif %}">
-                <i class="bi bi-gear"></i> Execution Configuration
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link {% if active_tab == 'plots' %}active{% endif %}" id="plots-tab" data-bs-toggle="tab" data-bs-target="#plots" 
-                    type="button" role="tab" aria-controls="plots" aria-selected="{% if active_tab == 'plots' %}true{% else %}false{% endif %}">
-                <i class="bi bi-diagram-3"></i> Plots
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link {% if active_tab == 'statistical-tests' %}active{% endif %}" id="statistical-tests-tab" data-bs-toggle="tab" data-bs-target="#statistical-tests" 
-                    type="button" role="tab" aria-controls="statistical-tests" aria-selected="{% if active_tab == 'statistical-tests' %}true{% else %}false{% endif %}">
-                <i class="bi bi-graph-up"></i> Statistical Tests
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link {% if active_tab == 'models' %}active{% endif %}" id="models-tab" data-bs-toggle="tab" data-bs-target="#models" 
-                    type="button" role="tab" aria-controls="models" aria-selected="{% if active_tab == 'models' %}true{% else %}false{% endif %}">
-                <i class="bi bi-cpu"></i> Models & Forecasts
-            </button>
-        </li>
-        {% if spillover_results %}
-        <li class="nav-item" role="presentation">
-            <button class="nav-link {% if active_tab == 'spillover' %}active{% endif %}" id="spillover-tab" data-bs-toggle="tab" data-bs-target="#spillover" 
-                    type="button" role="tab" aria-controls="spillover" aria-selected="{% if active_tab == 'spillover' %}true{% else %}false{% endif %}">
-                <i class="bi bi-arrows-angle-expand"></i> Spillover Analysis
-            </button>
-        </li>
-        {% endif %}
-        <li class="nav-item" role="presentation">
-            <button class="nav-link {% if active_tab == 'granger-causality' %}active{% endif %}" id="granger-causality-tab" data-bs-toggle="tab" data-bs-target="#granger-causality"
-                    type="button" role="tab" aria-controls="granger-causality" aria-selected="{% if active_tab == 'granger-causality' %}true{% else %}false{% endif %}">
-                <i class="bi bi-arrow-through-heart"></i> Granger Causality
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link {% if active_tab == 'raw-data' %}active{% endif %}" id="raw-data-tab" data-bs-toggle="tab" data-bs-target="#raw-data-pane" 
-                    type="button" role="tab" aria-controls="raw-data-pane" aria-selected="{% if active_tab == 'raw-data' %}true{% else %}false{% endif %}">
-                <i class="bi bi-table"></i> Raw Data
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link {% if active_tab == 'next-step' %}active{% endif %}" id="next-step-tab" data-bs-toggle="tab" data-bs-target="#next-step-pane" 
-                    type="button" role="tab" aria-controls="next-step-pane" aria-selected="{% if active_tab == 'next-step' %}true{% else %}false{% endif %}">
-                <i class="bi bi-arrow-right-circle"></i> Next Step
-            </button>
-        </li>
-    </ul>
+<div class="tab-content" id="resultsTabsContent">
     
-    <div class="tab-content" id="resultsTabsContent">
-        
-        <!-- Overview Tab -->
-        <div class="tab-pane fade {% if active_tab == 'overview' %}show active{% endif %}" id="overview" role="tabpanel" aria-labelledby="overview-tab">
-            <div class="row">
-                <div class="col-md-8">
-                    <!-- Executive Summary Card -->
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <h5 class="card-title mb-0"><i class="bi bi-briefcase"></i> Executive Summary</h5>
-                        </div>
-                        <div class="card-body" id="executive-summary-content">
-                            <!-- Populated by JavaScript -->
-                        </div>
+    <!-- Overview Tab -->
+    <div class="tab-pane fade {% if active_tab == 'overview' %}show active{% endif %}" id="overview" role="tabpanel" aria-labelledby="overview-tab">
+        <div class="row">
+            <div class="col-md-8">
+                <!-- Executive Summary Card -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0"><i class="bi bi-briefcase"></i> Executive Summary</h5>
                     </div>
-                    
-                    <!-- Key Insights Card -->
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <h5 class="card-title mb-0"><i class="bi bi-lightbulb"></i> Key Insights</h5>
-                        </div>
-                        <div class="card-body" id="key-insights-content">
-                            <!-- Populated by JavaScript -->
-                        </div>
+                    <div class="card-body">
+                        {% if executive_summary.analysis_overview %}
+                            <div class="mb-3">
+                                <h6>Analysis Overview</h6>
+                                <p><strong>Symbols Analyzed:</strong> {{ executive_summary.analysis_overview.symbols_analyzed|join:", " }}</p>
+                                <p><strong>Total Symbols:</strong> {{ executive_summary.analysis_overview.total_symbols }}</p>
+                            </div>
+                        {% endif %}
+                        
+                        {% if executive_summary.key_insights %}
+                            <div class="mb-3">
+                                <h6>Key Insights</h6>
+                                {% for insight in executive_summary.key_insights %}
+                                    <div class="alert alert-info py-2">{{ insight }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        
+                        {% if executive_summary.business_recommendations %}
+                            <div class="mb-3">
+                                <h6>Business Recommendations</h6>
+                                {% for recommendation in executive_summary.business_recommendations %}
+                                    <div class="alert alert-success py-2">{{ recommendation }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
                     </div>
                 </div>
-                
-                <div class="col-md-4">
-                    <!-- Analysis Summary Card -->
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <h5 class="card-title mb-0"><i class="bi bi-info-circle"></i> Analysis Summary</h5>
-                        </div>
-                        <div class="card-body" id="analysis-summary-content">
-                            <!-- Populated by JavaScript -->
+            </div>
+            
+            <div class="col-md-4">
+                <!-- Analysis Summary Card -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0"><i class="bi bi-info-circle"></i> Analysis Summary</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <div class="border rounded p-2 mb-2">
+                                    <h4 class="text-primary mb-0">{{ symbols|length }}</h4>
+                                    <small class="text-muted">Symbols</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="border rounded p-2 mb-2">
+                                    <h4 class="text-success mb-0">{% if arima_results %}{{ arima_results|length }}{% else %}0{% endif %}</h4>
+                                    <small class="text-muted">ARIMA Models</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="border rounded p-2 mb-2">
+                                    <h4 class="text-warning mb-0">{% if garch_results %}{{ garch_results|length }}{% else %}0{% endif %}</h4>
+                                    <small class="text-muted">GARCH Models</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="border rounded p-2 mb-2">
+                                    <h4 class="text-info mb-0">{% if spillover_enabled %}Yes{% else %}No{% endif %}</h4>
+                                    <small class="text-muted">Spillover</small>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Execution Configuration Tab -->
-        <div class="tab-pane fade {% if active_tab == 'execution-config' %}show active{% endif %}" id="execution-config" role="tabpanel" aria-labelledby="execution-config-tab">
-            <div class="alert alert-info mb-4">
-                <i class="bi bi-info-circle"></i>
-                <strong>Analysis Configuration:</strong> This section shows all the parameters and settings that were used to execute this analysis.
+    <!-- Execution Configuration Tab -->
+    <div class="tab-pane fade {% if active_tab == 'execution-config' %}show active{% endif %}" id="execution-config" role="tabpanel" aria-labelledby="execution-config-tab">
+        <div class="alert alert-info mb-4">
+            <i class="bi bi-info-circle"></i>
+            <strong>Analysis Configuration:</strong> This section shows all the parameters and settings that were used to execute this analysis.
+        </div>
+        
+        <!-- Data Source Configuration -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="bi bi-database"></i> Data Source Configuration</h5>
             </div>
-            
-            <!-- Data Source Configuration -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="card-title mb-0"><i class="bi bi-database"></i> Data Source Configuration</h5>
-                </div>
-                <div class="card-body">
-                    <div id="data-source-config-content">
-                        <!-- Populated by JavaScript -->
-                    </div>
-                </div>
+            <div class="card-body">
+                {% if execution_configuration.data_source %}
+                    <table class="table table-sm">
+                        {% for key, value in execution_configuration.data_source.items %}
+                        <tr>
+                            <td><strong>{{ key|title }}:</strong></td>
+                            <td>{{ value }}</td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                {% else %}
+                    <p class="text-muted">No data source configuration available.</p>
+                {% endif %}
             </div>
-            
-            <!-- Data Processing Configuration -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="card-title mb-0"><i class="bi bi-gear"></i> Data Processing Configuration</h5>
-                </div>
-                <div class="card-body">
-                    <div id="data-processing-config-content">
-                        <!-- Populated by JavaScript -->
-                    </div>
-                </div>
+        </div>
+        
+        <!-- Model Configurations -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="bi bi-cpu"></i> Model Configurations</h5>
             </div>
-            
-            <!-- Model Configurations -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="card-title mb-0"><i class="bi bi-cpu"></i> Model Configurations</h5>
-                </div>
-                <div class="card-body">
+            <div class="card-body">
+                {% if execution_configuration.model_configurations %}
                     <div class="row">
                         <div class="col-md-6">
                             <h6><i class="bi bi-graph-up-arrow"></i> ARIMA Parameters</h6>
-                            <div id="arima-config-content">
-                                <!-- Populated by JavaScript -->
-                            </div>
+                            {% if execution_configuration.model_configurations.arima_params %}
+                                <table class="table table-sm">
+                                    {% for key, value in execution_configuration.model_configurations.arima_params.items %}
+                                    <tr>
+                                        <td><strong>{{ key }}:</strong></td>
+                                        <td>{{ value }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </table>
+                            {% endif %}
                         </div>
                         <div class="col-md-6">
                             <h6><i class="bi bi-lightning"></i> GARCH Parameters</h6>
-                            <div id="garch-config-content">
-                                <!-- Populated by JavaScript -->
-                            </div>
+                            {% if execution_configuration.model_configurations.garch_params %}
+                                <table class="table table-sm">
+                                    {% for key, value in execution_configuration.model_configurations.garch_params.items %}
+                                    <tr>
+                                        <td><strong>{{ key }}:</strong></td>
+                                        <td>{{ value }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </table>
+                            {% endif %}
                         </div>
                     </div>
-                </div>
-            </div>
-            
-            <!-- Spillover Configuration -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="card-title mb-0"><i class="bi bi-shuffle"></i> Spillover Analysis Configuration</h5>
-                </div>
-                <div class="card-body">
-                    <div id="spillover-config-content">
-                        <!-- Populated by JavaScript -->
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Execution Metadata -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="card-title mb-0"><i class="bi bi-clock"></i> Execution Metadata</h5>
-                </div>
-                <div class="card-body">
-                    <div id="execution-metadata-content">
-                        <!-- Populated by JavaScript -->
-                    </div>
-                </div>
+                {% endif %}
             </div>
         </div>
-
-        <!-- Plotted Transformations Tab -->
-        <div class="tab-pane fade {% if active_tab == 'plots' %}show active{% endif %}" id="plots" role="tabpanel" aria-labelledby="plots-tab">
-            {% if plots %}
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="alert alert-info">
-                        <i class="bi bi-info-circle"></i>
-                        <strong>Interactive Charts:</strong> All plots are generated server-side using Plotly and are fully interactive. 
-                        You can zoom, pan, hover for details, and toggle series on/off by clicking the legend.
-                    </div>
-                </div>
+        
+        <!-- Spillover Configuration -->
+        {% if spillover_enabled %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="bi bi-shuffle"></i> Spillover Analysis Configuration</h5>
             </div>
-            
-            <!-- Collapsible Data Sections -->
-            <div class="accordion" id="dataLineageAccordion">
-                <!-- Original Data -->
-                <div class="accordion-item">
-                    <h2 class="accordion-header" id="headingOriginalData">
-                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOriginalData" aria-expanded="true" aria-controls="collapseOriginalData">
-                            <i class="bi bi-database me-2"></i> Original Price Data
-                        </button>
-                    </h2>
-                    <div id="collapseOriginalData" class="accordion-collapse collapse show" aria-labelledby="headingOriginalData" data-bs-parent="#dataLineageAccordion">
-                        <div class="accordion-body">
-                            {% if plots.original_data %}
-                            <div id="original-data-plot-container"></div>
-                            <script>
-                                var originalDataPlot = {{ plots.original_data|safe }};
-                                Plotly.newPlot('original-data-plot-container', originalDataPlot.data, originalDataPlot.layout, {responsive: true});
-                            </script>
-                            {% else %}
-                            <div class="alert alert-warning">
-                                <i class="bi bi-exclamation-triangle"></i> Original price data plot not available.
-                            </div>
-                            {% endif %}
-                            <div class="mt-3">
-                                <button class="btn btn-outline-primary btn-sm" id="view-original-data-table">
-                                    <i class="bi bi-table"></i> View Data Table
-                                </button>
-                                <button class="btn btn-outline-success btn-sm" id="export-original-data">
-                                    <i class="bi bi-download"></i> Export CSV
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Returns Data -->
-                <div class="accordion-item">
-                    <h2 class="accordion-header" id="headingReturnsData">
-                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseReturnsData" aria-expanded="false" aria-controls="collapseReturnsData">
-                            <i class="bi bi-arrow-up-right me-2"></i> Returns Data
-                        </button>
-                    </h2>
-                    <div id="collapseReturnsData" class="accordion-collapse collapse" aria-labelledby="headingReturnsData" data-bs-parent="#dataLineageAccordion">
-                        <div class="accordion-body">
-                            {% if plots.returns_data %}
-                            <div id="returns-data-plot-container"></div>
-                            <script>
-                                var returnsDataPlot = {{ plots.returns_data|safe }};
-                                Plotly.newPlot('returns-data-plot-container', returnsDataPlot.data, returnsDataPlot.layout, {responsive: true});
-                            </script>
-                            {% else %}
-                            <div class="alert alert-warning">
-                                <i class="bi bi-exclamation-triangle"></i> Returns data plot not available.
-                            </div>
-                            {% endif %}
-                            <div class="mt-3">
-                                <button class="btn btn-outline-primary btn-sm" id="view-returns-data-table">
-                                    <i class="bi bi-table"></i> View Data Table
-                                </button>
-                                <button class="btn btn-outline-success btn-sm" id="export-returns-data">
-                                    <i class="bi bi-download"></i> Export CSV
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Scaled Data -->
-                <div class="accordion-item">
-                    <h2 class="accordion-header" id="headingScaledData">
-                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseScaledData" aria-expanded="false" aria-controls="collapseScaledData">
-                            <i class="bi bi-arrows-expand me-2"></i> Scaled Data (for GARCH)
-                        </button>
-                    </h2>
-                    <div id="collapseScaledData" class="accordion-collapse collapse" aria-labelledby="headingScaledData" data-bs-parent="#dataLineageAccordion">
-                        <div class="accordion-body">
-                            {% if plots.scaled_data %}
-                            <div id="scaled-data-plot-container"></div>
-                            <script>
-                                var scaledDataPlot = {{ plots.scaled_data|safe }};
-                                Plotly.newPlot('scaled-data-plot-container', scaledDataPlot.data, scaledDataPlot.layout, {responsive: true});
-                            </script>
-                            {% else %}
-                            <div class="alert alert-warning">
-                                <i class="bi bi-exclamation-triangle"></i> Scaled data plot not available.
-                            </div>
-                            {% endif %}
-                            <div class="mt-3">
-                                <button class="btn btn-outline-primary btn-sm" id="view-scaled-data-table">
-                                    <i class="bi bi-table"></i> View Data Table
-                                </button>
-                                <button class="btn btn-outline-success btn-sm" id="export-scaled-data">
-                                    <i class="bi bi-download"></i> Export CSV
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- ARIMA Forecasts -->
-                <div class="accordion-item">
-                    <h2 class="accordion-header" id="headingArimaForecast">
-                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseArimaForecast" aria-expanded="false" aria-controls="collapseArimaForecast">
-                            <i class="bi bi-graph-up-arrow me-2"></i> ARIMA Forecasts
-                        </button>
-                    </h2>
-                    <div id="collapseArimaForecast" class="accordion-collapse collapse" aria-labelledby="headingArimaForecast" data-bs-parent="#dataLineageAccordion">
-                        <div class="accordion-body">
-                            {% if plots.arima_forecast %}
-                            <div id="arima-forecast-plot-container"></div>
-                            <script>
-                                var arimaForecastPlot = {{ plots.arima_forecast|safe }};
-                                Plotly.newPlot('arima-forecast-plot-container', arimaForecastPlot.data, arimaForecastPlot.layout, {responsive: true});
-                            </script>
-                            {% else %}
-                            <div class="alert alert-warning">
-                                <i class="bi bi-exclamation-triangle"></i> ARIMA forecast plot not available.
-                            </div>
-                            {% endif %}
-                            <div class="mt-3">
-                                <button class="btn btn-outline-info btn-sm">
-                                    <i class="bi bi-info-circle"></i> ARIMA forecasts show predicted future values with confidence intervals
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- GARCH Volatility -->
-                <div class="accordion-item">
-                    <h2 class="accordion-header" id="headingGarchVolatility">
-                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseGarchVolatility" aria-expanded="false" aria-controls="collapseGarchVolatility">
-                            <i class="bi bi-lightning me-2"></i> GARCH Volatility Forecasts
-                        </button>
-                    </h2>
-                    <div id="collapseGarchVolatility" class="accordion-collapse collapse" aria-labelledby="headingGarchVolatility" data-bs-parent="#dataLineageAccordion">
-                        <div class="accordion-body">
-                            {% if plots.garch_volatility %}
-                            <div id="garch-volatility-plot-container"></div>
-                            <script>
-                                var garchVolatilityPlot = {{ plots.garch_volatility|safe }};
-                                Plotly.newPlot('garch-volatility-plot-container', garchVolatilityPlot.data, garchVolatilityPlot.layout, {responsive: true});
-                            </script>
-                            {% else %}
-                            <div class="alert alert-warning">
-                                <i class="bi bi-exclamation-triangle"></i> GARCH volatility plot not available.
-                            </div>
-                            {% endif %}
-                            <div class="mt-3">
-                                <button class="btn btn-outline-info btn-sm">
-                                    <i class="bi bi-info-circle"></i> GARCH volatility forecasts show expected risk levels over time
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Spillover Analysis -->
-                <div class="accordion-item">
-                    <h2 class="accordion-header" id="headingSpilloverPlot">
-                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSpilloverPlot" aria-expanded="false" aria-controls="collapseSpilloverPlot">
-                            <i class="bi bi-shuffle me-2"></i> Spillover Analysis
-                        </button>
-                    </h2>
-                    <div id="collapseSpilloverPlot" class="accordion-collapse collapse" aria-labelledby="headingSpilloverPlot" data-bs-parent="#dataLineageAccordion">
-                        <div class="accordion-body">
-                            {% if plots.spillover_heatmap %}
-                            <div id="spillover-heatmap-plot-container"></div>
-                            <script>
-                                var spilloverHeatmapPlot = {{ plots.spillover_heatmap|safe }};
-                                Plotly.newPlot('spillover-heatmap-plot-container', spilloverHeatmapPlot.data, spilloverHeatmapPlot.layout, {responsive: true});
-                            </script>
-                            {% else %}
-                            <div class="alert alert-warning">
-                                <i class="bi bi-exclamation-triangle"></i> Spillover analysis plot not available.
-                            </div>
-                            {% endif %}
-                            <div class="mt-3">
-                                <button class="btn btn-outline-info btn-sm">
-                                    <i class="bi bi-info-circle"></i> Spillover analysis shows how shocks spread between assets
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div class="card-body">
+                {% if execution_configuration.spillover_configuration %}
+                    <table class="table table-sm">
+                        {% for key, value in execution_configuration.spillover_configuration.items %}
+                        <tr>
+                            <td><strong>{{ key|title }}:</strong></td>
+                            <td>{{ value }}</td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                {% endif %}
             </div>
-            {% else %}
-            <div class="alert alert-warning">
-                <i class="bi bi-exclamation-triangle"></i>
-                <strong>No plots available:</strong> Server-side plot generation failed or no data was provided.
-                <br><small>Please check the Raw Data tab to see if analysis results are available.</small>
-            </div>
-            {% endif %}
-        </div>
-
-        <!-- Statistical Tests Tab -->
-        <div class="tab-pane fade {% if active_tab == 'statistical-tests' %}show active{% endif %}" id="statistical-tests" role="tabpanel" aria-labelledby="statistical-tests-tab">
-            <!-- Stationarity Tests -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <button class="btn btn-link text-decoration-none w-100 text-start p-0" type="button" data-bs-toggle="collapse" data-bs-target="#collapseStationarity" aria-expanded="true" aria-controls="collapseStationarity">
-                        <h5 class="card-title mb-0"><i class="bi bi-activity me-2"></i> Stationarity Tests (ADF)</h5>
-                    </button>
-                </div>
-                <div id="collapseStationarity" class="collapse show">
-                    <div class="card-body">
-                        <div id="stationarity-results-container">
-                            <!-- Per-symbol stationarity results -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Series Statistics -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <button class="btn btn-link text-decoration-none w-100 text-start p-0" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSeriesStats" aria-expanded="false" aria-controls="collapseSeriesStats">
-                        <h5 class="card-title mb-0"><i class="bi bi-bar-chart me-2"></i> Series Statistics</h5>
-                    </button>
-                </div>
-                <div id="collapseSeriesStats" class="collapse">
-                    <div class="card-body">
-                        <div id="series-statistics-container">
-                            <!-- Series statistics table -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Models & Forecasts Tab -->
-        <div class="tab-pane fade {% if active_tab == 'models' %}show active{% endif %}" id="models" role="tabpanel" aria-labelledby="models-tab">
-        </div>
-
-        {% if spillover_results %}
-        <div class="tab-pane fade {% if active_tab == 'spillover' %}show active{% endif %}" id="spillover" role="tabpanel" aria-labelledby="spillover-tab">
         </div>
         {% endif %}
+    </div>
 
-        <!-- Granger Causality Tab -->
-        <div class="tab-pane fade {% if active_tab == 'granger-causality' %}show active{% endif %}" id="granger-causality" role="tabpanel" aria-labelledby="granger-causality-tab">
-        </div>
-
-        <!-- Raw Data Tab -->
-        <div class="tab-pane fade {% if active_tab == 'raw-data' %}show active{% endif %}" id="raw-data-pane" role="tabpanel" aria-labelledby="raw-data-tab">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0"><i class="bi bi-table"></i> Raw Data</h5>
-                </div>
-                <div class="card-body">
-                    <div class="alert alert-info">
-                        <i class="bi bi-info-circle-fill"></i>
-                        This section provides access to the raw underlying data at various stages of the analysis pipeline. You can inspect the data in tabular format and export it as a CSV file.
+    <!-- Statistical Tests Tab -->
+    <div class="tab-pane fade {% if active_tab == 'statistical-tests' %}show active{% endif %}" id="statistical-tests" role="tabpanel" aria-labelledby="statistical-tests-tab">
+        <!-- Stationarity Tests -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="bi bi-activity me-2"></i> Stationarity Tests (ADF)</h5>
+            </div>
+            <div class="card-body">
+                {% if stationarity_results.all_symbols_stationarity %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Symbol</th>
+                                    <th>Status</th>
+                                    <th>Test Statistic</th>
+                                    <th>P-Value</th>
+                                    <th>Critical Values (1%, 5%, 10%)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for symbol, test in stationarity_results.all_symbols_stationarity.items %}
+                                    {% if test.interpretation %}
+                                        <tr>
+                                            <td><strong>{{ symbol }}</strong></td>
+                                            <td>
+                                                {% if test.interpretation.is_stationary %}
+                                                    <span class="badge bg-success">Stationary</span>
+                                                {% else %}
+                                                    <span class="badge bg-warning">Non-Stationary</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ test.interpretation.test_statistic|floatformat:4 }}</td>
+                                            <td>{{ test.interpretation.p_value|floatformat:4 }}</td>
+                                            <td>
+                                                {% if test.interpretation.critical_values %}
+                                                    {% for key, value in test.interpretation.critical_values.items %}
+                                                        {{ value|floatformat:3 }}{% if not forloop.last %}, {% endif %}
+                                                    {% endfor %}
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
-                    <div id="raw-data-container"></div>
-                </div>
+                {% else %}
+                    <p class="text-muted">No stationarity test results available.</p>
+                {% endif %}
             </div>
         </div>
+        
+        <!-- Series Statistics -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="bi bi-bar-chart me-2"></i> Series Statistics</h5>
+            </div>
+            <div class="card-body">
+                {% if stationarity_results.series_stats %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Symbol</th>
+                                    <th>Count</th>
+                                    <th>Mean</th>
+                                    <th>Std Dev</th>
+                                    <th>Min</th>
+                                    <th>Max</th>
+                                    <th>Skewness</th>
+                                    <th>Kurtosis</th>
+                                    <th>Ann. Return</th>
+                                    <th>Ann. Vol</th>
+                                    <th>Sharpe</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for symbol, stats in stationarity_results.series_stats.items %}
+                                <tr>
+                                    <td><strong>{{ symbol }}</strong></td>
+                                    <td>{{ stats.n|default:"-" }}</td>
+                                    <td>{{ stats.mean|floatformat:6|default:"-" }}</td>
+                                    <td>{{ stats.std|floatformat:6|default:"-" }}</td>
+                                    <td>{{ stats.min|floatformat:6|default:"-" }}</td>
+                                    <td>{{ stats.max|floatformat:6|default:"-" }}</td>
+                                    <td>{{ stats.skew|floatformat:3|default:"-" }}</td>
+                                    <td>{{ stats.kurt|floatformat:3|default:"-" }}</td>
+                                    <td>{{ stats.annualized_return|floatformat:4|default:"-" }}</td>
+                                    <td>{{ stats.annualized_vol|floatformat:4|default:"-" }}</td>
+                                    <td>{{ stats.sharpe_approx|floatformat:3|default:"-" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">No series statistics available.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
 
-        <!-- Next Step -->
-        <div class="tab-pane fade {% if active_tab == 'next-step' %}show active{% endif %}" id="next-step-pane" role="tabpanel" aria-labelledby="next-step-tab">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0"><i class="bi bi-arrow-right-circle"></i> Next Step</h5>
+    <!-- Models & Forecasts Tab -->
+    <div class="tab-pane fade {% if active_tab == 'models' %}show active{% endif %}" id="models" role="tabpanel" aria-labelledby="models-tab">
+        <!-- ARIMA Results -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="bi bi-graph-up-arrow"></i> ARIMA Model Results</h5>
+            </div>
+            <div class="card-body">
+                {% if arima_results %}
+                    {% for symbol, arima in arima_results.items %}
+                        <div class="border rounded p-3 mb-3">
+                            <h6><strong>{{ symbol }}</strong></h6>
+                            
+                            {% if arima.interpretation.executive_summary %}
+                                <div class="alert alert-info">
+                                    <strong>Executive Summary:</strong> {{ arima.interpretation.executive_summary.bottom_line }}
+                                </div>
+                            {% endif %}
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Model Summary</h6>
+                                    {% if arima.summary %}
+                                        <table class="table table-sm">
+                                            <tr><td><strong>Model:</strong></td><td>{{ arima.summary.model_specification|default:"-" }}</td></tr>
+                                            <tr><td><strong>AIC:</strong></td><td>{{ arima.summary.aic|floatformat:2|default:"-" }}</td></tr>
+                                            <tr><td><strong>BIC:</strong></td><td>{{ arima.summary.bic|floatformat:2|default:"-" }}</td></tr>
+                                            <tr><td><strong>Log Likelihood:</strong></td><td>{{ arima.summary.log_likelihood|floatformat:2|default:"-" }}</td></tr>
+                                            <tr><td><strong>Sample Size:</strong></td><td>{{ arima.summary.sample_size|default:"-" }}</td></tr>
+                                        </table>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Forecast Summary</h6>
+                                    {% if arima.forecast %}
+                                        <table class="table table-sm">
+                                            <tr><td><strong>Forecast Steps:</strong></td><td>{{ arima.forecast.forecast_steps|default:"-" }}</td></tr>
+                                            <tr><td><strong>Method:</strong></td><td>{{ arima.forecast.forecast_method|default:"-" }}</td></tr>
+                                            {% if arima.forecast.point_forecasts %}
+                                                <tr><td><strong>Next Value:</strong></td><td>{{ arima.forecast.point_forecasts.0|floatformat:4 }}</td></tr>
+                                            {% endif %}
+                                        </table>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            {% if arima.interpretation.key_findings %}
+                                <div class="mt-2">
+                                    <h6>Key Findings</h6>
+                                    {% for finding_type, finding_text in arima.interpretation.key_findings.items %}
+                                        {% if finding_text %}
+                                            <p><strong>{{ finding_type|title }}:</strong> {{ finding_text }}</p>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted">No ARIMA results available.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- GARCH Results -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="bi bi-lightning"></i> GARCH Model Results</h5>
+            </div>
+            <div class="card-body">
+                {% if garch_results %}
+                    {% for symbol, garch in garch_results.items %}
+                        <div class="border rounded p-3 mb-3">
+                            <h6><strong>{{ symbol }}</strong></h6>
+                            
+                            {% if garch.interpretation.executive_summary %}
+                                <div class="alert alert-warning">
+                                    <strong>Volatility Summary:</strong> {{ garch.interpretation.executive_summary.bottom_line }}
+                                </div>
+                            {% endif %}
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Model Parameters</h6>
+                                    {% if garch.summary %}
+                                        <p><small>{{ garch.summary|truncatechars:200 }}</small></p>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Volatility Forecast</h6>
+                                    {% if garch.forecast %}
+                                        <p>{{ garch.forecast|length }} forecast periods</p>
+                                        {% if garch.forecast.0 %}
+                                            <p><strong>Next Period Volatility:</strong> {{ garch.forecast.0|floatformat:6 }}</p>
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted">No GARCH results available.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Spillover Analysis Tab -->
+    {% if spillover_enabled %}
+    <div class="tab-pane fade {% if active_tab == 'spillover' %}show active{% endif %}" id="spillover" role="tabpanel" aria-labelledby="spillover-tab">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="bi bi-arrows-angle-expand"></i> Spillover Analysis Results</h5>
+            </div>
+            <div class="card-body">
+                {% if spillover_results %}
+                    {% if spillover_results.total_spillover_index %}
+                        <div class="alert alert-primary">
+                            <h6><strong>Total Spillover Index:</strong> {{ spillover_results.total_spillover_index|floatformat:2 }}%</h6>
+                            <p>This indicates the percentage of forecast error variance that comes from spillovers between assets.</p>
+                        </div>
+                    {% endif %}
+                    
+                    {% if spillover_results.interpretation %}
+                        <div class="alert alert-info">
+                            <strong>Interpretation:</strong> {{ spillover_results.interpretation }}
+                        </div>
+                    {% endif %}
+                    
+                    {% if spillover_results.spillover_table_data %}
+                        <h6>Directional Spillover</h6>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Asset</th>
+                                        <th>Spillover TO Others (%)</th>
+                                        <th>Spillover FROM Others (%)</th>
+                                        <th>Net Spillover (%)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for row in spillover_results.spillover_table_data %}
+                                        <tr>
+                                            <td><strong>{{ row.symbol }}</strong></td>
+                                            <td>{{ row.spillover_to|floatformat:2|default:"-" }}</td>
+                                            <td>{{ row.spillover_from|floatformat:2|default:"-" }}</td>
+                                            <td>
+                                                {% if row.net_spillover_positive %}
+                                                    <span class="text-success">+{{ row.net_spillover|floatformat:2 }}</span>
+                                                {% elif row.net_spillover %}
+                                                    <span class="text-danger">{{ row.net_spillover|floatformat:2 }}</span>
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <p class="text-muted">No spillover analysis results available.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Granger Causality Tab -->
+    <div class="tab-pane fade {% if active_tab == 'granger-causality' %}show active{% endif %}" id="granger-causality" role="tabpanel" aria-labelledby="granger-causality-tab">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="bi bi-arrow-through-heart"></i> Granger Causality Results</h5>
+            </div>
+            <div class="card-body">
+                {% if granger_causality_results.causality_results %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Relationship</th>
+                                    <th>Significant at 5%</th>
+                                    <th>Significant at 1%</th>
+                                    <th>Min P-Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for relationship, test in granger_causality_results.causality_results.items %}
+                                    <tr>
+                                        <td><strong>{{ relationship }}</strong></td>
+                                        <td>
+                                            {% if test.significance_summary.significant_at_5pct %}
+                                                <span class="badge bg-success">Yes</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">No</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if test.significance_summary.significant_at_1pct %}
+                                                <span class="badge bg-success">Yes</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">No</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ test.significance_summary.min_p_value|floatformat:4|default:"-" }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">No Granger causality results available.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Raw Data Tab -->
+    <div class="tab-pane fade {% if active_tab == 'raw-data' %}show active{% endif %}" id="raw-data-pane" role="tabpanel" aria-labelledby="raw-data-tab">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="bi bi-table"></i> Raw Data</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle-fill"></i>
+                    This section provides access to the raw JSON response from the analysis API. You can inspect the complete data structure and download it for further analysis.
                 </div>
-                <div class="card-body">
-                    <p>Based on the analysis, you can choose to continue to the next iteration.</p>
-                    <form id="next-iteration-form" method="post" action="{% url 'timeseries:iterate' %}">
-                        {% csrf_token %}
-                        <input type="hidden" name="session_id" value="{{ session_id }}">
-                        <button type="submit" class="btn btn-primary">Continue to iterate?</button>
-                    </form>
-                </div>
+                
+                {% if raw_results %}
+                    <div class="mb-3">
+                        <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#rawJsonCollapse" aria-expanded="false" aria-controls="rawJsonCollapse">
+                            <i class="bi bi-eye"></i> Show/Hide Raw JSON
+                        </button>
+                    </div>
+                    
+                    <div class="collapse" id="rawJsonCollapse">
+                        <pre class="bg-light p-3 rounded" style="max-height: 60vh; overflow: auto; font-size: 0.8em;"><code>{{ raw_results|pprint }}</code></pre>
+                    </div>
+                {% else %}
+                    <p class="text-muted">No raw data available.</p>
+                {% endif %}
             </div>
         </div>
     </div>
 </div>
 
+{% endif %}
+
+<!-- Minimal JavaScript for downloading results -->
 <script>
-    // Get results from sessionStorage instead of Django context
-    const analysisResults = sessionStorage.getItem('analysisResults');
-    let resultsData = null;
+document.addEventListener('DOMContentLoaded', function() {
+    const downloadBtn = document.getElementById('download-results-btn');
     
-    if (analysisResults) {
-        try {
-            resultsData = JSON.parse(analysisResults);
-            // Show results container and hide no-results message
-            document.getElementById('results-container').style.display = 'block';
-            document.getElementById('no-results').style.display = 'none';
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', function() {
+            // Create download of processed results
+            const results = {
+                processed_results: {{ processed_results|safe }},
+                raw_results: {{ raw_results|safe }}
+            };
             
-            // Populate the page with results data
-            populateResultsPage(resultsData);
-        } catch (error) {
-            console.error('Error parsing analysis results:', error);
-            document.getElementById('no-results').style.display = 'block';
-            document.getElementById('results-container').style.display = 'none';
-        }
-    } else {
-        // No results found in sessionStorage
-        document.getElementById('no-results').style.display = 'block';
-        document.getElementById('results-container').style.display = 'none';
+            const blob = new Blob([JSON.stringify(results, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `analysis_results_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
     }
-    
-    function populateResultsPage(data) {
-        // Populate various sections with the results data
-        // This function will need to be implemented based on your data structure
-        console.log('Analysis results:', data);
-        
-        // For now, just display the raw JSON in the raw data tab
-        const rawDataContainer = document.getElementById('raw-data-container');
-        if (rawDataContainer) {
-            rawDataContainer.innerHTML = `<pre style="background-color: #f8f9fa; padding: 1rem; border-radius: 0.375rem;">${JSON.stringify(data, null, 2)}</pre>`;
-        }
-        
-        // Set up download functionality
-        setupDownloadFunctionality(data);
-    }
-    
-    function setupDownloadFunctionality(data) {
-        const downloadBtn = document.getElementById('download-api-response-btn');
-        const viewBtn = document.getElementById('view-api-response-btn');
-        const copyBtn = document.getElementById('copy-json-btn');
-        
-        if (downloadBtn) {
-            downloadBtn.addEventListener('click', function() {
-                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `analysis_results_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-            });
-        }
-        
-        if (viewBtn) {
-            viewBtn.addEventListener('click', function() {
-                const jsonContent = document.getElementById('json-content');
-                if (jsonContent) {
-                    jsonContent.textContent = JSON.stringify(data, null, 2);
-                }
-                const modal = new bootstrap.Modal(document.getElementById('jsonModal'));
-                modal.show();
-            });
-        }
-        
-        if (copyBtn) {
-            copyBtn.addEventListener('click', function() {
-                const jsonContent = document.getElementById('json-content').textContent;
-                navigator.clipboard.writeText(jsonContent).then(() => {
-                    copyBtn.textContent = 'Copied!';
-                    setTimeout(() => {
-                        copyBtn.textContent = 'Copy to Clipboard';
-                    }, 2000);
-                });
-            });
-        }
-    }
+});
 </script>
 {% endblock %}

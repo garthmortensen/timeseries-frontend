@@ -1312,7 +1312,7 @@
                 </select>
                 <div class="parameter-help">
                     <strong>AIC:</strong> Tends to select higher lag orders, capturing more dynamics but potentially overfitting.<br>
-                    <strong>BIC:</strong> More conservative, tends to select lower lag orders, preferred for parsimonious models.<br>
+                    <strong>BIC:</</strong> More conservative, tends to select lower lag orders, preferred for parsimonious models.<br>
                     <strong>HQIC:</strong> Balance between AIC and BIC, good compromise for most applications.
                 </div>
             </div>
@@ -1835,10 +1835,17 @@ let loadingMessageInterval;
                 return;
             }
 
-            // Store the results in sessionStorage and redirect to results page
-            // Do NOT restore the analysis page elements - go directly to results
-            sessionStorage.setItem('analysisResults', JSON.stringify(responseData));
-            window.location.href = '/results/';
+            // Server-side processing complete, redirect to results page
+            if (responseData.status === "success" && responseData.redirect_url) {
+                window.location.href = responseData.redirect_url;
+            } else {
+                // Fallback: something went wrong but no specific error
+                loadingIndicator.style.display = 'none';
+                pageTitle.style.display = 'block';
+                marketIntroText.style.display = 'block';
+                form.style.display = 'block';
+                alert('Analysis completed but there was an issue redirecting to results.');
+            }
         })
         .catch(error => {
             // Stop the loading animation and re-enable the form
