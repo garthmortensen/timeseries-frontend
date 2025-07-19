@@ -15,11 +15,11 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="mb-0">Analysis Results</h1>
     <div class="btn-group" role="group">
-        <button id="download-results-btn" class="btn btn-outline-primary">
-            <i class="bi bi-download"></i> Download Results JSON
-        </button>
-        <a href="{% url 'timeseries:analysis' %}" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left"></i> New Analysis
+        <a href="{% url 'timeseries:download_api_response' %}" class="btn btn-outline-primary">
+            <i class="bi bi-download"></i> Download API response
+        </a>
+        <a href="{% url 'timeseries:view_api_response_popup' %}" target="_blank" class="btn btn-outline-secondary">
+            <i class="bi bi-eye"></i> View API response
         </a>
     </div>
 </div>
@@ -602,31 +602,4 @@
 </div>
 
 {% endif %}
-
-<!-- Minimal JavaScript for downloading results -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const downloadBtn = document.getElementById('download-results-btn');
-    
-    if (downloadBtn) {
-        downloadBtn.addEventListener('click', function() {
-            // Create download of processed results
-            const results = {
-                processed_results: {{ processed_results|safe }},
-                raw_results: {{ raw_results|safe }}
-            };
-            
-            const blob = new Blob([JSON.stringify(results, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `analysis_results_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        });
-    }
-});
-</script>
 {% endblock %}

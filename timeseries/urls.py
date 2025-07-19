@@ -17,6 +17,9 @@ urlpatterns = [
     path('results/test/', views.results_test, name='results_test'),  # Add test route
     path('about/', views.about, name='about'),
     path('iterate/', views.iterate, name='iterate'),
+    # API response functionality
+    path('download-api-response/', views.download_api_response, name='download_api_response'),
+    path('view-api-response/', views.view_api_response_popup, name='view_api_response_popup'),
     # Generic API proxy - captures the rest of the path and passes it to the view
     path('api_proxy/<path:api_path>', views.api_proxy, name='api_proxy'),
     # Specific API proxy endpoints (if you want to keep them for non-JS or specific logic)

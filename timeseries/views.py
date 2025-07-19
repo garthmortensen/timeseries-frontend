@@ -25,6 +25,7 @@ from django.views.decorators.csrf import csrf_exempt
 from .results_processor import ResultsProcessor
 from django.urls import reverse
 import uuid
+from datetime import datetime
 
 # Get a logger instance specific to this module
 logger = logging.getLogger(__name__)
@@ -131,6 +132,14 @@ def results(request: HttpRequest) -> HttpResponse:
             'error_message': 'No analysis results found. Please run an analysis first.'
         })
     
+    # Debug: Log what we have in execution_configuration
+    execution_config = processed_results.get('execution_configuration', {})
+    logger.info(f"DEBUG: execution_configuration keys: {list(execution_config.keys())}")
+    if execution_config.get('data_source'):
+        logger.info(f"DEBUG: data_source keys: {list(execution_config['data_source'].keys())}")
+    if execution_config.get('model_configurations'):
+        logger.info(f"DEBUG: model_configurations keys: {list(execution_config['model_configurations'].keys())}")
+    
     # Prepare context for template
     context = {
         'results_available': True,
@@ -138,7 +147,7 @@ def results(request: HttpRequest) -> HttpResponse:
         'raw_results': raw_results,
         'symbols': processed_results.get('symbols', []),
         'executive_summary': processed_results.get('executive_summary', {}),
-        'execution_configuration': processed_results.get('execution_configuration', {}),
+        'execution_configuration': execution_config,  # Use the extracted config
         'data_arrays': processed_results.get('data_arrays', {}),
         'stationarity_results': processed_results.get('stationarity_results', {}),
         'arima_results': processed_results.get('arima_results', {}),
@@ -422,3 +431,47 @@ def run_pipeline_proxy(request):
             }, status=500)
     else:
         return redirect(reverse("timeseries:analysis"))
+
+def download_api_response(request: HttpRequest) -> HttpResponse:
+    """
+    Download the raw API response as a JSON file - unmodified original response.
+    """
+    # Get the raw results from session (unmodified API response)
+    raw_results = request.session.get('analysis_raw_results')
+    
+    if not raw_results:
+        return HttpResponse("No analysis results found in session.", status=404)
+    
+    # Return the raw API response exactly as received - no wrapping or modification
+    response = HttpResponse(
+        json.dumps(raw_results, indent=2, default=str),
+        content_type='application/json'
+    )
+    
+    # Set headers for file download
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    filename = f'raw_api_response_{timestamp}.json'
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    
+    return response
+
+
+def view_api_response_popup(request: HttpRequest) -> HttpResponse:
+    """
+    Display the API response in a popup-friendly template.
+    """
+    # Get results from session
+    raw_results = request.session.get('analysis_raw_results')
+    processed_results = request.session.get('analysis_results')
+    
+    if not raw_results:
+        return HttpResponse("<h3>No analysis results found</h3><p>Please run an analysis first.</p>")
+    
+    context = {
+        'raw_results': raw_results,
+        'processed_results': processed_results,
+        'raw_results_json': json.dumps(raw_results, indent=2, default=str),
+        'symbols': processed_results.get('symbols', []) if processed_results else []
+    }
+    
+    return render(request, 'timeseries/api_response_popup.html', context)

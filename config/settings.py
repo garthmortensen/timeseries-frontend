@@ -159,3 +159,25 @@ CONTENT_SECURITY_POLICY = {
         'frame-src': ("'none'",),
     }
 }
+
+# Logging configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+        'file': {
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'django_debug.log',
+        },
+    },
+    'loggers': {
+        'timeseries': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}

@@ -56,10 +56,14 @@ class ResultsProcessor:
     
     def process_execution_configuration(self) -> Dict[str, Any]:
         """Process execution configuration data."""
+        logger.info(f"DEBUG: Raw results top-level keys: {list(self.raw_results.keys())}")
+        
         if 'execution_configuration' not in self.raw_results:
+            logger.info("DEBUG: execution_configuration key not found in raw_results")
             return {}
             
         config = self.raw_results['execution_configuration']
+        logger.info(f"DEBUG: execution_configuration found with keys: {list(config.keys()) if config else 'None'}")
         
         return {
             'data_source': config.get('data_source', {}),
@@ -267,6 +271,15 @@ class ResultsProcessor:
     def process_all(self) -> Dict[str, Any]:
         """Process all sections and return comprehensive results."""
         logger.info("Processing comprehensive analysis results")
+        
+        # DEBUG: Let's see the actual structure we're getting
+        logger.info(f"DEBUG: Full raw_results keys: {list(self.raw_results.keys())}")
+        
+        # Let's check if any of these sections contain configuration info
+        for key in ['stationarity_results', 'arima_results', 'garch_results', 'var_results']:
+            if key in self.raw_results and self.raw_results[key]:
+                section_keys = list(self.raw_results[key].keys()) if isinstance(self.raw_results[key], dict) else "Not a dict"
+                logger.info(f"DEBUG: {key} structure: {section_keys}")
         
         processed = {
             'execution_configuration': self.process_execution_configuration(),
