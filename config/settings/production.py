@@ -10,26 +10,25 @@ from .base import *
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-# Get allowed hosts from environment variable
-ALLOWED_HOSTS = ['spilloverlab.com', 'www.spilloverlab.com'] # Add your custom domain
-allowed_hosts_env = os.environ.get('ALLOWED_HOSTS')
-if allowed_hosts_env:
-    ALLOWED_HOSTS.extend([h.strip() for h in allowed_hosts_env.split(',') if h.strip()])
+# Get allowed hosts from environment variable. This is the single source of truth for deployments.
+allowed_hosts_str = os.environ.get('ALLOWED_HOSTS')
+if allowed_hosts_str:
+    ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_str.split(',') if host.strip()]
+else:
+    # Fallback for local testing of production settings if the env var is not set.
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
-app_host_env = os.environ.get('APP_HOST')
-if app_host_env and app_host_env not in ALLOWED_HOSTS:
-    ALLOWED_HOSTS.append(app_host_env)
+# CSRF Trusted Origins - build directly from ALLOWED_HOSTS.
+CSRF_TRUSTED_ORIGINS = [f"https://{host}" for host in ALLOWED_HOSTS if host]
+# Add http origins for local testing if applicable
+if 'localhost' in ALLOWED_HOSTS:
+    CSRF_TRUSTED_ORIGINS.append('http://localhost:8000')
+    CSRF_TRUSTED_ORIGINS.append('http://127.0.0.1:8000')
 
-# Ensure ALLOWED_HOSTS is not empty
-if not ALLOWED_HOSTS:
-    ALLOWED_HOSTS = ['spilloverlab.com', 'www.spilloverlab.com']
-
-# CSRF Trusted Origins - build from ALLOWED_HOSTS
-# This ensures any allowed host is also trusted for secure requests.
-CSRF_TRUSTED_ORIGINS = [f"https://{host}" for host in ALLOWED_HOSTS]
 
 # Trust the X-Forwarded-Host header from the Google Cloud Run proxy
 USE_X_FORWARDED_HOST = True
+
 # Trust the X-Forwarded-Proto header from Cloudflare and other proxies
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
