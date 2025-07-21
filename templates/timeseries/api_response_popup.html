@@ -24,7 +24,7 @@
 <body>
     <div class="container-fluid p-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3><i class="bi bi-code-square"></i> API Response</h3>
+            <h3><i class="bi bi-code-square"></i> Raw API Response</h3>
             <div class="btn-group">
                 <button id="copyBtn" class="btn btn-primary">
                     <i class="bi bi-clipboard"></i> Copy to Clipboard
@@ -35,51 +35,21 @@
             </div>
         </div>
 
-        {% if symbols %}
-        <div class="alert alert-info mb-3">
-            <strong>Analysis Summary:</strong> {{ symbols|length }} symbol{{ symbols|length|pluralize }} analyzed: {{ symbols|join:", " }}
-        </div>
-        {% endif %}
-
-        <div class="mb-3">
-            <nav>
-                <div class="nav nav-tabs" id="nav-tab" role="tablist">
-                    <button class="nav-link active" id="nav-raw-tab" data-bs-toggle="tab" data-bs-target="#nav-raw" type="button" role="tab">
-                        <i class="bi bi-file-text"></i> Raw API Response
-                    </button>
-                    <button class="nav-link" id="nav-processed-tab" data-bs-toggle="tab" data-bs-target="#nav-processed" type="button" role="tab">
-                        <i class="bi bi-gear"></i> Processed Results
-                    </button>
-                </div>
-            </nav>
-            <div class="tab-content" id="nav-tabContent">
-                <div class="tab-pane fade show active" id="nav-raw" role="tabpanel">
-                    <div class="json-container p-3 mt-3">
-                        <pre><code>{{ raw_results_json }}</code></pre>
-                    </div>
-                </div>
-                <div class="tab-pane fade" id="nav-processed" role="tabpanel">
-                    <div class="json-container p-3 mt-3">
-                        <pre><code>{{ processed_results|pprint }}</code></pre>
-                    </div>
-                </div>
-            </div>
+        <div class="json-container p-3">
+            <pre><code>{{ raw_results_json }}</code></pre>
         </div>
 
-        <div class="text-muted small">
+        <div class="text-muted small mt-3">
             <i class="bi bi-info-circle"></i> 
-            This popup shows the complete API response data. Use the tabs above to switch between raw and processed views.
+            This popup shows the complete raw API response data as returned from the backend.
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.getElementById('copyBtn').addEventListener('click', function() {
-            // Get the currently active tab content
-            const activeTab = document.querySelector('.tab-pane.active pre code');
-            const textToCopy = activeTab.textContent;
+            const textToCopy = document.querySelector('pre code').textContent;
             
-            // Copy to clipboard using the modern API
             navigator.clipboard.writeText(textToCopy).then(function() {
                 // Success feedback
                 const btn = document.getElementById('copyBtn');
@@ -95,7 +65,6 @@
                     btn.classList.add('btn-primary');
                 }, 2000);
             }).catch(function(err) {
-                // Fallback for older browsers
                 console.error('Could not copy text: ', err);
                 alert('Copy failed. Please select the text manually and copy with Ctrl+C');
             });

@@ -54,6 +54,18 @@ class ResultsProcessor:
                 
         return symbols
     
+    def _format_list_for_display(self, value):
+        """Format a list, dict, or string for display as comma-separated values."""
+        if isinstance(value, list):
+            return ', '.join(str(v) for v in value)
+        if isinstance(value, dict):
+            # If dict, show values only, comma separated
+            return ', '.join(str(v) for v in value.values())
+        if isinstance(value, str):
+            # Remove brackets and quotes if present
+            return value.replace('[', '').replace(']', '').replace("'", '').replace('"', '').strip()
+        return value
+
     def process_execution_configuration(self) -> Dict[str, Any]:
         """Process execution configuration data."""
         logger.info(f"DEBUG: Raw results top-level keys: {list(self.raw_results.keys())}")
@@ -65,8 +77,14 @@ class ResultsProcessor:
         config = self.raw_results['execution_configuration']
         logger.info(f"DEBUG: execution_configuration found with keys: {list(config.keys()) if config else 'None'}")
         
+        data_source = config.get('data_source', {})
+        # Format symbols and synthetic_anchor_prices for display
+        if 'symbols' in data_source:
+            data_source['symbols'] = self._format_list_for_display(data_source['symbols'])
+        if 'synthetic_anchor_prices' in data_source:
+            data_source['synthetic_anchor_prices'] = self._format_list_for_display(data_source['synthetic_anchor_prices'])
         return {
-            'data_source': config.get('data_source', {}),
+            'data_source': data_source,
             'data_processing': config.get('data_processing', {}),
             'model_configurations': config.get('model_configurations', {}),
             'spillover_configuration': config.get('spillover_configuration', {}),
@@ -89,12 +107,24 @@ class ResultsProcessor:
         if not data_array:
             return {}
             
+        # DEBUG: Let's see what the raw data looks like
+        logger.info(f"DEBUG: Processing data array with {len(data_array)} rows")
+        if len(data_array) > 0:
+            logger.info(f"DEBUG: First row: {data_array[0]}")
+        if len(data_array) > 1:
+            logger.info(f"DEBUG: Second row: {data_array[1]}")
+        if len(data_array) > 2:
+            logger.info(f"DEBUG: Third row: {data_array[2]}")
+            
         # Extract timestamps and symbol data
         timestamps = [row.get('index') for row in data_array if 'index' in row]
         symbol_data = {}
         
         for symbol in self.symbols:
-            symbol_data[symbol] = [row.get(symbol) for row in data_array if symbol in row]
+            # Get the symbol value from each row, preserving order and handling missing values
+            symbol_values = [row.get(symbol) for row in data_array]
+            logger.info(f"DEBUG: Symbol {symbol} first 3 values: {symbol_values[:3]}")
+            symbol_data[symbol] = symbol_values
             
         return {
             'timestamps': timestamps,
@@ -174,6 +204,19 @@ class ResultsProcessor:
         
         var = self.raw_results['var_results']
         
+        # Handle case where var_results is None or not a dictionary
+        if not var or not isinstance(var, dict):
+            return {
+                'fitted_model': None,
+                'selected_lag': None,
+                'ic_used': None,
+                'coefficients': {},
+                'granger_causality': {},
+                'fevd_matrix': [],
+                'fevd_interpretation': {},
+                'interpretation': ''
+            }
+        
         return {
             'fitted_model': var.get('fitted_model'),
             'selected_lag': var.get('selected_lag'),
@@ -191,6 +234,18 @@ class ResultsProcessor:
             return {}
         
         spillover = self.raw_results['spillover_results']
+        
+        # Handle case where spillover_results is None or not a dictionary
+        if not spillover or not isinstance(spillover, dict):
+            return {
+                'total_spillover_index': None,
+                'directional_spillover': {},
+                'net_spillover': {},
+                'pairwise_spillover': {},
+                'interpretation': '',
+                'pairwise_spillover_table': [],
+                'spillover_table_data': []
+            }
         
         # Process spillover data into template-friendly format
         processed_spillover = {
@@ -231,6 +286,14 @@ class ResultsProcessor:
         
         granger = self.raw_results['granger_causality_results']
         
+        # Handle case where granger_causality_results is None or not a dictionary
+        if not granger or not isinstance(granger, dict):
+            return {
+                'causality_results': {},
+                'interpretations': {},
+                'metadata': {}
+            }
+        
         return {
             'causality_results': granger.get('causality_results', {}),
             'interpretations': granger.get('interpretations', {}),
@@ -247,25 +310,25 @@ class ResultsProcessor:
             },
             'key_insights': [],
             'model_performance': {},
-            'business_recommendations': []
+            'business_recommendations': [],
+            'executive_summary': {}
         }
-        
         # Extract key insights from ARIMA interpretations
         arima_results = self.process_arima_results()
         for symbol, result in arima_results.items():
             interpretation = result.get('interpretation', {})
             if 'executive_summary' in interpretation:
                 exec_summary = interpretation['executive_summary']
+                # Add all executive_summary fields for each symbol
+                summary['executive_summary'][symbol] = exec_summary
                 if 'bottom_line' in exec_summary:
                     summary['key_insights'].append(f"{symbol}: {exec_summary['bottom_line']}")
                 if 'recommendation' in exec_summary:
                     summary['business_recommendations'].append(f"{symbol}: {exec_summary['recommendation']}")
-        
         # Extract spillover insights
         spillover_results = self.process_spillover_results()
         if spillover_results.get('interpretation'):
             summary['key_insights'].append(f"Spillover Analysis: {spillover_results['interpretation']}")
-        
         return summary
     
     def process_all(self) -> Dict[str, Any]:

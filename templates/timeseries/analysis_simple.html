@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+
+{% block title %}Lab:Analysis{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+    }
+    
+    .section-header {
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .guide-text {
+        border-left: 4px solid #2196f3;
+        padding: 0.75rem 1rem;
+        margin-bottom: 1rem;
+        border-radius: 0 0.25rem 0.25rem 0;
+        font-style: italic;
+        color: #1565c0;
+        font-size: 1.1em;
+        line-height: 1.4;
+    }
+
+    /* Simple loading animation */
+    .loading-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.95);
+        z-index: 9999;
+        text-align: center;
+        padding-top: 20%;
+    }
+
+    .spinner {
+        width: 3rem;
+        height: 3rem;
+        border: 0.4rem solid #e9ecef;
+        border-top: 0.4rem solid #007bff;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 2rem;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="loading" class="loading-overlay">
+    <div class="spinner"></div>
+    <h3>Processing Analysis...</h3>
+    <p>This may take a few moments...</p>
+</div>
+
+<h1 class="mb-4">Analysis Configuration</h1>
+
+<div class="guide-text">
+    <strong>Markets are deeply interconnected</strong>, as the 2008 Global Financial Crisis proved beyond doubt. A shock in one can ripple through others—stocks, indexes, even regions.
+    This analysis quantifies those spillovers, predicts volatility, and maps how risk moves between assets.<br><br>
+    <strong>Choose Your Own Analysis</strong> below to explore market dynamics, forecast volatility, and uncover contagion paths.
+</div>
+
+<!-- Simple Form -->
+<form id="analysisForm" action="{% url 'timeseries:run_pipeline_htmx' %}" method="post">
+    {% csrf_token %}
+    
+    <div class="form-section">
+        <h3 class="section-header">Data Source</h3>
+        
+        <div class="form-check mb-3">
+            <input class="form-check-input" type="radio" name="source_actual_or_synthetic_data" id="synthetic" value="synthetic" checked>
+            <label class="form-check-label" for="synthetic">
+                <strong>Synthetic Data</strong><br>
+                <small class="text-muted">Generate artificial time series data for testing</small>
+            </label>
+        </div>
+        <div class="form-check mb-3">
+            <input class="form-check-input" type="radio" name="source_actual_or_synthetic_data" id="yfinance" value="actual_yfinance">
+            <label class="form-check-label" for="yfinance">
+                <strong>Yahoo Finance Data</strong><br>
+                <small class="text-muted">Real market data from Yahoo Finance</small>
+            </label>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <h3 class="section-header">Symbols</h3>
+        <div class="mb-3">
+            <label for="symbols" class="form-label">Symbols (comma-separated, max 5)</label>
+            <input type="text" class="form-control" name="symbols" value="MSFT,AAPL,GOOGL" placeholder="MSFT,AAPL,GOOGL">
+        </div>
+    </div>
+
+    <div class="form-section">
+        <h3 class="section-header">ARIMA Parameters</h3>
+        <div class="row">
+            <div class="col-md-4">
+                <label for="arima_p" class="form-label">p (AR)</label>
+                <input type="number" class="form-control" name="arima_p" value="2" min="0" max="10">
+            </div>
+            <div class="col-md-4">
+                <label for="arima_d" class="form-label">d (I)</label>
+                <input type="number" class="form-control" name="arima_d" value="1" min="0" max="5">
+            </div>
+            <div class="col-md-4">
+                <label for="arima_q" class="form-label">q (MA)</label>
+                <input type="number" class="form-control" name="arima_q" value="2" min="0" max="10">
+            </div>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <h3 class="section-header">GARCH Parameters</h3>
+        <div class="row">
+            <div class="col-md-6">
+                <label for="garch_p" class="form-label">p (ARCH)</label>
+                <input type="number" class="form-control" name="garch_p" value="1" min="0" max="5">
+            </div>
+            <div class="col-md-6">
+                <label for="garch_q" class="form-label">q (GARCH)</label>
+                <input type="number" class="form-control" name="garch_q" value="1" min="0" max="5">
+            </div>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" name="enable_spillover" checked>
+            <label class="form-check-label">Enable Spillover Analysis</label>
+        </div>
+    </div>
+
+    <div class="d-grid gap-2">
+        <button type="submit" class="btn btn-primary btn-lg">Run Analysis</button>
+    </div>
+</form>
+
+<script>
+// Simple JavaScript without external dependencies
+document.getElementById('analysisForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Show loading overlay
+    document.getElementById('loading').style.display = 'block';
+    
+    // Submit form via fetch
+    const formData = new FormData(this);
+    
+    fetch(this.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+        }
+    })
+    .then(response => response.text())
+    .then(data => {
+        // Handle redirect response
+        if (data.includes('redirect:')) {
+            const redirectUrl = data.split('redirect:')[1].trim();
+            window.location.href = redirectUrl;
+        } else {
+            // Hide loading and show error
+            document.getElementById('loading').style.display = 'none';
+            alert('Analysis failed: ' + data);
+        }
+    })
+    .catch(error => {
+        document.getElementById('loading').style.display = 'none';
+        alert('Error: ' + error.message);
+    });
+});
+</script>
+{% endblock %}

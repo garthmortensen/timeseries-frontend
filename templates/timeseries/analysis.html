@@ -96,7 +96,7 @@
     <strong>Choose Your Own Analysis</strong> below to explore market dynamics, forecast volatility, and uncover contagion paths.
 </div>
 
-<form id="analysis-form" method="post" action="{% url 'timeseries:run_pipeline' %}" enctype="multipart/form-data">
+<form id="analysis-form" method="post" enctype="multipart/form-data">
     {% csrf_token %}
         
     <div class="form-section">
@@ -1808,7 +1808,7 @@ let loadingMessageInterval;
         console.log("Sending data to API:", data);
         
         // Send the AJAX request
-        fetch("{% url 'timeseries:run_pipeline' %}", {
+        fetch("/api/run_pipeline", {
             method: 'POST',
             headers: {
                 'X-CSRFToken': '{{ csrf_token }}',

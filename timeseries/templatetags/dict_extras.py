@@ -26,7 +26,15 @@ def lookup(dictionary, key):
     if dictionary is None:
         return None
     
-    # Handle nested key access (e.g., 'symbol.to_others')
+    if not isinstance(dictionary, dict):
+        return None
+    
+    # First try direct key lookup (handles symbols like "NEM.US")
+    if key in dictionary:
+        return dictionary[key]
+    
+    # If direct lookup fails and key contains dots, try nested access
+    # This is for actual nested structures, not symbol names with dots
     if hasattr(key, 'split') and '.' in str(key):
         keys = str(key).split('.')
         result = dictionary
@@ -37,8 +45,8 @@ def lookup(dictionary, key):
                 return None
         return result
     
-    # Simple key lookup
-    return dictionary.get(key, None) if isinstance(dictionary, dict) else None
+    # Return None if key not found
+    return None
 
 @register.filter
 def abs(value):
@@ -57,3 +65,50 @@ def abs(value):
         return abs(float(value))
     except (ValueError, TypeError):
         return 0
+
+
+@register.filter
+def index(indexable, i):
+    """
+    Template filter to get an item from a list/array by index.
+    
+    Usage in template: {{ my_list|index:0 }} or {{ my_list|index:forloop.counter0 }}
+    
+    Args:
+        indexable: The list, tuple, or other indexable object
+        i: The index to access
+        
+    Returns:
+        The item at the given index, or None if index is invalid
+    """
+    try:
+        return indexable[int(i)]
+    except (IndexError, TypeError, ValueError, KeyError):
+        return None
+
+
+@register.filter  
+def getattr(obj, attr):
+    """
+    Template filter to get an attribute from an object.
+    
+    Usage in template: {{ my_object|getattr:"attribute_name" }}
+    
+    Args:
+        obj: The object to get the attribute from
+        attr: The attribute name
+        
+    Returns:
+        The attribute value, or None if attribute doesn't exist
+    """
+    try:
+        return getattr(obj, str(attr), None)
+    except (AttributeError, TypeError):
+        return None
+
+@register.filter
+def replace_underscore(value):
+    """Replace underscores with spaces for display labels."""
+    if isinstance(value, str):
+        return value.replace('_', ' ')
+    return value

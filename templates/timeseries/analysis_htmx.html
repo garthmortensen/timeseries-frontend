@@ -1,0 +1,285 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Lab:Analysis{% endblock %}
+{% block description %}Configure ARIMA and GARCH models for financial spillover analysis with real-time loading indicators.{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+    }
+    
+    .section-header {
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .guide-text {
+        border-left: 4px solid #2196f3;
+        padding: 0.75rem 1rem;
+        margin-bottom: 1rem;
+        border-radius: 0 0.25rem 0.25rem 0;
+        font-style: italic;
+        color: #1565c0;
+        font-size: 1.1em;
+        line-height: 1.4;
+    }
+    
+    .parameter-help {
+        padding: 0.5rem 0.75rem;
+        margin-top: 0.25rem;
+        border-radius: 0.25rem;
+        font-size: 0.875em;
+        color: #495057;
+    }
+    
+    .parameter-help strong {
+        color: #2c3e50;
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+
+    /* Loading animation styles */
+    .loading-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.95);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    }
+
+    .spinner {
+        width: 3rem;
+        height: 3rem;
+        border: 0.4rem solid #e9ecef;
+        border-top: 0.4rem solid #007bff;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 2rem;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .qa-text {
+        max-width: 600px;
+        text-align: center;
+        font-size: 1.2rem;
+        line-height: 1.6;
+        color: #333;
+        white-space: pre-line;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="app" x-data="analysisApp()">
+    <!-- API Links -->
+    <div class="d-flex justify-content-end align-items-start mb-3" style="gap: 0.5rem;">
+        <a href="http://localhost:8001/v1/graphql" class="btn btn-outline-secondary btn-sm" target="_blank">GraphQL</a>
+        <a href="http://localhost:8001/docs" class="btn btn-outline-secondary btn-sm" target="_blank">Swagger UI</a>
+        <a href="http://localhost:8001/redoc" class="btn btn-outline-secondary btn-sm" target="_blank">ReDoc</a>
+        <a href="http://localhost:8001/api/openapi.json" class="btn btn-outline-secondary btn-sm" target="_blank">OpenAPI Spec</a>
+    </div>
+
+    <!-- Loading Screen -->
+    <div x-show="isLoading" 
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-300"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="loading-container">
+        <div class="spinner"></div>
+        <div class="qa-text" x-text="currentMessage"></div>
+    </div>
+
+    <!-- Main Content -->
+    <div x-show="!isLoading">
+        <h1 class="mb-4">Analysis Configuration</h1>
+
+        <div class="guide-text" style="font-size: 1.1em;">
+            <strong>Markets are deeply interconnected</strong>, as the 2008 Global Financial Crisis proved beyond doubt. A shock in one can ripple through others—stocks, indexes, even regions.
+            This analysis quantifies those spillovers, predicts volatility, and maps how risk moves between assets.<br><br>
+            <strong>Choose Your Own Analysis</strong> below to explore market dynamics, forecast volatility, and uncover contagion paths.
+        </div>
+
+        <!-- Form -->
+        <form hx-post="{% url 'timeseries:run_pipeline_htmx' %}"
+              hx-trigger="submit"
+              hx-target="#results-container"
+              hx-indicator="#loading-indicator"
+              @htmx:before-request="startAnalysis()"
+              @htmx:after-request="handleResponse($event)">
+            {% csrf_token %}
+            
+            <!-- Simplified form with key fields -->
+            <div class="form-section">
+                <h3 class="section-header">Data Source</h3>
+                
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="radio" name="source_actual_or_synthetic_data" id="synthetic" value="synthetic" checked>
+                    <label class="form-check-label" for="synthetic">
+                        <strong>Synthetic Data</strong><br>
+                        <small class="text-muted">Generate artificial time series data for testing</small>
+                    </label>
+                </div>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="radio" name="source_actual_or_synthetic_data" id="yfinance" value="actual_yfinance">
+                    <label class="form-check-label" for="yfinance">
+                        <strong>Yahoo Finance Data</strong><br>
+                        <small class="text-muted">Real market data from Yahoo Finance</small>
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3 class="section-header">Symbols</h3>
+                <div class="mb-3">
+                    <label for="symbols" class="form-label">Symbols (comma-separated, max 5)</label>
+                    <input type="text" class="form-control" name="symbols" value="MSFT,AAPL,GOOGL" placeholder="MSFT,AAPL,GOOGL">
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3 class="section-header">ARIMA Parameters</h3>
+                <div class="row">
+                    <div class="col-md-4">
+                        <label for="arima_p" class="form-label">p (AR)</label>
+                        <input type="number" class="form-control" name="arima_p" value="2" min="0" max="10">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="arima_d" class="form-label">d (I)</label>
+                        <input type="number" class="form-control" name="arima_d" value="1" min="0" max="5">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="arima_q" class="form-label">q (MA)</label>
+                        <input type="number" class="form-control" name="arima_q" value="2" min="0" max="10">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3 class="section-header">GARCH Parameters</h3>
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="garch_p" class="form-label">p (ARCH)</label>
+                        <input type="number" class="form-control" name="garch_p" value="1" min="0" max="5">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="garch_q" class="form-label">q (GARCH)</label>
+                        <input type="number" class="form-control" name="garch_q" value="1" min="0" max="5">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" name="enable_spillover" checked>
+                    <label class="form-check-label">Enable Spillover Analysis</label>
+                </div>
+            </div>
+
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary btn-lg" :disabled="isLoading">
+                    <span x-show="!isLoading">Run Analysis</span>
+                    <span x-show="isLoading">Processing...</span>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Results container -->
+    <div id="results-container"></div>
+</div>
+
+<!-- HTMX -->
+<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+<!-- Alpine.js -->
+<script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+<script>
+function analysisApp() {
+    return {
+        isLoading: false,
+        currentMessage: '',
+        messageIndex: 0,
+        messageInterval: null,
+        
+        messages: [
+            'Loading...\nQ: When was the ROC curve created?',
+            'Loading...\nA: During WWII, for radar signal detection',
+            'Loading...\nQ: What does ARIMA tell you?',
+            'Loading...\nA: How past values and trends shape the future',
+            'Loading...\nQ: Who invented the correlation coefficient?',
+            'Loading...\nA: Karl Pearson in 1896',
+            'Loading...\nQ: What is the Central Limit Theorem about?',
+            'Loading...\nA: Sample means approach normal distribution',
+            'Loading...\nQ: What does GARCH tell you?',
+            'Loading...\nA: When volatility spikes are likely to return',
+            'Loading...\nQ: Who developed the Black-Scholes model?',
+            'Loading...\nA: Fischer Black, Myron Scholes, and Robert Merton in 1973',
+            'Loading...\nQ: What is the difference between Type I and Type II errors?',
+            'Loading...\nA: Type I: False positive, Type II: False negative',
+            'Loading...\nQ: What does VAR stand for in econometrics?',
+            'Loading...\nA: Vector AutoRegression',
+            'Loading...\nQ: Who created the concept of statistical significance?',
+            'Loading...\nA: Ronald Fisher in the 1920s',
+            'Loading...\nQ: What is heteroskedasticity?',
+            'Loading...\nA: When error variance is not constant across observations'
+        ],
+
+        startAnalysis() {
+            this.isLoading = true;
+            this.messageIndex = 0;
+            this.currentMessage = this.messages[0];
+            this.startMessageCycle();
+        },
+
+        startMessageCycle() {
+            this.messageInterval = setInterval(() => {
+                this.messageIndex = (this.messageIndex + 1) % this.messages.length;
+                this.currentMessage = this.messages[this.messageIndex];
+            }, 3000); // Change message every 3 seconds
+        },
+
+        handleResponse(event) {
+            this.stopLoading();
+            
+            const xhr = event.detail.xhr;
+            if (xhr.status === 200) {
+                const response = xhr.responseText;
+                if (response.includes('redirect:')) {
+                    const redirectUrl = response.split('redirect:')[1].trim();
+                    window.location.href = redirectUrl;
+                }
+            } else {
+                alert('Analysis failed. Please try again.');
+            }
+        },
+
+        stopLoading() {
+            this.isLoading = false;
+            if (this.messageInterval) {
+                clearInterval(this.messageInterval);
+                this.messageInterval = null;
+            }
+        }
+    }
+}
+</script>
+{% endblock %}

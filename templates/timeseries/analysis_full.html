@@ -1,0 +1,554 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Lab:Analysis{% endblock %}
+{% block description %}Configure ARIMA and GARCH models for financial spillover analysis with real-time loading indicators.{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+    }
+    
+    .section-header {
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .guide-text {
+        border-left: 4px solid #2196f3;
+        padding: 0.75rem 1rem;
+        margin-bottom: 1rem;
+        border-radius: 0 0.25rem 0.25rem 0;
+        font-style: italic;
+        color: #1565c0;
+        font-size: 1.1em;
+        line-height: 1.4;
+    }
+    
+    .parameter-help {
+        padding: 0.5rem 0.75rem;
+        margin-top: 0.25rem;
+        border-radius: 0.25rem;
+        font-size: 0.875em;
+        color: #495057;
+    }
+    
+    .parameter-help strong {
+        color: #2c3e50;
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+
+    /* Loading animation styles */
+    .loading-container {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.95);
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    }
+
+    .spinner {
+        width: 3rem;
+        height: 3rem;
+        border: 0.4rem solid #e9ecef;
+        border-top: 0.4rem solid #007bff;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 2rem;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .qa-text {
+        max-width: 600px;
+        text-align: center;
+        font-size: 1.2rem;
+        line-height: 1.6;
+        color: #333;
+        white-space: pre-line;
+    }
+
+    .advanced-settings {
+        display: none;
+    }
+    
+    .advanced-settings.show {
+        display: block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- API Links -->
+<div class="d-flex justify-content-end align-items-start mb-3" style="gap: 0.5rem;">
+    <a href="http://localhost:8001/v1/graphql" class="btn btn-outline-secondary btn-sm" target="_blank">GraphQL</a>
+    <a href="http://localhost:8001/docs" class="btn btn-outline-secondary btn-sm" target="_blank">Swagger UI</a>
+    <a href="http://localhost:8001/redoc" class="btn btn-outline-secondary btn-sm" target="_blank">ReDoc</a>
+    <a href="http://localhost:8001/api/openapi.json" class="btn btn-outline-secondary btn-sm" target="_blank">OpenAPI Spec</a>
+</div>
+
+<!-- Loading Screen -->
+<div id="loadingContainer" class="loading-container">
+    <div class="spinner"></div>
+    <div id="qaText" class="qa-text"></div>
+</div>
+
+<!-- Main Content -->
+<div id="mainContent">
+    <h1 class="mb-4">Comprehensive Analysis Configuration</h1>
+
+    <div class="guide-text" style="font-size: 1.1em;">
+        <strong>Markets are deeply interconnected</strong>, as the 2008 Global Financial Crisis proved beyond doubt. A shock in one can ripple through others—stocks, indexes, even regions.
+        This analysis quantifies those spillovers, predicts volatility, and maps how risk moves between assets.<br><br>
+        <strong>Configure Your Analysis</strong> below to explore market dynamics, forecast volatility, and uncover contagion paths with full control over all parameters.
+    </div>
+
+    <!-- Form -->
+    <form id="analysisForm" action="{% url 'timeseries:run_pipeline_htmx' %}" method="post">
+        {% csrf_token %}
+        
+        <!-- Data Source Configuration -->
+        <div class="form-section">
+            <h3 class="section-header">Data Source Configuration</h3>
+            
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="radio" name="source_actual_or_synthetic_data" id="synthetic" value="synthetic" checked>
+                <label class="form-check-label" for="synthetic">
+                    <strong>Synthetic Data</strong><br>
+                    <small class="text-muted">Generate artificial time series data for testing and prototyping</small>
+                </label>
+            </div>
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="radio" name="source_actual_or_synthetic_data" id="yfinance" value="actual_yfinance">
+                <label class="form-check-label" for="yfinance">
+                    <strong>Yahoo Finance Data</strong><br>
+                    <small class="text-muted">Real market data from Yahoo Finance API</small>
+                </label>
+            </div>
+            
+            <!-- Date Range (for real data) -->
+            <div id="dateRangeSection" style="display: none;">
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <label for="data_start_date" class="form-label">Start Date</label>
+                        <input type="date" class="form-control" name="data_start_date" value="2023-01-01">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="data_end_date" class="form-label">End Date</label>
+                        <input type="date" class="form-control" name="data_end_date" value="2023-06-01">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Symbols Configuration -->
+        <div class="form-section">
+            <h3 class="section-header">Symbols Configuration</h3>
+            <div class="mb-3">
+                <label for="symbols" class="form-label">Stock Symbols (comma-separated, max 5)</label>
+                <input type="text" class="form-control" name="symbols" value="MSFT,AAPL,GOOGL" placeholder="e.g., MSFT,AAPL,GOOGL,TSLA,NVDA">
+                <div class="parameter-help">
+                    <strong>Examples:</strong> MSFT,AAPL,GOOGL for tech stocks; SPY,QQQ,IWM for ETFs; BTC-USD,ETH-USD for crypto
+                </div>
+            </div>
+            
+            <!-- Synthetic Data Anchor Prices -->
+            <div id="anchorPricesSection">
+                <div class="mb-3">
+                    <label for="synthetic_anchor_prices" class="form-label">Synthetic Anchor Prices (optional)</label>
+                    <input type="text" class="form-control" name="synthetic_anchor_prices" placeholder="e.g., 100,200,300">
+                    <div class="parameter-help">
+                        <strong>Leave blank for auto-generated prices</strong> or specify starting prices for each symbol
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Processing -->
+        <div class="form-section">
+            <h3 class="section-header">Data Processing</h3>
+            <div class="mb-3">
+                <label for="scaling_method" class="form-label">Scaling Method</label>
+                <select class="form-select" name="scaling_method">
+                    <option value="standardize" selected>Standardize (Z-score)</option>
+                    <option value="normalize">Normalize (Min-Max)</option>
+                    <option value="robust">Robust Scaling</option>
+                    <option value="none">No Scaling</option>
+                </select>
+                <div class="parameter-help">
+                    <strong>Standardize:</strong> Centers data around 0 with unit variance<br>
+                    <strong>Normalize:</strong> Scales to 0-1 range<br>
+                    <strong>Robust:</strong> Uses median and IQR, less sensitive to outliers
+                </div>
+            </div>
+        </div>
+
+        <!-- ARIMA Configuration -->
+        <div class="form-section">
+            <h3 class="section-header">ARIMA Model Configuration</h3>
+            <div class="row">
+                <div class="col-md-3">
+                    <label for="arima_p" class="form-label">p (AR Order)</label>
+                    <input type="number" class="form-control" name="arima_p" value="2" min="0" max="10">
+                    <div class="parameter-help">
+                        <strong>Autoregressive terms:</strong> How many past values to include
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label for="arima_d" class="form-label">d (Differencing)</label>
+                    <input type="number" class="form-control" name="arima_d" value="1" min="0" max="5">
+                    <div class="parameter-help">
+                        <strong>Differencing order:</strong> Usually 1 for non-stationary data
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label for="arima_q" class="form-label">q (MA Order)</label>
+                    <input type="number" class="form-control" name="arima_q" value="2" min="0" max="10">
+                    <div class="parameter-help">
+                        <strong>Moving average terms:</strong> Past forecast errors to include
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label for="arima_forecast_steps" class="form-label">Forecast Steps</label>
+                    <input type="number" class="form-control" name="arima_forecast_steps" value="10" min="1" max="50">
+                    <div class="parameter-help">
+                        <strong>Periods ahead:</strong> How many steps to forecast
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- GARCH Configuration -->
+        <div class="form-section">
+            <h3 class="section-header">GARCH Model Configuration</h3>
+            <div class="row">
+                <div class="col-md-4">
+                    <label for="garch_p" class="form-label">p (ARCH Order)</label>
+                    <input type="number" class="form-control" name="garch_p" value="1" min="0" max="5">
+                    <div class="parameter-help">
+                        <strong>ARCH terms:</strong> Past squared errors affecting volatility
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label for="garch_q" class="form-label">q (GARCH Order)</label>
+                    <input type="number" class="form-control" name="garch_q" value="1" min="0" max="5">
+                    <div class="parameter-help">
+                        <strong>GARCH terms:</strong> Past conditional variances
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label for="garch_dist" class="form-label">Error Distribution</label>
+                    <select class="form-select" name="garch_dist">
+                        <option value="normal">Normal</option>
+                        <option value="t" selected>Student-t</option>
+                        <option value="skewt">Skewed Student-t</option>
+                    </select>
+                    <div class="parameter-help">
+                        <strong>Student-t:</strong> Better for financial data with fat tails
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <label for="garch_forecast_steps" class="form-label">GARCH Forecast Steps</label>
+                    <input type="number" class="form-control" name="garch_forecast_steps" value="3" min="1" max="20">
+                    <div class="parameter-help">
+                        <strong>Volatility forecasts:</strong> How many periods of volatility to forecast
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Spillover Analysis -->
+        <div class="form-section">
+            <h3 class="section-header">Spillover Analysis</h3>
+            <div class="form-check form-switch mb-3">
+                <input class="form-check-input" type="checkbox" name="spillover_enabled" id="enableSpillover" checked>
+                <label class="form-check-label" for="enableSpillover">
+                    <strong>Enable Spillover Analysis</strong><br>
+                    <small class="text-muted">Analyze how shocks propagate between assets using Diebold-Yilmaz methodology</small>
+                </label>
+            </div>
+            
+            <!-- Advanced Spillover Settings -->
+            <div class="mb-3">
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleAdvanced('spilloverAdvanced')">
+                    Show Advanced Spillover Settings
+                </button>
+            </div>
+            <div id="spilloverAdvanced" class="advanced-settings">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="spillover_method" class="form-label">Spillover Method</label>
+                        <select class="form-select" name="spillover_method">
+                            <option value="diebold_yilmaz" selected>Diebold-Yilmaz</option>
+                            <option value="barunik_krehlik">Baruník-Křehlík</option>
+                        </select>
+                        <div class="parameter-help">
+                            <strong>Diebold-Yilmaz:</strong> Standard spillover methodology<br>
+                            <strong>Baruník-Křehlík:</strong> Frequency domain decomposition
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="forecast_horizon" class="form-label">Forecast Horizon</label>
+                        <input type="number" class="form-control" name="forecast_horizon" value="5" min="1" max="20">
+                        <div class="parameter-help">
+                            <strong>Steps ahead:</strong> Forecast horizon for spillover analysis
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <label for="var_lag_selection_method" class="form-label">VAR Lag Selection</label>
+                        <select class="form-select" name="var_lag_selection_method">
+                            <option value="aic" selected>AIC (Akaike Info Criterion)</option>
+                            <option value="bic">BIC (Bayesian Info Criterion)</option>
+                            <option value="hqic">HQIC (Hannan-Quinn)</option>
+                            <option value="fpe">FPE (Final Prediction Error)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="max_lags" class="form-label">Maximum VAR Lags</label>
+                        <input type="number" class="form-control" name="max_lags" value="10" min="1" max="20">
+                        <div class="parameter-help">
+                            <strong>Model selection:</strong> Maximum lags to consider for VAR model
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <label for="granger_significance_level" class="form-label">Granger Significance Level</label>
+                        <input type="number" class="form-control" name="granger_significance_level" value="0.05" min="0.01" max="0.10" step="0.01">
+                        <div class="parameter-help">
+                            <strong>P-value threshold:</strong> For Granger causality tests
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="rolling_window" class="form-label">Rolling Window (optional)</label>
+                        <input type="number" class="form-control" name="rolling_window" placeholder="e.g., 252">
+                        <div class="parameter-help">
+                            <strong>Time-varying spillovers:</strong> Use rolling window analysis
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="include_granger" id="includeGranger" checked>
+                        <label class="form-check-label" for="includeGranger">
+                            Include Granger Causality Analysis
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="include_fevd_details" id="includeFevd" checked>
+                        <label class="form-check-label" for="includeFevd">
+                            Include FEVD (Forecast Error Variance Decomposition) Details
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="include_impulse_response" id="includeImpulse">
+                        <label class="form-check-label" for="includeImpulse">
+                            Include Impulse Response Functions
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Analysis Options -->
+        <div class="form-section">
+            <h3 class="section-header">Additional Analysis Options</h3>
+            
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" name="include_stationarity_tests" id="includeStationarity" checked>
+                <label class="form-check-label" for="includeStationarity">
+                    <strong>Stationarity Tests</strong> - ADF, KPSS, Phillips-Perron
+                </label>
+            </div>
+            
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" name="include_cointegration" id="includeCointegration">
+                <label class="form-check-label" for="includeCointegration">
+                    <strong>Cointegration Analysis</strong> - Johansen test for long-run relationships
+                </label>
+            </div>
+            
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" name="include_correlation_analysis" id="includeCorrelation" checked>
+                <label class="form-check-label" for="includeCorrelation">
+                    <strong>Correlation Analysis</strong> - Dynamic and rolling correlations
+                </label>
+            </div>
+            
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" name="include_risk_metrics" id="includeRisk" checked>
+                <label class="form-check-label" for="includeRisk">
+                    <strong>Risk Metrics</strong> - VaR, Expected Shortfall, Maximum Drawdown
+                </label>
+            </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                <span id="submitText">Run Analysis</span>
+                <span id="submitSpinner" style="display: none;">
+                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                    Processing...
+                </span>
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+// Q&A messages for loading screen
+const qaMessages = [
+    'Loading...\nQ: When was the ROC curve created?',
+    'Loading...\nA: During WWII, for radar signal detection',
+    'Loading...\nQ: What does ARIMA tell you?',
+    'Loading...\nA: How past values and trends shape the future',
+    'Loading...\nQ: Who invented the correlation coefficient?',
+    'Loading...\nA: Karl Pearson in 1896',
+    'Loading...\nQ: What is the Central Limit Theorem about?',
+    'Loading...\nA: Sample means approach normal distribution',
+    'Loading...\nQ: What does GARCH tell you?',
+    'Loading...\nA: When volatility spikes are likely to return',
+    'Loading...\nQ: Who developed the Black-Scholes model?',
+    'Loading...\nA: Fischer Black, Myron Scholes, and Robert Merton in 1973',
+    'Loading...\nQ: What is the difference between Type I and Type II errors?',
+    'Loading...\nA: Type I: False positive, Type II: False negative',
+    'Loading...\nQ: What does VAR stand for in econometrics?',
+    'Loading...\nA: Vector AutoRegression',
+    'Loading...\nQ: Who created the concept of statistical significance?',
+    'Loading...\nA: Ronald Fisher in the 1920s',
+    'Loading...\nQ: What is heteroskedasticity?',
+    'Loading...\nA: When error variance is not constant across observations',
+    'Loading...\nQ: What is the Diebold-Yilmaz spillover index?',
+    'Loading...\nA: A measure of how much variance comes from spillovers',
+    'Loading...\nQ: Who developed the ARCH model?',
+    'Loading...\nA: Robert Engle in 1982 (Nobel Prize 2003)',
+    'Loading...\nQ: What does FEVD stand for?',
+    'Loading...\nA: Forecast Error Variance Decomposition'
+];
+
+let currentMessageIndex = 0;
+let messageInterval = null;
+
+// Show/hide advanced settings
+function toggleAdvanced(sectionId) {
+    const section = document.getElementById(sectionId);
+    const button = section.previousElementSibling.querySelector('button');
+    
+    if (section.classList.contains('show')) {
+        section.classList.remove('show');
+        button.textContent = 'Show Advanced Spillover Settings';
+    } else {
+        section.classList.add('show');
+        button.textContent = 'Hide Advanced Spillover Settings';
+    }
+}
+
+// Show/hide sections based on data source
+document.addEventListener('DOMContentLoaded', function() {
+    const syntheticRadio = document.getElementById('synthetic');
+    const yfinanceRadio = document.getElementById('yfinance');
+    const dateRangeSection = document.getElementById('dateRangeSection');
+    const anchorPricesSection = document.getElementById('anchorPricesSection');
+    
+    function updateDataSourceSettings() {
+        if (yfinanceRadio.checked) {
+            dateRangeSection.style.display = 'block';
+            anchorPricesSection.style.display = 'none';
+        } else {
+            dateRangeSection.style.display = 'none';
+            anchorPricesSection.style.display = 'block';
+        }
+    }
+    
+    syntheticRadio.addEventListener('change', updateDataSourceSettings);
+    yfinanceRadio.addEventListener('change', updateDataSourceSettings);
+    
+    updateDataSourceSettings(); // Set initial state
+});
+
+// Loading animation functions
+function startLoadingAnimation() {
+    document.getElementById('mainContent').style.display = 'none';
+    document.getElementById('loadingContainer').style.display = 'flex';
+    document.getElementById('submitBtn').disabled = true;
+    document.getElementById('submitText').style.display = 'none';
+    document.getElementById('submitSpinner').style.display = 'inline';
+    
+    currentMessageIndex = 0;
+    document.getElementById('qaText').textContent = qaMessages[0];
+    
+    messageInterval = setInterval(() => {
+        currentMessageIndex = (currentMessageIndex + 1) % qaMessages.length;
+        document.getElementById('qaText').textContent = qaMessages[currentMessageIndex];
+    }, 3000); // Change message every 3 seconds
+}
+
+function stopLoadingAnimation() {
+    document.getElementById('loadingContainer').style.display = 'none';
+    document.getElementById('mainContent').style.display = 'block';
+    document.getElementById('submitBtn').disabled = false;
+    document.getElementById('submitText').style.display = 'inline';
+    document.getElementById('submitSpinner').style.display = 'none';
+    
+    if (messageInterval) {
+        clearInterval(messageInterval);
+        messageInterval = null;
+    }
+}
+
+// Form submission handling
+document.getElementById('analysisForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    startLoadingAnimation();
+    
+    const formData = new FormData(this);
+    
+    fetch(this.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+        }
+    })
+    .then(response => response.text())
+    .then(data => {
+        stopLoadingAnimation();
+        
+        if (data.includes('redirect:')) {
+            const redirectUrl = data.split('redirect:')[1].trim();
+            window.location.href = redirectUrl;
+        } else {
+            alert('Analysis failed: ' + data);
+        }
+    })
+    .catch(error => {
+        stopLoadingAnimation();
+        alert('Error: ' + error.message);
+    });
+});
+</script>
+{% endblock %}

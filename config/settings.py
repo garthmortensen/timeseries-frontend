@@ -135,6 +135,7 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 API_URL = os.environ.get("API_URL", "http://localhost:8001")
+TIMESERIES_API_URL = os.environ.get("TIMESERIES_API_URL", "http://localhost:8001")
 
 # Settings for running behind a reverse proxy like Google Cloud Run
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
@@ -143,6 +144,9 @@ CSRF_COOKIE_SECURE = not DEBUG # True in production
 # SECURE_SSL_REDIRECT = not DEBUG # True in production, ensure your health checks use HTTP or are configured for HTTPS
 # Set SECURE_SSL_REDIRECT to False because Cloud Run handles SSL termination.
 SECURE_SSL_REDIRECT = False
+
+# Disable automatic slash appending for API endpoints to prevent redirects
+APPEND_SLASH = False
 
 # Content Security Policy - Updated for django-csp 4.0+
 CONTENT_SECURITY_POLICY = {

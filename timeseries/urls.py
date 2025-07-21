@@ -6,7 +6,6 @@ URL patterns for the timeseries app.
 """
 from django.urls import path
 from . import views
-from .views import run_pipeline_proxy
 
 app_name = 'timeseries'
 
@@ -14,17 +13,18 @@ urlpatterns = [
     path('', views.index, name='index'),
     path('analysis/', views.analysis, name='analysis'),
     path('results/', views.results, name='results'),
-    path('results/test/', views.results_test, name='results_test'),  # Add test route
+    path('results/test/', views.results_test, name='results_test'),
     path('about/', views.about, name='about'),
     path('iterate/', views.iterate, name='iterate'),
     # API response functionality
     path('download-api-response/', views.download_api_response, name='download_api_response'),
     path('view-api-response/', views.view_api_response_popup, name='view_api_response_popup'),
+    # CSV export functionality
+    path('export-csv/<str:data_type>/', views.export_csv, name='export_csv'),
     # Generic API proxy - captures the rest of the path and passes it to the view
     path('api_proxy/<path:api_path>', views.api_proxy, name='api_proxy'),
-    # Specific API proxy endpoints (if you want to keep them for non-JS or specific logic)
-    # Ensure no trailing slash for consistency with FastAPI backend
-    path('api/run_pipeline', run_pipeline_proxy, name='run_pipeline'),
+    # HTMX analysis endpoint
+    path('api/run_pipeline_htmx', views.run_pipeline_htmx, name='run_pipeline_htmx'),
     # Debug endpoints
-    path('debug/api-data', views.debug_data, name='debug_data'), # Removed trailing slash
+    path('debug/api-data', views.debug_data, name='debug_data'),
 ]

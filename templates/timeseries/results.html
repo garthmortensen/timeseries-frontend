@@ -8,6 +8,7 @@
 
 {% extends 'base.html' %}
 {% load static %}
+{% load dict_extras %}
 
 {% block title %}Lab:Results{% endblock %}
 
@@ -53,9 +54,15 @@
         </button>
     </li>
     <li class="nav-item" role="presentation">
-        <button class="nav-link {% if active_tab == 'models' %}active{% endif %}" id="models-tab" data-bs-toggle="tab" data-bs-target="#models" 
-                type="button" role="tab" aria-controls="models" aria-selected="{% if active_tab == 'models' %}true{% else %}false{% endif %}">
-            <i class="bi bi-cpu"></i> ARIMA & GARCH
+        <button class="nav-link {% if active_tab == 'arima' %}active{% endif %}" id="arima-tab" data-bs-toggle="tab" data-bs-target="#arima" 
+                type="button" role="tab" aria-controls="arima" aria-selected="{% if active_tab == 'arima' %}true{% else %}false{% endif %}">
+            <i class="bi bi-graph-up-arrow"></i> ARIMA
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link {% if active_tab == 'garch' %}active{% endif %}" id="garch-tab" data-bs-toggle="tab" data-bs-target="#garch" 
+                type="button" role="tab" aria-controls="garch" aria-selected="{% if active_tab == 'garch' %}true{% else %}false{% endif %}">
+            <i class="bi bi-lightning"></i> GARCH
         </button>
     </li>
     {% if spillover_enabled %}
@@ -73,9 +80,9 @@
         </button>
     </li>
     <li class="nav-item" role="presentation">
-        <button class="nav-link {% if active_tab == 'raw-data' %}active{% endif %}" id="raw-data-tab" data-bs-toggle="tab" data-bs-target="#raw-data-pane" 
-                type="button" role="tab" aria-controls="raw-data-pane" aria-selected="{% if active_tab == 'raw-data' %}true{% else %}false{% endif %}">
-            <i class="bi bi-table"></i> Raw Data
+        <button class="nav-link {% if active_tab == 'data-lineage' %}active{% endif %}" id="data-lineage-tab" data-bs-toggle="tab" data-bs-target="#data-lineage-pane" 
+                type="button" role="tab" aria-controls="data-lineage-pane" aria-selected="{% if active_tab == 'data-lineage' %}true{% else %}false{% endif %}">
+            <i class="bi bi-diagram-3"></i> Data Lineage
         </button>
     </li>
 </ul>
@@ -85,7 +92,7 @@
     <!-- Overview Tab -->
     <div class="tab-pane fade {% if active_tab == 'overview' %}show active{% endif %}" id="overview" role="tabpanel" aria-labelledby="overview-tab">
         <div class="row">
-            <div class="col-md-8">
+            <div class="col-12">
                 <!-- Executive Summary Card -->
                 <div class="card mb-4">
                     <div class="card-header">
@@ -96,64 +103,52 @@
                             <div class="mb-3">
                                 <h6>Analysis Overview</h6>
                                 <p><strong>Symbols Analyzed:</strong> {{ executive_summary.analysis_overview.symbols_analyzed|join:", " }}</p>
-                                <p><strong>Total Symbols:</strong> {{ executive_summary.analysis_overview.total_symbols }}</p>
                             </div>
                         {% endif %}
-                        
-                        {% if executive_summary.key_insights %}
+                        {% if executive_summary.executive_summary or executive_summary.stationarity_summary or executive_summary.garch_summary %}
                             <div class="mb-3">
-                                <h6>Key Insights</h6>
-                                {% for insight in executive_summary.key_insights %}
-                                    <div class="alert alert-info py-2">{{ insight }}</div>
-                                {% endfor %}
+                                <h6>Executive Summary Details</h6>
+                                {% if executive_summary.stationarity_summary %}
+                                    <h6 class="mt-3 text-primary">Stationarity Executive Summary</h6>
+                                    {% for symbol, details in executive_summary.stationarity_summary.items %}
+                                        <div class="mb-2">
+                                            <strong>{{ symbol|upper }}:</strong>
+                                            <ul class="mb-0">
+                                                {% for key, value in details.items %}
+                                                    <li><strong>{{ key|title|replace_underscore }}:</strong> {{ value }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    {% endfor %}
+                                {% endif %}
+                                {% if executive_summary.executive_summary %}
+                                    <h6 class="mt-3 text-primary">ARIMA Executive Summary</h6>
+                                    {% for symbol, details in executive_summary.executive_summary.items %}
+                                        <div class="mb-2">
+                                            <strong>{{ symbol|upper }}:</strong>
+                                            <ul class="mb-0">
+                                                {% for key, value in details.items %}
+                                                    <li><strong>{{ key|title|replace_underscore }}:</strong> {{ value }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    {% endfor %}
+                                {% endif %}
+                                {% if executive_summary.garch_summary %}
+                                    <h6 class="mt-3 text-primary">GARCH Executive Summary</h6>
+                                    {% for symbol, details in executive_summary.garch_summary.items %}
+                                        <div class="mb-2">
+                                            <strong>{{ symbol|upper }}:</strong>
+                                            <ul class="mb-0">
+                                                {% for key, value in details.items %}
+                                                    <li><strong>{{ key|title|replace_underscore }}:</strong> {{ value }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    {% endfor %}
+                                {% endif %}
                             </div>
                         {% endif %}
-                        
-                        {% if executive_summary.business_recommendations %}
-                            <div class="mb-3">
-                                <h6>Business Recommendations</h6>
-                                {% for recommendation in executive_summary.business_recommendations %}
-                                    <div class="alert alert-success py-2">{{ recommendation }}</div>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-4">
-                <!-- Analysis Summary Card -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0"><i class="bi bi-info-circle"></i> Analysis Summary</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row text-center">
-                            <div class="col-6">
-                                <div class="border rounded p-2 mb-2">
-                                    <h4 class="text-primary mb-0">{{ symbols|length }}</h4>
-                                    <small class="text-muted">Symbols</small>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="border rounded p-2 mb-2">
-                                    <h4 class="text-success mb-0">{% if arima_results %}{{ arima_results|length }}{% else %}0{% endif %}</h4>
-                                    <small class="text-muted">ARIMA Models</small>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="border rounded p-2 mb-2">
-                                    <h4 class="text-warning mb-0">{% if garch_results %}{{ garch_results|length }}{% else %}0{% endif %}</h4>
-                                    <small class="text-muted">GARCH Models</small>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="border rounded p-2 mb-2">
-                                    <h4 class="text-info mb-0">{% if spillover_enabled %}Yes{% else %}No{% endif %}</h4>
-                                    <small class="text-muted">Spillover</small>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -227,26 +222,68 @@
             </div>
         </div>
         
-        <!-- Spillover Configuration -->
-        {% if spillover_enabled %}
+        <!-- Data Processing Configuration -->
         <div class="card mb-4">
             <div class="card-header">
-                <h5 class="card-title mb-0"><i class="bi bi-shuffle"></i> Spillover Analysis Configuration</h5>
+                <h5 class="card-title mb-0"><i class="bi bi-sliders"></i> Data Processing Configuration</h5>
+            </div>
+            <div class="card-body">
+                {% if execution_configuration.data_processing %}
+                    <table class="table table-sm">
+                        {% for key, value in execution_configuration.data_processing.items %}
+                        <tr>
+                            <td><strong>{{ key|title|replace_underscore }}:</strong></td>
+                            <td>{{ value }}</td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                {% else %}
+                    <p class="text-muted">No data processing configuration available.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Spillover Configuration -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="bi bi-shuffle"></i> Spillover Configuration</h5>
             </div>
             <div class="card-body">
                 {% if execution_configuration.spillover_configuration %}
                     <table class="table table-sm">
                         {% for key, value in execution_configuration.spillover_configuration.items %}
                         <tr>
-                            <td><strong>{{ key|title }}:</strong></td>
+                            <td><strong>{{ key|title|replace_underscore }}:</strong></td>
                             <td>{{ value }}</td>
                         </tr>
                         {% endfor %}
                     </table>
+                {% else %}
+                    <p class="text-muted">No spillover configuration available.</p>
                 {% endif %}
             </div>
         </div>
-        {% endif %}
+        
+        <!-- Execution Metadata -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="bi bi-clock-history"></i> Execution Metadata</h5>
+            </div>
+            <div class="card-body">
+                {% if execution_configuration.execution_metadata %}
+                    <table class="table table-sm">
+                        {% for key, value in execution_configuration.execution_metadata.items %}
+                        <tr>
+                            <td><strong>{{ key|title|replace_underscore }}:</strong></td>
+                            <td>{{ value }}</td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                {% else %}
+                    <p class="text-muted">No execution metadata available.</p>
+                {% endif %}
+            </div>
+        </div>
     </div>
 
     <!-- Statistical Tests Tab -->
@@ -271,27 +308,25 @@
                             </thead>
                             <tbody>
                                 {% for symbol, test in stationarity_results.all_symbols_stationarity.items %}
-                                    {% if test.interpretation %}
-                                        <tr>
-                                            <td><strong>{{ symbol }}</strong></td>
-                                            <td>
-                                                {% if test.interpretation.is_stationary %}
-                                                    <span class="badge bg-success">Stationary</span>
-                                                {% else %}
-                                                    <span class="badge bg-warning">Non-Stationary</span>
-                                                {% endif %}
-                                            </td>
-                                            <td>{{ test.interpretation.test_statistic|floatformat:4 }}</td>
-                                            <td>{{ test.interpretation.p_value|floatformat:4 }}</td>
-                                            <td>
-                                                {% if test.interpretation.critical_values %}
-                                                    {% for key, value in test.interpretation.critical_values.items %}
-                                                        {{ value|floatformat:3 }}{% if not forloop.last %}, {% endif %}
-                                                    {% endfor %}
-                                                {% endif %}
-                                            </td>
-                                        </tr>
-                                    {% endif %}
+                                    <tr>
+                                        <td><strong>{{ symbol }}</strong></td>
+                                        <td>
+                                            {% if test.is_stationary %}
+                                                <span class="badge bg-success">Stationary</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">Non-Stationary</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ test.adf_statistic|floatformat:4 }}</td>
+                                        <td>{{ test.p_value|floatformat:4 }}</td>
+                                        <td>
+                                            {% if test.critical_values %}
+                                                {% for key, value in test.critical_values.items %}
+                                                    {{ value|floatformat:3 }}{% if not forloop.last %}, {% endif %}
+                                                {% endfor %}
+                                            {% endif %}
+                                        </td>
+                                    </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
@@ -321,9 +356,7 @@
                                     <th>Max</th>
                                     <th>Skewness</th>
                                     <th>Kurtosis</th>
-                                    <th>Ann. Return</th>
                                     <th>Ann. Vol</th>
-                                    <th>Sharpe</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -337,9 +370,7 @@
                                     <td>{{ stats.max|floatformat:6|default:"-" }}</td>
                                     <td>{{ stats.skew|floatformat:3|default:"-" }}</td>
                                     <td>{{ stats.kurt|floatformat:3|default:"-" }}</td>
-                                    <td>{{ stats.annualized_return|floatformat:4|default:"-" }}</td>
                                     <td>{{ stats.annualized_vol|floatformat:4|default:"-" }}</td>
-                                    <td>{{ stats.sharpe_approx|floatformat:3|default:"-" }}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -352,9 +383,8 @@
         </div>
     </div>
 
-    <!-- Models & Forecasts Tab -->
-    <div class="tab-pane fade {% if active_tab == 'models' %}show active{% endif %}" id="models" role="tabpanel" aria-labelledby="models-tab">
-        <!-- ARIMA Results -->
+    <!-- ARIMA Tab -->
+    <div class="tab-pane fade {% if active_tab == 'arima' %}show active{% endif %}" id="arima" role="tabpanel" aria-labelledby="arima-tab">
         <div class="card mb-4">
             <div class="card-header">
                 <h5 class="card-title mb-0"><i class="bi bi-graph-up-arrow"></i> ARIMA Model Results</h5>
@@ -379,9 +409,50 @@
                                             <tr><td><strong>Model:</strong></td><td>{{ arima.summary.model_specification|default:"-" }}</td></tr>
                                             <tr><td><strong>AIC:</strong></td><td>{{ arima.summary.aic|floatformat:2|default:"-" }}</td></tr>
                                             <tr><td><strong>BIC:</strong></td><td>{{ arima.summary.bic|floatformat:2|default:"-" }}</td></tr>
+                                            <tr><td><strong>HQIC:</strong></td><td>{{ arima.summary.hqic|floatformat:2|default:"-" }}</td></tr>
                                             <tr><td><strong>Log Likelihood:</strong></td><td>{{ arima.summary.log_likelihood|floatformat:2|default:"-" }}</td></tr>
                                             <tr><td><strong>Sample Size:</strong></td><td>{{ arima.summary.sample_size|default:"-" }}</td></tr>
                                         </table>
+                                        <h6 class="mt-3">Parameters</h6>
+                                        <table class="table table-bordered table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>Parameter</th>
+                                                    <th>Value</th>
+                                                    <th>P-Value</th>
+                                                    <th>Significance</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for param in param_list %}
+                                                    <tr>
+                                                        <td>{{ param }}</td>
+                                                        <td>{{ arima.summary.parameters|lookup:param|floatformat:4|default:"-" }}</td>
+                                                        <td>{{ arima.summary.parameter_pvalues|lookup:param|floatformat:4|default:"-" }}</td>
+                                                        <td>{{ arima.summary.parameter_significance|lookup:param|default:"-" }}</td>
+                                                    </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                        {% if arima.summary.residual_statistics %}
+                                        <h6 class="mt-3">Residual Statistics</h6>
+                                        <table class="table table-bordered table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>Statistic</th>
+                                                    <th>Value</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for stat, value in arima.summary.residual_statistics.items %}
+                                                    <tr>
+                                                        <td>{{ stat|title|replace_underscore }}</td>
+                                                        <td>{{ value|floatformat:4|default:"-" }}</td>
+                                                    </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    {% endif %}
                                     {% endif %}
                                 </div>
                                 <div class="col-md-6">
@@ -403,7 +474,20 @@
                                     <h6>Key Findings</h6>
                                     {% for finding_type, finding_text in arima.interpretation.key_findings.items %}
                                         {% if finding_text %}
-                                            <p><strong>{{ finding_type|title }}:</strong> {{ finding_text }}</p>
+                                            <div class="mb-2">
+                                                <strong>{{ finding_type|title|replace_underscore }}:</strong>
+                                                {% if finding_text is string %}
+                                                    <span>{{ finding_text }}</span>
+                                                {% elif finding_text.items %}
+                                                    <ul class="mb-0">
+                                                        {% for k, v in finding_text.items %}
+                                                            <li><strong>{{ k|title|replace_underscore }}:</strong> {{ v }}</li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                {% else %}
+                                                    <span>{{ finding_text }}</span>
+                                                {% endif %}
+                                            </div>
                                         {% endif %}
                                     {% endfor %}
                                 </div>
@@ -416,7 +500,10 @@
             </div>
         </div>
         
-        <!-- GARCH Results -->
+    </div>
+
+    <!-- GARCH Tab -->
+    <div class="tab-pane fade {% if active_tab == 'garch' %}show active{% endif %}" id="garch" role="tabpanel" aria-labelledby="garch-tab">
         <div class="card mb-4">
             <div class="card-header">
                 <h5 class="card-title mb-0"><i class="bi bi-lightning"></i> GARCH Model Results</h5>
@@ -571,31 +658,385 @@
         </div>
     </div>
 
-    <!-- Raw Data Tab -->
-    <div class="tab-pane fade {% if active_tab == 'raw-data' %}show active{% endif %}" id="raw-data-pane" role="tabpanel" aria-labelledby="raw-data-tab">
+    <!-- Data Lineage Tab -->
+    <div class="tab-pane fade {% if active_tab == 'data-lineage' %}show active{% endif %}" id="data-lineage-pane" role="tabpanel" aria-labelledby="data-lineage-tab">
         <div class="card">
             <div class="card-header">
-                <h5 class="card-title mb-0"><i class="bi bi-table"></i> Raw Data</h5>
+                <h5 class="card-title mb-0"><i class="bi bi-diagram-3"></i> Data Lineage & Transformation Pipeline</h5>
             </div>
             <div class="card-body">
                 <div class="alert alert-info">
                     <i class="bi bi-info-circle-fill"></i>
-                    This section provides access to the raw JSON response from the analysis API. You can inspect the complete data structure and download it for further analysis.
+                    <strong>Data Transformation Pipeline:</strong> View the data at each stage of the analysis pipeline. Each tab shows data as it flows through the transformation process from original prices to model-ready formats.
                 </div>
                 
-                {% if raw_results %}
-                    <div class="mb-3">
-                        <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#rawJsonCollapse" aria-expanded="false" aria-controls="rawJsonCollapse">
-                            <i class="bi bi-eye"></i> Show/Hide Raw JSON
+                <!-- Data Stage Navigation -->
+                <ul class="nav nav-pills mb-4" id="dataLineageTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="original-data-tab" data-bs-toggle="pill" data-bs-target="#original-data-stage" 
+                                type="button" role="tab" aria-controls="original-data-stage" aria-selected="true">
+                            <i class="bi bi-currency-dollar"></i> Original Prices
                         </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="returns-data-tab" data-bs-toggle="pill" data-bs-target="#returns-data-stage" 
+                                type="button" role="tab" aria-controls="returns-data-stage" aria-selected="false">
+                            <i class="bi bi-graph-up"></i> Returns
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="scaled-data-tab" data-bs-toggle="pill" data-bs-target="#scaled-data-stage" 
+                                type="button" role="tab" aria-controls="scaled-data-stage" aria-selected="false">
+                            <i class="bi bi-arrows-fullscreen"></i> Scaled for GARCH
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="pre-garch-data-tab" data-bs-toggle="pill" data-bs-target="#pre-garch-data-stage" 
+                                type="button" role="tab" aria-controls="pre-garch-data-stage" aria-selected="false">
+                            <i class="bi bi-box-arrow-in-right"></i> Pre-GARCH
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="post-garch-data-tab" data-bs-toggle="pill" data-bs-target="#post-garch-data-stage" 
+                                type="button" role="tab" aria-controls="post-garch-data-stage" aria-selected="false">
+                            <i class="bi bi-box-arrow-right"></i> Post-GARCH
+                        </button>
+                    </li>
+                </ul>
+                
+                <!-- Data Stage Content -->
+                <div class="tab-content" id="dataLineageTabsContent">
+                    
+                    <!-- Original Data Stage -->
+                    <div class="tab-pane fade show active" id="original-data-stage" role="tabpanel" aria-labelledby="original-data-tab">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <h6><i class="bi bi-currency-dollar"></i> Original Price Data</h6>
+                                <p class="text-muted mb-0">Raw financial data as received from the data source</p>
+                            </div>
+                            <form method="post" action="{% url 'timeseries:export_csv' 'original_data' %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-success btn-sm">
+                                    <i class="bi bi-download"></i> Export CSV
+                                </button>
+                            </form>
+                        </div>
+                        
+                        {% if data_arrays.original_data %}
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <div class="bg-light p-2 rounded">
+                                        <small><strong>Records:</strong> {{ data_arrays.original_data.count }}</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="bg-light p-2 rounded">
+                                        <small><strong>Symbols:</strong> {{ symbols|join:", " }}</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="bg-light p-2 rounded">
+                                        <small><strong>Type:</strong> Price Levels</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                                <table class="table table-striped table-sm">
+                                    <thead class="table-dark sticky-top">
+                                        <tr>
+                                            <th>Date</th>
+                                            {% for symbol in symbols %}
+                                                <th>{{ symbol }}</th>
+                                            {% endfor %}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for timestamp in data_arrays.original_data.timestamps|slice:":50" %}
+                                            <tr>
+                                                <td>{{ timestamp }}</td>
+                                                {% for symbol in symbols %}
+                                                    <td>{{ data_arrays.original_data.symbol_data|lookup:symbol|index:forloop.parentloop.counter0|floatformat:4 }}</td>
+                                                {% endfor %}
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% if data_arrays.original_data.count > 50 %}
+                                <div class="text-muted text-center mt-2">
+                                    <small>Showing first 50 of {{ data_arrays.original_data.count }} records. Export to CSV for full dataset.</small>
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <p class="text-muted">No original data available.</p>
+                        {% endif %}
                     </div>
                     
-                    <div class="collapse" id="rawJsonCollapse">
-                        <pre class="bg-light p-3 rounded" style="max-height: 60vh; overflow: auto; font-size: 0.8em;"><code>{{ raw_results|pprint }}</code></pre>
+                    <!-- Returns Data Stage -->
+                    <div class="tab-pane fade" id="returns-data-stage" role="tabpanel" aria-labelledby="returns-data-tab">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <h6><i class="bi bi-graph-up"></i> Returns Data</h6>
+                                <p class="text-muted mb-0">Logarithmic returns calculated from price data</p>
+                            </div>
+                            <form method="post" action="{% url 'timeseries:export_csv' 'returns_data' %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-success btn-sm">
+                                    <i class="bi bi-download"></i> Export CSV
+                                </button>
+                            </form>
+                        </div>
+                        
+                        {% if data_arrays.returns_data %}
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <div class="bg-light p-2 rounded">
+                                        <small><strong>Records:</strong> {{ data_arrays.returns_data.count }}</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="bg-light p-2 rounded">
+                                        <small><strong>Symbols:</strong> {{ symbols|join:", " }}</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="bg-light p-2 rounded">
+                                        <small><strong>Type:</strong> Log Returns</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                                <table class="table table-striped table-sm">
+                                    <thead class="table-dark sticky-top">
+                                        <tr>
+                                            <th>Date</th>
+                                            {% for symbol in symbols %}
+                                                <th>{{ symbol }}</th>
+                                            {% endfor %}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for timestamp in data_arrays.returns_data.timestamps|slice:":50" %}
+                                            <tr>
+                                                <td>{{ timestamp }}</td>
+                                                {% for symbol in symbols %}
+                                                    <td>{{ data_arrays.returns_data.symbol_data|lookup:symbol|index:forloop.parentloop.counter0|floatformat:6 }}</td>
+                                                {% endfor %}
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% if data_arrays.returns_data.count > 50 %}
+                                <div class="text-muted text-center mt-2">
+                                    <small>Showing first 50 of {{ data_arrays.returns_data.count }} records. Export to CSV for full dataset.</small>
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <p class="text-muted">No returns data available.</p>
+                        {% endif %}
                     </div>
-                {% else %}
-                    <p class="text-muted">No raw data available.</p>
-                {% endif %}
+                    
+                    <!-- Scaled Data Stage -->
+                    <div class="tab-pane fade" id="scaled-data-stage" role="tabpanel" aria-labelledby="scaled-data-tab">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <h6><i class="bi bi-arrows-fullscreen"></i> Scaled Data for GARCH</h6>
+                                <p class="text-muted mb-0">Standardized returns data prepared for GARCH modeling</p>
+                            </div>
+                            <form method="post" action="{% url 'timeseries:export_csv' 'scaled_data' %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-success btn-sm">
+                                    <i class="bi bi-download"></i> Export CSV
+                                </button>
+                            </form>
+                        </div>
+                        
+                        {% if data_arrays.scaled_data %}
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <div class="bg-light p-2 rounded">
+                                        <small><strong>Records:</strong> {{ data_arrays.scaled_data.count }}</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="bg-light p-2 rounded">
+                                        <small><strong>Symbols:</strong> {{ symbols|join:", " }}</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="bg-light p-2 rounded">
+                                        <small><strong>Type:</strong> Standardized Returns</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                                <table class="table table-striped table-sm">
+                                    <thead class="table-dark sticky-top">
+                                        <tr>
+                                            <th>Date</th>
+                                            {% for symbol in symbols %}
+                                                <th>{{ symbol }}</th>
+                                            {% endfor %}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for timestamp in data_arrays.scaled_data.timestamps|slice:":50" %}
+                                            <tr>
+                                                <td>{{ timestamp }}</td>
+                                                {% for symbol in symbols %}
+                                                    <td>{{ data_arrays.scaled_data.symbol_data|lookup:symbol|index:forloop.parentloop.counter0|floatformat:6 }}</td>
+                                                {% endfor %}
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% if data_arrays.scaled_data.count > 50 %}
+                                <div class="text-muted text-center mt-2">
+                                    <small>Showing first 50 of {{ data_arrays.scaled_data.count }} records. Export to CSV for full dataset.</small>
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <p class="text-muted">No scaled data available.</p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Pre-GARCH Data Stage -->
+                    <div class="tab-pane fade" id="pre-garch-data-stage" role="tabpanel" aria-labelledby="pre-garch-data-tab">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <h6><i class="bi bi-box-arrow-in-right"></i> Pre-GARCH Data</h6>
+                                <p class="text-muted mb-0">Data prepared and ready for GARCH model input</p>
+                            </div>
+                            <form method="post" action="{% url 'timeseries:export_csv' 'pre_garch_data' %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-success btn-sm">
+                                    <i class="bi bi-download"></i> Export CSV
+                                </button>
+                            </form>
+                        </div>
+                        
+                        {% if data_arrays.pre_garch_data %}
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <div class="bg-light p-2 rounded">
+                                        <small><strong>Records:</strong> {{ data_arrays.pre_garch_data.count }}</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="bg-light p-2 rounded">
+                                        <small><strong>Symbols:</strong> {{ symbols|join:", " }}</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="bg-light p-2 rounded">
+                                        <small><strong>Type:</strong> GARCH Input</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                                <table class="table table-striped table-sm">
+                                    <thead class="table-dark sticky-top">
+                                        <tr>
+                                            <th>Date</th>
+                                            {% for symbol in symbols %}
+                                                <th>{{ symbol }}</th>
+                                            {% endfor %}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for timestamp in data_arrays.pre_garch_data.timestamps|slice:":50" %}
+                                            <tr>
+                                                <td>{{ timestamp }}</td>
+                                                {% for symbol in symbols %}
+                                                    <td>{{ data_arrays.pre_garch_data.symbol_data|lookup:symbol|index:forloop.parentloop.counter0|floatformat:6 }}</td>
+                                                {% endfor %}
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% if data_arrays.pre_garch_data.count > 50 %}
+                                <div class="text-muted text-center mt-2">
+                                    <small>Showing first 50 of {{ data_arrays.pre_garch_data.count }} records. Export to CSV for full dataset.</small>
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <p class="text-muted">No pre-GARCH data available.</p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Post-GARCH Data Stage -->
+                    <div class="tab-pane fade" id="post-garch-data-stage" role="tabpanel" aria-labelledby="post-garch-data-tab">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <h6><i class="bi bi-box-arrow-right"></i> Post-GARCH Data</h6>
+                                <p class="text-muted mb-0">Data after GARCH volatility modeling and residual extraction</p>
+                            </div>
+                            <form method="post" action="{% url 'timeseries:export_csv' 'post_garch_data' %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-success btn-sm">
+                                    <i class="bi bi-download"></i> Export CSV
+                                </button>
+                            </form>
+                        </div>
+                        
+                        {% if data_arrays.post_garch_data %}
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <div class="bg-light p-2 rounded">
+                                        <small><strong>Records:</strong> {{ data_arrays.post_garch_data.count }}</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="bg-light p-2 rounded">
+                                        <small><strong>Symbols:</strong> {{ symbols|join:", " }}</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="bg-light p-2 rounded">
+                                        <small><strong>Type:</strong> GARCH Output</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                                <table class="table table-striped table-sm">
+                                    <thead class="table-dark sticky-top">
+                                        <tr>
+                                            <th>Date</th>
+                                            {% for symbol in symbols %}
+                                                <th>{{ symbol }}</th>
+                                            {% endfor %}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for timestamp in data_arrays.post_garch_data.timestamps|slice:":50" %}
+                                            <tr>
+                                                <td>{{ timestamp }}</td>
+                                                {% for symbol in symbols %}
+                                                    <td>{{ data_arrays.post_garch_data.symbol_data|lookup:symbol|index:forloop.parentloop.counter0|floatformat:6 }}</td>
+                                                {% endfor %}
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% if data_arrays.post_garch_data.count > 50 %}
+                                <div class="text-muted text-center mt-2">
+                                    <small>Showing first 50 of {{ data_arrays.post_garch_data.count }} records. Export to CSV for full dataset.</small>
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <p class="text-muted">No post-GARCH data available.</p>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
         </div>
     </div>
