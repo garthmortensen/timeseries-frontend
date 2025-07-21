@@ -131,6 +131,605 @@ class ResultsProcessor:
             'symbol_data': symbol_data,
             'count': len(timestamps)
         }
+
+    def create_plots(self) -> Dict[str, Any]:
+        """Create Plotly plots for statistical analysis."""
+        plots = {}
+        
+        try:
+            # Import here to avoid circular imports
+            from .plotting_utils import TimeSeriesPlotter
+            
+            # Create plotter with raw results
+            plotter = TimeSeriesPlotter(self.raw_results)
+            
+            # Generate original data plot for statistical tests section
+            original_data_plot = self._create_original_data_plot_for_stats()
+            if original_data_plot:
+                plots['original_data_stats'] = original_data_plot
+                logger.info("✓ Created original data plot for statistical tests")
+            else:
+                logger.warning("✗ Failed to create original data plot for statistical tests")
+
+            # Generate additional data transformation plots
+            returns_plot = self._create_returns_plot()
+            if returns_plot:
+                plots['returns_data_plot'] = returns_plot
+                logger.info("✓ Created returns data plot")
+            else:
+                logger.warning("✗ Failed to create returns data plot")
+
+            scaled_plot = self._create_scaled_data_plot()
+            if scaled_plot:
+                plots['scaled_data_plot'] = scaled_plot
+                logger.info("✓ Created scaled data plot")
+            else:
+                logger.warning("✗ Failed to create scaled data plot")
+
+            pre_garch_plot = self._create_pre_garch_plot()
+            if pre_garch_plot:
+                plots['pre_garch_plot'] = pre_garch_plot
+                logger.info("✓ Created pre-GARCH data plot")
+            else:
+                logger.warning("✗ Failed to create pre-GARCH data plot")
+
+            post_garch_plot = self._create_post_garch_plot()
+            if post_garch_plot:
+                plots['post_garch_plot'] = post_garch_plot
+                logger.info("✓ Created post-GARCH data plot")
+            else:
+                logger.warning("✗ Failed to create post-GARCH data plot")
+
+            # Generate ARIMA analysis plots
+            arima_plots = self._create_arima_plots()
+            if arima_plots:
+                plots.update(arima_plots)
+                logger.info(f"✓ Created {len(arima_plots)} ARIMA analysis plots")
+            else:
+                logger.warning("✗ Failed to create ARIMA analysis plots")
+                
+        except Exception as e:
+            logger.error(f"Error creating plots: {e}")
+            
+        return plots
+
+    def _create_original_data_plot_for_stats(self) -> Optional[str]:
+        """Create an original data plot specifically for the Statistical Tests section."""
+        try:
+            import plotly.graph_objects as go
+            import plotly.express as px
+            import plotly.utils
+            import json
+            
+            if 'original_data' not in self.raw_results or not self.raw_results['original_data']:
+                return None
+                
+            fig = go.Figure()
+            color_palette = px.colors.qualitative.Set2
+            
+            # Extract data from the original_data array
+            original_data = self.raw_results['original_data']
+            
+            # Get timestamps
+            timestamps = [row.get('index') for row in original_data if 'index' in row]
+            
+            # Add trace for each symbol
+            for i, symbol in enumerate(self.symbols):
+                prices = [row.get(symbol) for row in original_data if row.get(symbol) is not None]
+                valid_timestamps = [timestamps[j] for j, row in enumerate(original_data) if row.get(symbol) is not None]
+                
+                if prices and valid_timestamps:
+                    color = color_palette[i % len(color_palette)]
+                    fig.add_trace(go.Scatter(
+                        x=valid_timestamps,
+                        y=prices,
+                        mode='lines',
+                        name=symbol,
+                        line=dict(color=color, width=2),
+                        hovertemplate=f'<b>{symbol}</b><br>' +
+                                    'Date: %{x}<br>' +
+                                    'Price: %{y:.2f}<br>' +
+                                    '<extra></extra>'
+                    ))
+            
+            # Update layout
+            fig.update_layout(
+                title=dict(
+                    text="Original Price Data - Statistical Analysis Context",
+                    x=0.5,
+                    font=dict(size=18)
+                ),
+                xaxis_title="Date",
+                yaxis_title="Price",
+                yaxis=dict(rangemode='tozero'),  # Set y-axis minimum to 0
+                hovermode='x unified',
+                template='plotly_white',
+                showlegend=True,
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    x=1
+                ),
+                height=500,  # Increased height for wider appearance
+                margin=dict(l=40, r=40, t=80, b=60)  # Reduced margins and made plot wider
+            )
+            
+            return json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+            
+        except Exception as e:
+            logger.error(f"Error creating original data plot for stats: {e}")
+            return None
+
+    def _create_returns_plot(self) -> Optional[str]:
+        """Create a returns data plot."""
+        try:
+            import plotly.graph_objects as go
+            import plotly.express as px
+            import plotly.utils
+            import json
+            
+            if 'returns_data' not in self.raw_results or not self.raw_results['returns_data']:
+                return None
+                
+            fig = go.Figure()
+            color_palette = px.colors.qualitative.Set2
+            
+            # Extract data from the returns_data array
+            returns_data = self.raw_results['returns_data']
+            
+            # Get timestamps
+            timestamps = [row.get('index') for row in returns_data if 'index' in row]
+            
+            # Add trace for each symbol
+            for i, symbol in enumerate(self.symbols):
+                returns = [row.get(symbol) for row in returns_data if row.get(symbol) is not None]
+                valid_timestamps = [timestamps[j] for j, row in enumerate(returns_data) if row.get(symbol) is not None]
+                
+                if returns and valid_timestamps:
+                    color = color_palette[i % len(color_palette)]
+                    fig.add_trace(go.Scatter(
+                        x=valid_timestamps,
+                        y=returns,
+                        mode='lines',
+                        name=symbol,
+                        line=dict(color=color, width=1.5),
+                        hovertemplate=f'<b>{symbol}</b><br>' +
+                                    'Date: %{x}<br>' +
+                                    'Return: %{y:.6f}<br>' +
+                                    '<extra></extra>'
+                    ))
+            
+            # Add zero line
+            fig.add_hline(y=0, line_dash="dash", line_color="gray", opacity=0.5)
+            
+            # Update layout
+            fig.update_layout(
+                title=dict(
+                    text="Daily Returns - Logarithmic Returns",
+                    x=0.5,
+                    font=dict(size=18)
+                ),
+                xaxis_title="Date",
+                yaxis_title="Return",
+                hovermode='x unified',
+                template='plotly_white',
+                showlegend=True,
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    x=1
+                ),
+                height=500,  # Increased height for wider appearance
+                margin=dict(l=40, r=40, t=80, b=60)  # Reduced margins and made plot wider
+            )
+            
+            return json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+            
+        except Exception as e:
+            logger.error(f"Error creating returns plot: {e}")
+            return None
+
+    def _create_scaled_data_plot(self) -> Optional[str]:
+        """Create a scaled data plot."""
+        try:
+            import plotly.graph_objects as go
+            import plotly.express as px
+            import plotly.utils
+            import json
+            
+            if 'scaled_data' not in self.raw_results or not self.raw_results['scaled_data']:
+                return None
+                
+            fig = go.Figure()
+            color_palette = px.colors.qualitative.Set2
+            
+            # Extract data from the scaled_data array
+            scaled_data = self.raw_results['scaled_data']
+            
+            # Get timestamps
+            timestamps = [row.get('index') for row in scaled_data if 'index' in row]
+            
+            # Add trace for each symbol
+            for i, symbol in enumerate(self.symbols):
+                scaled_values = [row.get(symbol) for row in scaled_data if row.get(symbol) is not None]
+                valid_timestamps = [timestamps[j] for j, row in enumerate(scaled_data) if row.get(symbol) is not None]
+                
+                if scaled_values and valid_timestamps:
+                    color = color_palette[i % len(color_palette)]
+                    fig.add_trace(go.Scatter(
+                        x=valid_timestamps,
+                        y=scaled_values,
+                        mode='lines',
+                        name=symbol,
+                        line=dict(color=color, width=1.5),
+                        hovertemplate=f'<b>{symbol}</b><br>' +
+                                    'Date: %{x}<br>' +
+                                    'Scaled Value: %{y:.4f}<br>' +
+                                    '<extra></extra>'
+                    ))
+            
+            # Add zero line
+            fig.add_hline(y=0, line_dash="dash", line_color="gray", opacity=0.5)
+            
+            # Update layout
+            fig.update_layout(
+                title=dict(
+                    text="Scaled Data - Standardized for GARCH Analysis",
+                    x=0.5,
+                    font=dict(size=18)
+                ),
+                xaxis_title="Date",
+                yaxis_title="Scaled Value",
+                hovermode='x unified',
+                template='plotly_white',
+                showlegend=True,
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    x=1
+                ),
+                height=500,  # Increased height for wider appearance
+                margin=dict(l=40, r=40, t=80, b=60)  # Reduced margins and made plot wider
+            )
+            
+            return json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+            
+        except Exception as e:
+            logger.error(f"Error creating scaled data plot: {e}")
+            return None
+
+    def _create_pre_garch_plot(self) -> Optional[str]:
+        """Create a pre-GARCH data plot."""
+        try:
+            import plotly.graph_objects as go
+            import plotly.express as px
+            import plotly.utils
+            import json
+            
+            if 'pre_garch_data' not in self.raw_results or not self.raw_results['pre_garch_data']:
+                return None
+                
+            fig = go.Figure()
+            color_palette = px.colors.qualitative.Set2
+            
+            # Extract data from the pre_garch_data array
+            pre_garch_data = self.raw_results['pre_garch_data']
+            
+            # Get timestamps
+            timestamps = [row.get('index') for row in pre_garch_data if 'index' in row]
+            
+            # Add trace for each symbol
+            for i, symbol in enumerate(self.symbols):
+                pre_garch_values = [row.get(symbol) for row in pre_garch_data if row.get(symbol) is not None]
+                valid_timestamps = [timestamps[j] for j, row in enumerate(pre_garch_data) if row.get(symbol) is not None]
+                
+                if pre_garch_values and valid_timestamps:
+                    color = color_palette[i % len(color_palette)]
+                    fig.add_trace(go.Scatter(
+                        x=valid_timestamps,
+                        y=pre_garch_values,
+                        mode='lines',
+                        name=symbol,
+                        line=dict(color=color, width=1.5),
+                        hovertemplate=f'<b>{symbol}</b><br>' +
+                                    'Date: %{x}<br>' +
+                                    'Pre-GARCH Value: %{y:.4f}<br>' +
+                                    '<extra></extra>'
+                    ))
+            
+            # Add zero line
+            fig.add_hline(y=0, line_dash="dash", line_color="gray", opacity=0.5)
+            
+            # Update layout
+            fig.update_layout(
+                title=dict(
+                    text="Pre-GARCH Data - Input to GARCH Model",
+                    x=0.5,
+                    font=dict(size=18)
+                ),
+                xaxis_title="Date",
+                yaxis_title="Pre-GARCH Value",
+                hovermode='x unified',
+                template='plotly_white',
+                showlegend=True,
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    x=1
+                ),
+                height=500,  # Increased height for wider appearance
+                margin=dict(l=40, r=40, t=80, b=60)  # Reduced margins and made plot wider
+            )
+            
+            return json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+            
+        except Exception as e:
+            logger.error(f"Error creating pre-GARCH plot: {e}")
+            return None
+
+    def _create_post_garch_plot(self) -> Optional[str]:
+        """Create a post-GARCH data plot."""
+        try:
+            import plotly.graph_objects as go
+            import plotly.express as px
+            import plotly.utils
+            import json
+            
+            if 'post_garch_data' not in self.raw_results or not self.raw_results['post_garch_data']:
+                return None
+                
+            fig = go.Figure()
+            color_palette = px.colors.qualitative.Set2
+            
+            # Extract data from the post_garch_data array
+            post_garch_data = self.raw_results['post_garch_data']
+            
+            # Get timestamps
+            timestamps = [row.get('index') for row in post_garch_data if 'index' in row]
+            
+            # Add trace for each symbol
+            for i, symbol in enumerate(self.symbols):
+                post_garch_values = [row.get(symbol) for row in post_garch_data if row.get(symbol) is not None]
+                valid_timestamps = [timestamps[j] for j, row in enumerate(post_garch_data) if row.get(symbol) is not None]
+                
+                if post_garch_values and valid_timestamps:
+                    color = color_palette[i % len(color_palette)]
+                    fig.add_trace(go.Scatter(
+                        x=valid_timestamps,
+                        y=post_garch_values,
+                        mode='lines',
+                        name=symbol,
+                        line=dict(color=color, width=1.5),
+                        hovertemplate=f'<b>{symbol}</b><br>' +
+                                    'Date: %{x}<br>' +
+                                    'Post-GARCH Value: %{y:.4f}<br>' +
+                                    '<extra></extra>'
+                    ))
+            
+            # Update layout
+            fig.update_layout(
+                title=dict(
+                    text="Post-GARCH Data - GARCH Model Output",
+                    x=0.5,
+                    font=dict(size=18)
+                ),
+                xaxis_title="Date",
+                yaxis_title="Post-GARCH Value",
+                hovermode='x unified',
+                template='plotly_white',
+                showlegend=True,
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    x=1
+                ),
+                height=500,  # Increased height for wider appearance
+                margin=dict(l=40, r=40, t=80, b=60)  # Reduced margins and made plot wider
+            )
+            
+            return json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+            
+        except Exception as e:
+            logger.error(f"Error creating post-GARCH plot: {e}")
+            return None
+    
+    def _create_arima_plots(self) -> Dict[str, str]:
+        """Create ARIMA analysis plots for each symbol."""
+        arima_plots = {}
+        
+        try:
+            import plotly.graph_objects as go
+            import plotly.express as px
+            import plotly.utils
+            import json
+            from plotly.subplots import make_subplots
+            
+            if 'arima_results' not in self.raw_results or not self.raw_results['arima_results']:
+                return {}
+                
+            arima_results = self.raw_results['arima_results']
+            if 'all_symbols_arima' not in arima_results:
+                return {}
+                
+            all_symbols = arima_results['all_symbols_arima']
+            color_palette = px.colors.qualitative.Set2
+            
+            for i, (symbol, arima_data) in enumerate(all_symbols.items()):
+                if 'summary' not in arima_data:
+                    continue
+                    
+                summary = arima_data['summary']
+                forecast_data = arima_data.get('forecast', {})
+                
+                # Create subplot figure with 2x2 layout
+                fig = make_subplots(
+                    rows=2, cols=2,
+                    subplot_titles=(
+                        f'{symbol} - Fitted Values vs Actual',
+                        f'{symbol} - Residuals',
+                        f'{symbol} - Filtered Series (Mean Removed)',
+                        f'{symbol} - Forecast'
+                    ),
+                    vertical_spacing=0.12,
+                    horizontal_spacing=0.1
+                )
+                
+                color = color_palette[i % len(color_palette)]
+                
+                # Extract data
+                fitted_values = summary.get('fitted_values', {})
+                residuals = summary.get('residuals', {})
+                conditional_filtering = summary.get('conditional_mean_filtering', {})
+                filtered_series = conditional_filtering.get('filtered_series', {})
+                point_forecasts = forecast_data.get('point_forecasts', [])
+                
+                # Get timestamps and data for fitted values
+                if fitted_values:
+                    timestamps = list(fitted_values.keys())
+                    fitted_vals = list(fitted_values.values())
+                    
+                    # Plot 1: Fitted Values vs Actual (using returns data as actual)
+                    if 'returns_data' in self.raw_results and self.raw_results['returns_data']:
+                        returns_data = self.raw_results['returns_data']
+                        actual_values = [row.get(symbol) for row in returns_data if row.get(symbol) is not None]
+                        actual_timestamps = [row.get('index') for row in returns_data if row.get(symbol) is not None]
+                        
+                        if len(actual_values) >= len(fitted_vals):
+                            actual_values = actual_values[:len(fitted_vals)]
+                            actual_timestamps = actual_timestamps[:len(fitted_vals)]
+                            
+                            fig.add_trace(
+                                go.Scatter(
+                                    x=actual_timestamps,
+                                    y=actual_values,
+                                    mode='lines',
+                                    name='Actual',
+                                    line=dict(color='black', width=1),
+                                    showlegend=True
+                                ),
+                                row=1, col=1
+                            )
+                    
+                    fig.add_trace(
+                        go.Scatter(
+                            x=timestamps,
+                            y=fitted_vals,
+                            mode='lines',
+                            name='Fitted',
+                            line=dict(color=color, width=2),
+                            showlegend=True
+                        ),
+                        row=1, col=1
+                    )
+                
+                # Plot 2: Residuals
+                if residuals:
+                    res_timestamps = list(residuals.keys())
+                    res_values = list(residuals.values())
+                    
+                    fig.add_trace(
+                        go.Scatter(
+                            x=res_timestamps,
+                            y=res_values,
+                            mode='lines',
+                            name='Residuals',
+                            line=dict(color='red', width=1),
+                            showlegend=True
+                        ),
+                        row=1, col=2
+                    )
+                    
+                    # Add zero line for residuals
+                    fig.add_hline(y=0, line_dash="dash", line_color="gray", opacity=0.5, row=1, col=2)
+                
+                # Plot 3: Filtered Series (Mean Removed)
+                if filtered_series:
+                    filt_timestamps = list(filtered_series.keys())
+                    filt_values = list(filtered_series.values())
+                    
+                    fig.add_trace(
+                        go.Scatter(
+                            x=filt_timestamps,
+                            y=filt_values,
+                            mode='lines',
+                            name='Filtered Series',
+                            line=dict(color='green', width=1.5),
+                            showlegend=True
+                        ),
+                        row=2, col=1
+                    )
+                    
+                    # Add zero line for filtered series
+                    fig.add_hline(y=0, line_dash="dash", line_color="gray", opacity=0.5, row=2, col=1)
+                
+                # Plot 4: Point Forecasts
+                if point_forecasts:
+                    # Create forecast timestamps (assuming they follow the last timestamp)
+                    if fitted_values:
+                        last_timestamp = max(fitted_values.keys())
+                        # Simple increment for demo - in practice you'd calculate proper future dates
+                        forecast_timestamps = [f"Forecast_{j+1}" for j in range(len(point_forecasts))]
+                        
+                        fig.add_trace(
+                            go.Scatter(
+                                x=forecast_timestamps,
+                                y=point_forecasts,
+                                mode='lines+markers',
+                                name='Point Forecasts',
+                                line=dict(color='purple', width=2),
+                                marker=dict(size=6),
+                                showlegend=True
+                            ),
+                            row=2, col=2
+                        )
+                
+                # Update layout
+                fig.update_layout(
+                    title=dict(
+                        text=f"ARIMA Analysis - {symbol} ({forecast_data.get('model_specification', 'ARIMA')})",
+                        x=0.5,
+                        font=dict(size=16)
+                    ),
+                    height=600,
+                    showlegend=True,
+                    legend=dict(
+                        orientation="h",
+                        yanchor="bottom",
+                        y=-0.1,
+                        xanchor="center",
+                        x=0.5
+                    ),
+                    template='plotly_white',
+                    margin=dict(l=80, r=80, t=120, b=120)  # Increased padding on all sides
+                )
+                
+                # Update axes labels
+                fig.update_xaxes(title_text="Date", row=1, col=1)
+                fig.update_xaxes(title_text="Date", row=1, col=2)
+                fig.update_xaxes(title_text="Date", row=2, col=1)
+                fig.update_xaxes(title_text="Forecast Period", row=2, col=2)
+                
+                fig.update_yaxes(title_text="Value", row=1, col=1)
+                fig.update_yaxes(title_text="Residual", row=1, col=2)
+                fig.update_yaxes(title_text="Filtered Value", row=2, col=1)
+                fig.update_yaxes(title_text="Forecast Value", row=2, col=2)
+                
+                arima_plots[f'arima_analysis_{symbol.lower()}'] = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+                
+        except Exception as e:
+            logger.error(f"Error creating ARIMA plots: {e}")
+            
+        return arima_plots
     
     def process_stationarity_results(self) -> Dict[str, Any]:
         """Process stationarity test results."""
@@ -381,6 +980,7 @@ class ResultsProcessor:
             'spillover_results': self.process_spillover_results(),
             'granger_causality_results': self.process_granger_causality_results(),
             'executive_summary': self.get_executive_summary(),
+            'plots': self.create_plots(),  # Add plots generation
             'symbols': self.symbols,
             'raw_results': self.raw_results  # Keep for debugging/raw data tab
         }

@@ -48,9 +48,15 @@
         </button>
     </li>
     <li class="nav-item" role="presentation">
+        <button class="nav-link {% if active_tab == 'time-series' %}active{% endif %}" id="time-series-tab" data-bs-toggle="tab" data-bs-target="#time-series" 
+                type="button" role="tab" aria-controls="time-series" aria-selected="{% if active_tab == 'time-series' %}true{% else %}false{% endif %}">
+            <i class="bi bi-graph-up"></i> Time Series
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
         <button class="nav-link {% if active_tab == 'statistical-tests' %}active{% endif %}" id="statistical-tests-tab" data-bs-toggle="tab" data-bs-target="#statistical-tests" 
                 type="button" role="tab" aria-controls="statistical-tests" aria-selected="{% if active_tab == 'statistical-tests' %}true{% else %}false{% endif %}">
-            <i class="bi bi-graph-up"></i> Statistical Tests
+            <i class="bi bi-calculator"></i> Statistical Tests
         </button>
     </li>
     <li class="nav-item" role="presentation">
@@ -77,6 +83,12 @@
         <button class="nav-link {% if active_tab == 'granger-causality' %}active{% endif %}" id="granger-causality-tab" data-bs-toggle="tab" data-bs-target="#granger-causality"
                 type="button" role="tab" aria-controls="granger-causality" aria-selected="{% if active_tab == 'granger-causality' %}true{% else %}false{% endif %}">
             <i class="bi bi-arrow-through-heart"></i> Granger Causality
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link {% if active_tab == 'explainer' %}active{% endif %}" id="explainer-tab" data-bs-toggle="tab" data-bs-target="#explainer" 
+                type="button" role="tab" aria-controls="explainer" aria-selected="{% if active_tab == 'explainer' %}true{% else %}false{% endif %}">
+            <i class="bi bi-question-circle"></i> Explainer
         </button>
     </li>
     <li class="nav-item" role="presentation">
@@ -295,6 +307,204 @@
         </div>
     </div>
 
+    <!-- Time Series Tab -->
+    <div class="tab-pane fade {% if active_tab == 'time-series' %}show active{% endif %}" id="time-series" role="tabpanel" aria-labelledby="time-series-tab">
+        <!-- Original Data Visualization -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="bi bi-graph-up me-2"></i> Original Price Data Visualization</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info mb-3">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Time Series Analysis:</strong> This section provides interactive visualizations of the original price data used in the analysis. The chart below shows price movements over time for all analyzed symbols.
+                </div>
+                
+                {% if plots.original_data_stats %}
+                    <div id="original-data-plot" class="plotly-chart"></div>
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            try {
+                                var plotData = {{ plots.original_data_stats|safe }};
+                                Plotly.newPlot('original-data-plot', plotData.data, plotData.layout, {
+                                    responsive: true,
+                                    displayModeBar: true,
+                                    displaylogo: false,
+                                    modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d']
+                                });
+                            } catch (error) {
+                                console.error('Error rendering original data plot:', error);
+                                document.getElementById('original-data-plot').innerHTML = 
+                                    '<div class="alert alert-warning">Error loading chart. Please try refreshing the page.</div>';
+                            }
+                        });
+                    </script>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Chart Not Available:</strong> Original data visualization could not be generated. This may be due to missing data or processing issues.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Returns Data Visualization -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="bi bi-activity me-2"></i> Returns Data Visualization</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info mb-3">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Returns Analysis:</strong> Logarithmic returns calculated from the original price data. Returns show the percentage change in prices and are used for risk analysis and modeling.
+                </div>
+                
+                {% if plots.returns_data_plot %}
+                    <div id="returns-data-plot" class="plotly-chart"></div>
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            try {
+                                var plotData = {{ plots.returns_data_plot|safe }};
+                                Plotly.newPlot('returns-data-plot', plotData.data, plotData.layout, {
+                                    responsive: true,
+                                    displayModeBar: true,
+                                    displaylogo: false,
+                                    modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d']
+                                });
+                            } catch (error) {
+                                console.error('Error rendering returns plot:', error);
+                                document.getElementById('returns-data-plot').innerHTML = 
+                                    '<div class="alert alert-warning">Error loading chart. Please try refreshing the page.</div>';
+                            }
+                        });
+                    </script>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Chart Not Available:</strong> Returns data visualization could not be generated.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Scaled Data Visualization -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="bi bi-arrows-fullscreen me-2"></i> Scaled Data Visualization</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info mb-3">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Scaled Data:</strong> Standardized returns data prepared for GARCH modeling. This normalization helps ensure model stability and comparability across different assets.
+                </div>
+                
+                {% if plots.scaled_data_plot %}
+                    <div id="scaled-data-plot" class="plotly-chart"></div>
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            try {
+                                var plotData = {{ plots.scaled_data_plot|safe }};
+                                Plotly.newPlot('scaled-data-plot', plotData.data, plotData.layout, {
+                                    responsive: true,
+                                    displayModeBar: true,
+                                    displaylogo: false,
+                                    modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d']
+                                });
+                            } catch (error) {
+                                console.error('Error rendering scaled data plot:', error);
+                                document.getElementById('scaled-data-plot').innerHTML = 
+                                    '<div class="alert alert-warning">Error loading chart. Please try refreshing the page.</div>';
+                            }
+                        });
+                    </script>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Chart Not Available:</strong> Scaled data visualization could not be generated.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Pre-GARCH Data Visualization -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="bi bi-box-arrow-in-right me-2"></i> Pre-GARCH Data Visualization</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info mb-3">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Pre-GARCH Data:</strong> Data prepared and ready for GARCH model input. This represents the final preprocessing step before volatility modeling.
+                </div>
+                
+                {% if plots.pre_garch_plot %}
+                    <div id="pre-garch-plot" class="plotly-chart"></div>
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            try {
+                                var plotData = {{ plots.pre_garch_plot|safe }};
+                                Plotly.newPlot('pre-garch-plot', plotData.data, plotData.layout, {
+                                    responsive: true,
+                                    displayModeBar: true,
+                                    displaylogo: false,
+                                    modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d']
+                                });
+                            } catch (error) {
+                                console.error('Error rendering pre-GARCH plot:', error);
+                                document.getElementById('pre-garch-plot').innerHTML = 
+                                    '<div class="alert alert-warning">Error loading chart. Please try refreshing the page.</div>';
+                            }
+                        });
+                    </script>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Chart Not Available:</strong> Pre-GARCH data visualization could not be generated.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Post-GARCH Data Visualization -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="bi bi-box-arrow-right me-2"></i> Post-GARCH Data Visualization</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info mb-3">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Post-GARCH Data:</strong> Data after GARCH volatility modeling and residual extraction. This shows the final processed data with volatility clustering effects captured.
+                </div>
+                
+                {% if plots.post_garch_plot %}
+                    <div id="post-garch-plot" class="plotly-chart"></div>
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            try {
+                                var plotData = {{ plots.post_garch_plot|safe }};
+                                Plotly.newPlot('post-garch-plot', plotData.data, plotData.layout, {
+                                    responsive: true,
+                                    displayModeBar: true,
+                                    displaylogo: false,
+                                    modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d']
+                                });
+                            } catch (error) {
+                                console.error('Error rendering post-GARCH plot:', error);
+                                document.getElementById('post-garch-plot').innerHTML = 
+                                    '<div class="alert alert-warning">Error loading chart. Please try refreshing the page.</div>';
+                            }
+                        });
+                    </script>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Chart Not Available:</strong> Post-GARCH data visualization could not be generated.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
     <!-- Statistical Tests Tab -->
     <div class="tab-pane fade {% if active_tab == 'statistical-tests' %}show active{% endif %}" id="statistical-tests" role="tabpanel" aria-labelledby="statistical-tests-tab">
         <!-- Stationarity Tests -->
@@ -508,6 +718,52 @@
                 {% endif %}
             </div>
         </div>
+
+        <!-- ARIMA Analysis Visualizations -->
+        {% if plots %}
+            {% for symbol in symbols %}
+                {% with plot_key='arima_analysis_'|add:symbol|lower %}
+                    {% if plots|lookup:plot_key %}
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">
+                                    <i class="bi bi-graph-up-arrow me-2"></i> 
+                                    {{ symbol|upper }} - ARIMA Analysis Visualization
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-info mb-3">
+                                    <i class="bi bi-info-circle"></i>
+                                    <strong>ARIMA Components:</strong> This visualization shows the complete ARIMA analysis for {{ symbol|upper }}, including fitted values vs actual data, residuals analysis, filtered series (with predictable component removed), and forecast projections.
+                                    {% if arima_results|lookup:symbol.forecast.forecast_method %}
+                                        <br><strong>Forecast Method:</strong> {{ arima_results|lookup:symbol.forecast.forecast_method }}
+                                    {% endif %}
+                                </div>
+                                
+                                <div id="arima-plot-{{ symbol|lower }}" class="plotly-chart"></div>
+                                <script>
+                                    document.addEventListener('DOMContentLoaded', function() {
+                                        try {
+                                            var plotData = {{ plots|lookup:plot_key|safe }};
+                                            Plotly.newPlot('arima-plot-{{ symbol|lower }}', plotData.data, plotData.layout, {
+                                                responsive: true,
+                                                displayModeBar: true,
+                                                displaylogo: false,
+                                                modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d']
+                                            });
+                                        } catch (error) {
+                                            console.error('Error rendering ARIMA plot for {{ symbol }}:', error);
+                                            document.getElementById('arima-plot-{{ symbol|lower }}').innerHTML = 
+                                                '<div class="alert alert-warning">Error loading ARIMA chart for {{ symbol }}. Please try refreshing the page.</div>';
+                                        }
+                                    });
+                                </script>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endwith %}
+            {% endfor %}
+        {% endif %}
         
     </div>
 
@@ -663,6 +919,122 @@
                 {% else %}
                     <p class="text-muted">No Granger causality results available.</p>
                 {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Explainer Tab -->
+    <div class="tab-pane fade {% if active_tab == 'explainer' %}show active{% endif %}" id="explainer" role="tabpanel" aria-labelledby="explainer-tab">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="bi bi-question-circle"></i> Analysis Background & Context</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info mb-4">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Background Context:</strong> This section provides detailed background information and context for the time series analysis, including explanations of the models used and their interpretation.
+                </div>
+
+                {% if arima_results %}
+                    {% for symbol, arima in arima_results.items %}
+                        {% if arima.interpretation.background_context %}
+                            <div class="card mb-4">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">
+                                        <i class="bi bi-graph-up-arrow me-2"></i>
+                                        {{ symbol|upper }} - ARIMA Background Context
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    {% for context_key, context_value in arima.interpretation.background_context.items %}
+                                        <div class="mb-3">
+                                            <h6 class="text-primary">{{ context_key|title|replace_underscore }}</h6>
+                                            {% if context_value is string %}
+                                                <p class="mb-0">{{ context_value }}</p>
+                                            {% elif context_value.items %}
+                                                <ul class="mb-0">
+                                                    {% for k, v in context_value.items %}
+                                                        <li><strong>{{ k|title|replace_underscore }}:</strong> {{ v }}</li>
+                                                    {% endfor %}
+                                                </ul>
+                                            {% else %}
+                                                <p class="mb-0">{{ context_value }}</p>
+                                            {% endif %}
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="bi bi-book"></i> General Analysis Overview</h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-3">This analysis was conducted using advanced time series modeling techniques to identify patterns, test hypotheses, and forecast future values. Below is a high-level overview of the steps involved in the analysis:</p>
+                
+                <div class="row">
+                    <div class="col-lg-6">
+                        <h6><i class="bi bi-1-circle me-2"></i>Data Collection & Preprocessing</h6>
+                        <ul class="mb-4">
+                            <li>Historical price data collection for analyzed assets</li>
+                            <li>Data cleaning and quality assurance</li>
+                            <li>Handling missing values and outliers</li>
+                            <li>Adjustments for corporate actions (splits, dividends)</li>
+                        </ul>
+
+                        <h6><i class="bi bi-2-circle me-2"></i>Exploratory Data Analysis</h6>
+                        <ul class="mb-4">
+                            <li>Distribution analysis and trend identification</li>
+                            <li>Anomaly detection and data validation</li>
+                            <li>Correlation analysis between assets</li>
+                            <li>Initial pattern recognition</li>
+                        </ul>
+
+                        <h6><i class="bi bi-3-circle me-2"></i>Stationarity Testing</h6>
+                        <ul class="mb-4">
+                            <li>Augmented Dickey-Fuller (ADF) test implementation</li>
+                            <li>Unit root testing for model assumptions</li>
+                            <li>Data transformation recommendations</li>
+                            <li>Statistical significance evaluation</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="col-lg-6">
+                        <h6><i class="bi bi-4-circle me-2"></i>Time Series Modeling</h6>
+                        <ul class="mb-4">
+                            <li><strong>ARIMA Models:</strong> AutoRegressive Integrated Moving Average for trend and seasonality</li>
+                            <li><strong>GARCH Models:</strong> Generalized AutoRegressive Conditional Heteroskedasticity for volatility</li>
+                            <li>Parameter optimization and model selection</li>
+                            <li>Cross-validation and robustness testing</li>
+                        </ul>
+
+                        <h6><i class="bi bi-5-circle me-2"></i>Model Evaluation & Diagnostics</h6>
+                        <ul class="mb-4">
+                            <li>Information criteria (AIC, BIC, HQIC) comparison</li>
+                            <li>Residual analysis and diagnostic checks</li>
+                            <li>Model adequacy testing</li>
+                            <li>Out-of-sample validation</li>
+                        </ul>
+
+                        <h6><i class="bi bi-6-circle me-2"></i>Results & Interpretation</h6>
+                        <ul class="mb-4">
+                            <li>Statistical significance assessment</li>
+                            <li>Economic interpretation of findings</li>
+                            <li>Risk and uncertainty quantification</li>
+                            <li>Actionable insights and recommendations</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="alert alert-light border mt-4">
+                    <h6><i class="bi bi-lightbulb me-2"></i>Key Takeaways</h6>
+                    <p class="mb-0">The analysis results are presented in the previous tabs, where you can explore detailed findings, interactive visualizations, and download underlying data. Each model provides specific insights into different aspects of the time series behavior, from trend forecasting to volatility estimation.</p>
+                </div>
             </div>
         </div>
     </div>
