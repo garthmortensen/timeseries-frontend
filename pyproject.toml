@@ -1,6 +1,6 @@
 [project]
 name = "timeseries-frontend"
-version = "0.8.0"
+version = "0.9.0"
 description = "Django frontend for spillover analysis and time series modeling"
 authors = [
     { name="Garth Mortensen", email="mortensengarth@hotmail.com" }

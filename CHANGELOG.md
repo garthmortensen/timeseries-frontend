@@ -10,6 +10,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial Django project setup
 - Basic spillover analysis interface
 - Google Cloud Run deployment configuration
+## frontend-v0.9.0 (2025-07-21)
+
+### Feat
+
+- **Background**: add api content to Background tab
+- **arima**: add content to ARIMA tab
+- **results-overview**: follow principles pyramid to restructure overview
+- **results.html**: reworking results parsing from scratch
+- **results**: quicksave before adding to api outputs all the config inputs
+
+### Fix
+
+- **pydantic**: update pydantic model with missing components so backend returns all expected keys
+- **api-parse**: parse basic api content using jsonpaths
+- **redirect**: analysis.html run analysis button starting loading spinner which redirects immediately to results.html
+- **POST**: adjust post request for nested data
+- **POST**: transform post request into nested structure with correct fields"
+- **everything**: trying to make this thing work
+
 ## frontend-v0.8.0 (2025-07-05)
 
 ### Feat
