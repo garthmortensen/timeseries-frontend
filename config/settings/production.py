@@ -30,6 +30,8 @@ CSRF_TRUSTED_ORIGINS = [f"https://{host}" for host in ALLOWED_HOSTS]
 
 # Trust the X-Forwarded-Host header from the Google Cloud Run proxy
 USE_X_FORWARDED_HOST = True
+# Trust the X-Forwarded-Proto header from Cloudflare and other proxies
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # Auto-detect Google Cloud Run environment
 # Cloud Run sets K_SERVICE environment variable
