@@ -24,18 +24,12 @@ if app_host_env and app_host_env not in ALLOWED_HOSTS:
 if not ALLOWED_HOSTS:
     ALLOWED_HOSTS = ['spilloverlab.com', 'www.spilloverlab.com']
 
-# CSRF Trusted Origins - use APP_HOST
-CSRF_TRUSTED_ORIGINS = [
-    'https://spilloverlab.com',
-    'https://www.spilloverlab.com'
-]
-if app_host_env:
-    CSRF_TRUSTED_ORIGINS.append(f"https://{app_host_env}")
-elif allowed_hosts_env: # Fallback to the first host in ALLOWED_HOSTS if APP_HOST is not set
-    first_allowed_host = ALLOWED_HOSTS[0] if ALLOWED_HOSTS else None
-    if first_allowed_host and first_allowed_host != 'localhost' and first_allowed_host != '127.0.0.1':
-        CSRF_TRUSTED_ORIGINS.append(f"https://{first_allowed_host}")
+# CSRF Trusted Origins - build from ALLOWED_HOSTS
+# This ensures any allowed host is also trusted for secure requests.
+CSRF_TRUSTED_ORIGINS = [f"https://{host}" for host in ALLOWED_HOSTS]
 
+# Trust the X-Forwarded-Host header from the Google Cloud Run proxy
+USE_X_FORWARDED_HOST = True
 
 # Auto-detect Google Cloud Run environment
 # Cloud Run sets K_SERVICE environment variable
