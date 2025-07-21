@@ -497,8 +497,13 @@ function startLoadingAnimation() {
     document.getElementById('submitText').style.display = 'none';
     document.getElementById('submitSpinner').style.display = 'inline';
     
-    currentMessageIndex = 0;
-    document.getElementById('qaText').textContent = qaMessages[0];
+    // Start with a random question (even indices are questions)
+    const questionIndices = [];
+    for (let i = 0; i < qaMessages.length; i += 2) {
+        questionIndices.push(i);
+    }
+    currentMessageIndex = questionIndices[Math.floor(Math.random() * questionIndices.length)];
+    document.getElementById('qaText').textContent = qaMessages[currentMessageIndex];
     
     messageInterval = setInterval(() => {
         currentMessageIndex = (currentMessageIndex + 1) % qaMessages.length;

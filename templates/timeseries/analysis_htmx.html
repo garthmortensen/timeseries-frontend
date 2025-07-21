@@ -245,8 +245,13 @@ function analysisApp() {
 
         startAnalysis() {
             this.isLoading = true;
-            this.messageIndex = 0;
-            this.currentMessage = this.messages[0];
+            // Start with a random question (even indices are questions)
+            const questionIndices = [];
+            for (let i = 0; i < this.messages.length; i += 2) {
+                questionIndices.push(i);
+            }
+            this.messageIndex = questionIndices[Math.floor(Math.random() * questionIndices.length)];
+            this.currentMessage = this.messages[this.messageIndex];
             this.startMessageCycle();
         },
 

@@ -92,6 +92,11 @@
         integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7" 
         crossorigin="anonymous">
 
+    <!-- HTMX for dynamic interactions -->
+    <script src="https://unpkg.com/htmx.org@1.9.12/dist/htmx.min.js"
+        integrity="sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2XoQrxeTUQyRjrOnlCoYta87iKBWq3EsdM2"
+        crossorigin="anonymous"></script>
+
     <!-- Plotly.js -->
     <script src="https://cdn.plot.ly/plotly-3.0.1.min.js"
         charset="utf-8"
@@ -140,7 +145,7 @@
         <div class="container py-3">
             <p class="text-center mb-0">Garth Mortensen &copy; {% now "Y" %}</p>
             <!-- Hidden message for screen readers -->
-            <p class="sr-only">SpilloverLab provides time series analysis with ARIMA and GARCH models. If you need assistance with accessibility, please contact us.</p>
+            <p class="visually-hidden">SpilloverLab provides time series analysis with ARIMA and GARCH models. If you need assistance with accessibility, please contact us.</p>
         </div>
     </footer>
 

@@ -1578,6 +1578,9 @@ let loadingMessageInterval;
             return;
         }
 
+        // Start with a random question instead of the first one
+        currentShuffledIndex = Math.floor(Math.random() * shuffledQuestionIndices.length);
+
         function displayNextQAPair() {
             if (currentShuffledIndex >= shuffledQuestionIndices.length) {
                 // Reshuffle and reset if we've gone through all pairs

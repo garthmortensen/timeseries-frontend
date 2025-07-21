@@ -80,9 +80,71 @@ def view_api_response_popup(request):
 
 def export_csv(request, data_type):
     """
-    Export CSV data.
+    Export CSV data using HTMX for better UX.
     """
-    return HttpResponse(f"CSV export for {data_type} not implemented", content_type="text/plain")
+    import csv
+    import io
+    from django.utils import timezone
+    
+    # Get processed results from session
+    processed_results = request.session.get('analysis_results', {})
+    data_arrays = processed_results.get('data_arrays', {})
+    symbols = processed_results.get('symbols', [])
+    
+    # Check if the requested data type exists
+    if data_type not in data_arrays:
+        if request.headers.get('HX-Request'):
+            return HttpResponse(
+                f'<div class="alert alert-danger">No {data_type.replace("_", " ")} data available for export.</div>',
+                content_type='text/html'
+            )
+        else:
+            return HttpResponse(f"No {data_type} data available for export.", content_type="text/plain")
+    
+    data_info = data_arrays[data_type]
+    timestamps = data_info.get('timestamps', [])
+    symbol_data = data_info.get('symbol_data', {})
+    
+    if not timestamps or not symbol_data:
+        if request.headers.get('HX-Request'):
+            return HttpResponse(
+                f'<div class="alert alert-warning">No data rows available for {data_type.replace("_", " ")}.</div>',
+                content_type='text/html'
+            )
+        else:
+            return HttpResponse(f"No data rows available for {data_type}.", content_type="text/plain")
+    
+    # Create CSV content
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Write header
+    header = ['Date'] + symbols
+    writer.writerow(header)
+    
+    # Write data rows
+    for i, timestamp in enumerate(timestamps):
+        row = [timestamp]
+        for symbol in symbols:
+            symbol_values = symbol_data.get(symbol, [])
+            if i < len(symbol_values) and symbol_values[i] is not None:
+                row.append(symbol_values[i])
+            else:
+                row.append('')  # Empty cell for missing data
+        writer.writerow(row)
+    
+    # Get CSV content
+    csv_content = output.getvalue()
+    output.close()
+    
+    # Generate filename with timestamp
+    current_time = timezone.now().strftime('%Y%m%d_%H%M%S')
+    filename = f"timeseries_{data_type}_{current_time}.csv"
+    
+    # Return CSV file
+    response = HttpResponse(csv_content, content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
 
 def api_proxy(request, api_path):
     """

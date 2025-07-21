@@ -50,7 +50,7 @@
     <li class="nav-item" role="presentation">
         <button class="nav-link {% if active_tab == 'time-series' %}active{% endif %}" id="time-series-tab" data-bs-toggle="tab" data-bs-target="#time-series" 
                 type="button" role="tab" aria-controls="time-series" aria-selected="{% if active_tab == 'time-series' %}true{% else %}false{% endif %}">
-            <i class="bi bi-graph-up"></i> Time Series
+            <i class="bi bi-graph-up"></i> Series
         </button>
     </li>
     <li class="nav-item" role="presentation">
@@ -82,19 +82,19 @@
     <li class="nav-item" role="presentation">
         <button class="nav-link {% if active_tab == 'granger-causality' %}active{% endif %}" id="granger-causality-tab" data-bs-toggle="tab" data-bs-target="#granger-causality"
                 type="button" role="tab" aria-controls="granger-causality" aria-selected="{% if active_tab == 'granger-causality' %}true{% else %}false{% endif %}">
-            <i class="bi bi-arrow-through-heart"></i> Granger Causality
+            <i class="bi bi-arrow-through-heart"></i> Causality
         </button>
     </li>
     <li class="nav-item" role="presentation">
         <button class="nav-link {% if active_tab == 'explainer' %}active{% endif %}" id="explainer-tab" data-bs-toggle="tab" data-bs-target="#explainer" 
                 type="button" role="tab" aria-controls="explainer" aria-selected="{% if active_tab == 'explainer' %}true{% else %}false{% endif %}">
-            <i class="bi bi-question-circle"></i> Explainer
+            <i class="bi bi-question-circle"></i> Background
         </button>
     </li>
     <li class="nav-item" role="presentation">
         <button class="nav-link {% if active_tab == 'data-lineage' %}active{% endif %}" id="data-lineage-tab" data-bs-toggle="tab" data-bs-target="#data-lineage-pane" 
                 type="button" role="tab" aria-controls="data-lineage-pane" aria-selected="{% if active_tab == 'data-lineage' %}true{% else %}false{% endif %}">
-            <i class="bi bi-diagram-3"></i> Data Lineage
+            <i class="bi bi-diagram-3"></i> Provenance
         </button>
     </li>
 </ul>
@@ -923,7 +923,7 @@
         </div>
     </div>
 
-    <!-- Explainer Tab -->
+    <!-- Background Tab -->
     <div class="tab-pane fade {% if active_tab == 'explainer' %}show active{% endif %}" id="explainer" role="tabpanel" aria-labelledby="explainer-tab">
         <div class="card mb-4">
             <div class="card-header">
@@ -935,14 +935,49 @@
                     <strong>Background Context:</strong> This section provides detailed background information and context for the time series analysis, including explanations of the models used and their interpretation.
                 </div>
 
+                {% if stationarity_results.all_symbols_stationarity %}
+                    <!-- Extract stationarity background context from first symbol -->
+                    {% for symbol, test_result in stationarity_results.all_symbols_stationarity.items %}
+                        {% if test_result.interpretation.background_context and forloop.first %}
+                            <div class="card mb-4">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">
+                                        <i class="bi bi-activity me-2"></i>
+                                        Stationarity Testing Background Context
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    {% for context_key, context_value in test_result.interpretation.background_context.items %}
+                                        <div class="mb-3">
+                                            <h6 class="text-primary">{{ context_key|title|replace_underscore }}</h6>
+                                            {% if context_value is string %}
+                                                <p class="mb-0">{{ context_value }}</p>
+                                            {% elif context_value.items %}
+                                                <ul class="mb-0">
+                                                    {% for k, v in context_value.items %}
+                                                        <li><strong>{{ k|title|replace_underscore }}:</strong> {{ v }}</li>
+                                                    {% endfor %}
+                                                </ul>
+                                            {% else %}
+                                                <p class="mb-0">{{ context_value }}</p>
+                                            {% endif %}
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+
                 {% if arima_results %}
+                    <!-- Extract background context from first symbol (since it's the same for all) -->
                     {% for symbol, arima in arima_results.items %}
-                        {% if arima.interpretation.background_context %}
+                        {% if arima.interpretation.background_context and forloop.first %}
                             <div class="card mb-4">
                                 <div class="card-header bg-light">
                                     <h6 class="mb-0">
                                         <i class="bi bi-graph-up-arrow me-2"></i>
-                                        {{ symbol|upper }} - ARIMA Background Context
+                                        ARIMA Modeling Background Context
                                     </h6>
                                 </div>
                                 <div class="card-body">
@@ -967,79 +1002,64 @@
                         {% endif %}
                     {% endfor %}
                 {% endif %}
-            </div>
-        </div>
 
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0"><i class="bi bi-book"></i> General Analysis Overview</h5>
-            </div>
-            <div class="card-body">
-                <p class="mb-3">This analysis was conducted using advanced time series modeling techniques to identify patterns, test hypotheses, and forecast future values. Below is a high-level overview of the steps involved in the analysis:</p>
-                
-                <div class="row">
-                    <div class="col-lg-6">
-                        <h6><i class="bi bi-1-circle me-2"></i>Data Collection & Preprocessing</h6>
-                        <ul class="mb-4">
-                            <li>Historical price data collection for analyzed assets</li>
-                            <li>Data cleaning and quality assurance</li>
-                            <li>Handling missing values and outliers</li>
-                            <li>Adjustments for corporate actions (splits, dividends)</li>
-                        </ul>
+                {% if garch_results %}
+                    <!-- Extract GARCH background context from first symbol -->
+                    {% for symbol, garch in garch_results.items %}
+                        {% if garch.interpretation.background_context and forloop.first %}
+                            <div class="card mb-4">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">
+                                        <i class="bi bi-lightning me-2"></i>
+                                        GARCH Modeling Background Context
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    {% for context_key, context_value in garch.interpretation.background_context.items %}
+                                        <div class="mb-3">
+                                            <h6 class="text-primary">{{ context_key|title|replace_underscore }}</h6>
+                                            {% if context_value is string %}
+                                                <p class="mb-0">{{ context_value }}</p>
+                                            {% elif context_value.items %}
+                                                <ul class="mb-0">
+                                                    {% for k, v in context_value.items %}
+                                                        <li><strong>{{ k|title|replace_underscore }}:</strong> {{ v }}</li>
+                                                    {% endfor %}
+                                                </ul>
+                                            {% else %}
+                                                <p class="mb-0">{{ context_value }}</p>
+                                            {% endif %}
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
 
-                        <h6><i class="bi bi-2-circle me-2"></i>Exploratory Data Analysis</h6>
-                        <ul class="mb-4">
-                            <li>Distribution analysis and trend identification</li>
-                            <li>Anomaly detection and data validation</li>
-                            <li>Correlation analysis between assets</li>
-                            <li>Initial pattern recognition</li>
-                        </ul>
-
-                        <h6><i class="bi bi-3-circle me-2"></i>Stationarity Testing</h6>
-                        <ul class="mb-4">
-                            <li>Augmented Dickey-Fuller (ADF) test implementation</li>
-                            <li>Unit root testing for model assumptions</li>
-                            <li>Data transformation recommendations</li>
-                            <li>Statistical significance evaluation</li>
-                        </ul>
-                    </div>
-                    
-                    <div class="col-lg-6">
-                        <h6><i class="bi bi-4-circle me-2"></i>Time Series Modeling</h6>
-                        <ul class="mb-4">
-                            <li><strong>ARIMA Models:</strong> AutoRegressive Integrated Moving Average for trend and seasonality</li>
-                            <li><strong>GARCH Models:</strong> Generalized AutoRegressive Conditional Heteroskedasticity for volatility</li>
-                            <li>Parameter optimization and model selection</li>
-                            <li>Cross-validation and robustness testing</li>
-                        </ul>
-
-                        <h6><i class="bi bi-5-circle me-2"></i>Model Evaluation & Diagnostics</h6>
-                        <ul class="mb-4">
-                            <li>Information criteria (AIC, BIC, HQIC) comparison</li>
-                            <li>Residual analysis and diagnostic checks</li>
-                            <li>Model adequacy testing</li>
-                            <li>Out-of-sample validation</li>
-                        </ul>
-
-                        <h6><i class="bi bi-6-circle me-2"></i>Results & Interpretation</h6>
-                        <ul class="mb-4">
-                            <li>Statistical significance assessment</li>
-                            <li>Economic interpretation of findings</li>
-                            <li>Risk and uncertainty quantification</li>
-                            <li>Actionable insights and recommendations</li>
-                        </ul>
-                    </div>
-                </div>
-                
-                <div class="alert alert-light border mt-4">
-                    <h6><i class="bi bi-lightbulb me-2"></i>Key Takeaways</h6>
-                    <p class="mb-0">The analysis results are presented in the previous tabs, where you can explore detailed findings, interactive visualizations, and download underlying data. Each model provides specific insights into different aspects of the time series behavior, from trend forecasting to volatility estimation.</p>
-                </div>
+                <!-- What is GARCH Section -->
+                {% if garch_results %}
+                    {% for symbol, garch in garch_results.items %}
+                        {% if garch.interpretation.background_context.what_is_garch and forloop.first %}
+                            <div class="card mb-4">
+                                <div class="card-header bg-warning text-dark">
+                                    <h6 class="mb-0">
+                                        <i class="bi bi-lightning-charge me-2"></i>
+                                        What is GARCH?
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="mb-0">{{ garch.interpretation.background_context.what_is_garch }}</p>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
             </div>
         </div>
     </div>
 
-    <!-- Data Lineage Tab -->
+    <!-- Data Pipeline Tab -->
     <div class="tab-pane fade {% if active_tab == 'data-lineage' %}show active{% endif %}" id="data-lineage-pane" role="tabpanel" aria-labelledby="data-lineage-tab">
         <div class="card">
             <div class="card-header">
@@ -1095,13 +1115,19 @@
                                 <h6><i class="bi bi-currency-dollar"></i> Original Price Data</h6>
                                 <p class="text-muted mb-0">Raw financial data as received from the data source</p>
                             </div>
-                            <form method="post" action="{% url 'timeseries:export_csv' 'original_data' %}" style="display: inline;">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-success btn-sm">
+                            <div>
+                                <button hx-post="{% url 'timeseries:export_csv' 'original_data' %}" 
+                                        hx-indicator="#csv-loading-original" 
+                                        hx-target="#csv-result-original"
+                                        class="btn btn-success btn-sm">
                                     <i class="bi bi-download"></i> Export CSV
                                 </button>
-                            </form>
+                                <div id="csv-loading-original" class="htmx-indicator spinner-border spinner-border-sm ms-2" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
                         </div>
+                        <div id="csv-result-original"></div>
                         
                         {% if data_arrays.original_data %}
                             <div class="row mb-3">
@@ -1133,7 +1159,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {% for timestamp in data_arrays.original_data.timestamps|slice:":50" %}
+                                        {% for timestamp in data_arrays.original_data.timestamps|slice:":10" %}
                                             <tr>
                                                 <td>{{ timestamp }}</td>
                                                 {% for symbol in symbols %}
@@ -1144,9 +1170,9 @@
                                     </tbody>
                                 </table>
                             </div>
-                            {% if data_arrays.original_data.count > 50 %}
+                            {% if data_arrays.original_data.count > 10 %}
                                 <div class="text-muted text-center mt-2">
-                                    <small>Showing first 50 of {{ data_arrays.original_data.count }} records. Export to CSV for full dataset.</small>
+                                    <small>Showing first 10 of {{ data_arrays.original_data.count }} records. Export to CSV for full dataset.</small>
                                 </div>
                             {% endif %}
                         {% else %}
@@ -1161,13 +1187,19 @@
                                 <h6><i class="bi bi-graph-up"></i> Returns Data</h6>
                                 <p class="text-muted mb-0">Logarithmic returns calculated from price data</p>
                             </div>
-                            <form method="post" action="{% url 'timeseries:export_csv' 'returns_data' %}" style="display: inline;">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-success btn-sm">
+                            <div>
+                                <button hx-post="{% url 'timeseries:export_csv' 'returns_data' %}" 
+                                        hx-indicator="#csv-loading-returns" 
+                                        hx-target="#csv-result-returns"
+                                        class="btn btn-success btn-sm">
                                     <i class="bi bi-download"></i> Export CSV
                                 </button>
-                            </form>
+                                <div id="csv-loading-returns" class="htmx-indicator spinner-border spinner-border-sm ms-2" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
                         </div>
+                        <div id="csv-result-returns"></div>
                         
                         {% if data_arrays.returns_data %}
                             <div class="row mb-3">
@@ -1199,7 +1231,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {% for timestamp in data_arrays.returns_data.timestamps|slice:":50" %}
+                                        {% for timestamp in data_arrays.returns_data.timestamps|slice:":10" %}
                                             <tr>
                                                 <td>{{ timestamp }}</td>
                                                 {% for symbol in symbols %}
@@ -1210,9 +1242,9 @@
                                     </tbody>
                                 </table>
                             </div>
-                            {% if data_arrays.returns_data.count > 50 %}
+                            {% if data_arrays.returns_data.count > 10 %}
                                 <div class="text-muted text-center mt-2">
-                                    <small>Showing first 50 of {{ data_arrays.returns_data.count }} records. Export to CSV for full dataset.</small>
+                                    <small>Showing first 10 of {{ data_arrays.returns_data.count }} records. Export to CSV for full dataset.</small>
                                 </div>
                             {% endif %}
                         {% else %}
@@ -1227,13 +1259,19 @@
                                 <h6><i class="bi bi-arrows-fullscreen"></i> Scaled Data for GARCH</h6>
                                 <p class="text-muted mb-0">Standardized returns data prepared for GARCH modeling</p>
                             </div>
-                            <form method="post" action="{% url 'timeseries:export_csv' 'scaled_data' %}" style="display: inline;">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-success btn-sm">
+                            <div>
+                                <button hx-post="{% url 'timeseries:export_csv' 'scaled_data' %}" 
+                                        hx-indicator="#csv-loading-scaled" 
+                                        hx-target="#csv-result-scaled"
+                                        class="btn btn-success btn-sm">
                                     <i class="bi bi-download"></i> Export CSV
                                 </button>
-                            </form>
+                                <div id="csv-loading-scaled" class="htmx-indicator spinner-border spinner-border-sm ms-2" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
                         </div>
+                        <div id="csv-result-scaled"></div>
                         
                         {% if data_arrays.scaled_data %}
                             <div class="row mb-3">
@@ -1265,7 +1303,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {% for timestamp in data_arrays.scaled_data.timestamps|slice:":50" %}
+                                        {% for timestamp in data_arrays.scaled_data.timestamps|slice:":10" %}
                                             <tr>
                                                 <td>{{ timestamp }}</td>
                                                 {% for symbol in symbols %}
@@ -1276,9 +1314,9 @@
                                     </tbody>
                                 </table>
                             </div>
-                            {% if data_arrays.scaled_data.count > 50 %}
+                            {% if data_arrays.scaled_data.count > 10 %}
                                 <div class="text-muted text-center mt-2">
-                                    <small>Showing first 50 of {{ data_arrays.scaled_data.count }} records. Export to CSV for full dataset.</small>
+                                    <small>Showing first 10 of {{ data_arrays.scaled_data.count }} records. Export to CSV for full dataset.</small>
                                 </div>
                             {% endif %}
                         {% else %}
@@ -1293,13 +1331,19 @@
                                 <h6><i class="bi bi-box-arrow-in-right"></i> Pre-GARCH Data</h6>
                                 <p class="text-muted mb-0">Data prepared and ready for GARCH model input</p>
                             </div>
-                            <form method="post" action="{% url 'timeseries:export_csv' 'pre_garch_data' %}" style="display: inline;">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-success btn-sm">
+                            <div>
+                                <button hx-post="{% url 'timeseries:export_csv' 'pre_garch_data' %}" 
+                                        hx-indicator="#csv-loading-pre-garch" 
+                                        hx-target="#csv-result-pre-garch"
+                                        class="btn btn-success btn-sm">
                                     <i class="bi bi-download"></i> Export CSV
                                 </button>
-                            </form>
+                                <div id="csv-loading-pre-garch" class="htmx-indicator spinner-border spinner-border-sm ms-2" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
                         </div>
+                        <div id="csv-result-pre-garch"></div>
                         
                         {% if data_arrays.pre_garch_data %}
                             <div class="row mb-3">
@@ -1331,7 +1375,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {% for timestamp in data_arrays.pre_garch_data.timestamps|slice:":50" %}
+                                        {% for timestamp in data_arrays.pre_garch_data.timestamps|slice:":10" %}
                                             <tr>
                                                 <td>{{ timestamp }}</td>
                                                 {% for symbol in symbols %}
@@ -1342,9 +1386,9 @@
                                     </tbody>
                                 </table>
                             </div>
-                            {% if data_arrays.pre_garch_data.count > 50 %}
+                            {% if data_arrays.pre_garch_data.count > 10 %}
                                 <div class="text-muted text-center mt-2">
-                                    <small>Showing first 50 of {{ data_arrays.pre_garch_data.count }} records. Export to CSV for full dataset.</small>
+                                    <small>Showing first 10 of {{ data_arrays.pre_garch_data.count }} records. Export to CSV for full dataset.</small>
                                 </div>
                             {% endif %}
                         {% else %}
@@ -1359,13 +1403,19 @@
                                 <h6><i class="bi bi-box-arrow-right"></i> Post-GARCH Data</h6>
                                 <p class="text-muted mb-0">Data after GARCH volatility modeling and residual extraction</p>
                             </div>
-                            <form method="post" action="{% url 'timeseries:export_csv' 'post_garch_data' %}" style="display: inline;">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-success btn-sm">
+                            <div>
+                                <button hx-post="{% url 'timeseries:export_csv' 'post_garch_data' %}" 
+                                        hx-indicator="#csv-loading-post-garch" 
+                                        hx-target="#csv-result-post-garch"
+                                        class="btn btn-success btn-sm">
                                     <i class="bi bi-download"></i> Export CSV
                                 </button>
-                            </form>
+                                <div id="csv-loading-post-garch" class="htmx-indicator spinner-border spinner-border-sm ms-2" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
                         </div>
+                        <div id="csv-result-post-garch"></div>
                         
                         {% if data_arrays.post_garch_data %}
                             <div class="row mb-3">
@@ -1397,7 +1447,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {% for timestamp in data_arrays.post_garch_data.timestamps|slice:":50" %}
+                                        {% for timestamp in data_arrays.post_garch_data.timestamps|slice:":10" %}
                                             <tr>
                                                 <td>{{ timestamp }}</td>
                                                 {% for symbol in symbols %}
@@ -1408,9 +1458,9 @@
                                     </tbody>
                                 </table>
                             </div>
-                            {% if data_arrays.post_garch_data.count > 50 %}
+                            {% if data_arrays.post_garch_data.count > 10 %}
                                 <div class="text-muted text-center mt-2">
-                                    <small>Showing first 50 of {{ data_arrays.post_garch_data.count }} records. Export to CSV for full dataset.</small>
+                                    <small>Showing first 10 of {{ data_arrays.post_garch_data.count }} records. Export to CSV for full dataset.</small>
                                 </div>
                             {% endif %}
                         {% else %}
