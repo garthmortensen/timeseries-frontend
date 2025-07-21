@@ -24,6 +24,9 @@ if app_host_env and app_host_env not in ALLOWED_HOSTS:
 if not ALLOWED_HOSTS:
     ALLOWED_HOSTS = ['spilloverlab.com', 'www.spilloverlab.com']
 
+# Trust the X-Forwarded-Host header from the Google Cloud Run proxy
+USE_X_FORWARDED_HOST = True
+
 # CSRF Trusted Origins - use APP_HOST
 CSRF_TRUSTED_ORIGINS = [
     'https://spilloverlab.com',
