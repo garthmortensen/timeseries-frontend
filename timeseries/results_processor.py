@@ -311,8 +311,22 @@ class ResultsProcessor:
             'key_insights': [],
             'model_performance': {},
             'business_recommendations': [],
-            'executive_summary': {}
+            'executive_summary': {},
+            'stationarity_summary': {},
+            'garch_summary': {}
         }
+        
+        # Extract stationarity executive summaries
+        stationarity_results = self.process_stationarity_results()
+        if 'all_symbols_stationarity' in stationarity_results:
+            for symbol, result in stationarity_results['all_symbols_stationarity'].items():
+                interpretation = result.get('interpretation', {})
+                if 'executive_summary' in interpretation:
+                    exec_summary = interpretation['executive_summary']
+                    summary['stationarity_summary'][symbol] = exec_summary
+                    if 'bottom_line' in exec_summary:
+                        summary['key_insights'].append(f"{symbol} Stationarity: {exec_summary['bottom_line']}")
+        
         # Extract key insights from ARIMA interpretations
         arima_results = self.process_arima_results()
         for symbol, result in arima_results.items():
@@ -325,6 +339,19 @@ class ResultsProcessor:
                     summary['key_insights'].append(f"{symbol}: {exec_summary['bottom_line']}")
                 if 'recommendation' in exec_summary:
                     summary['business_recommendations'].append(f"{symbol}: {exec_summary['recommendation']}")
+        
+        # Extract GARCH executive summaries
+        garch_results = self.process_garch_results()
+        for symbol, result in garch_results.items():
+            interpretation = result.get('interpretation', {})
+            if 'executive_summary' in interpretation:
+                exec_summary = interpretation['executive_summary']
+                summary['garch_summary'][symbol] = exec_summary
+                if 'bottom_line' in exec_summary:
+                    summary['key_insights'].append(f"{symbol} GARCH: {exec_summary['bottom_line']}")
+                if 'recommendation' in exec_summary:
+                    summary['business_recommendations'].append(f"{symbol} GARCH: {exec_summary['recommendation']}")
+        
         # Extract spillover insights
         spillover_results = self.process_spillover_results()
         if spillover_results.get('interpretation'):

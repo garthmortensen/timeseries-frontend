@@ -99,33 +99,35 @@
                         <h5 class="card-title mb-0"><i class="bi bi-briefcase"></i> Executive Summary</h5>
                     </div>
                     <div class="card-body">
-                        {% if executive_summary.analysis_overview %}
-                            <div class="mb-3">
-                                <h6>Analysis Overview</h6>
-                                <p><strong>Symbols Analyzed:</strong> {{ executive_summary.analysis_overview.symbols_analyzed|join:", " }}</p>
+                        {% if executive_summary.stationarity_summary %}
+                            <div class="card mb-3">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0"><i class="bi bi-activity"></i> Stationarity Analysis Summary</h6>
+                                </div>
+                                <div class="card-body">
+                                    {% for symbol, details in executive_summary.stationarity_summary.items %}
+                                        <div class="border-start border-primary border-3 ps-3 mb-3">
+                                            <h6 class="text-primary mb-2">{{ symbol|upper }}</h6>
+                                            <ul class="mb-0">
+                                                {% for key, value in details.items %}
+                                                    <li><strong>{{ key|title|replace_underscore }}:</strong> {{ value }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    {% endfor %}
+                                </div>
                             </div>
                         {% endif %}
-                        {% if executive_summary.executive_summary or executive_summary.stationarity_summary or executive_summary.garch_summary %}
-                            <div class="mb-3">
-                                <h6>Executive Summary Details</h6>
-                                {% if executive_summary.stationarity_summary %}
-                                    <h6 class="mt-3 text-primary">Stationarity Executive Summary</h6>
-                                    {% for symbol, details in executive_summary.stationarity_summary.items %}
-                                        <div class="mb-2">
-                                            <strong>{{ symbol|upper }}:</strong>
-                                            <ul class="mb-0">
-                                                {% for key, value in details.items %}
-                                                    <li><strong>{{ key|title|replace_underscore }}:</strong> {{ value }}</li>
-                                                {% endfor %}
-                                            </ul>
-                                        </div>
-                                    {% endfor %}
-                                {% endif %}
-                                {% if executive_summary.executive_summary %}
-                                    <h6 class="mt-3 text-primary">ARIMA Executive Summary</h6>
+                        
+                        {% if executive_summary.executive_summary %}
+                            <div class="card mb-3">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0"><i class="bi bi-graph-up-arrow"></i> ARIMA Analysis Summary</h6>
+                                </div>
+                                <div class="card-body">
                                     {% for symbol, details in executive_summary.executive_summary.items %}
-                                        <div class="mb-2">
-                                            <strong>{{ symbol|upper }}:</strong>
+                                        <div class="border-start border-success border-3 ps-3 mb-3">
+                                            <h6 class="text-success mb-2">{{ symbol|upper }}</h6>
                                             <ul class="mb-0">
                                                 {% for key, value in details.items %}
                                                     <li><strong>{{ key|title|replace_underscore }}:</strong> {{ value }}</li>
@@ -133,12 +135,19 @@
                                             </ul>
                                         </div>
                                     {% endfor %}
-                                {% endif %}
-                                {% if executive_summary.garch_summary %}
-                                    <h6 class="mt-3 text-primary">GARCH Executive Summary</h6>
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        {% if executive_summary.garch_summary %}
+                            <div class="card mb-3">
+                                <div class="card-header bg-warning text-dark">
+                                    <h6 class="mb-0"><i class="bi bi-lightning"></i> GARCH Analysis Summary</h6>
+                                </div>
+                                <div class="card-body">
                                     {% for symbol, details in executive_summary.garch_summary.items %}
-                                        <div class="mb-2">
-                                            <strong>{{ symbol|upper }}:</strong>
+                                        <div class="border-start border-warning border-3 ps-3 mb-3">
+                                            <h6 class="text-warning mb-2">{{ symbol|upper }}</h6>
                                             <ul class="mb-0">
                                                 {% for key, value in details.items %}
                                                     <li><strong>{{ key|title|replace_underscore }}:</strong> {{ value }}</li>
@@ -146,7 +155,7 @@
                                             </ul>
                                         </div>
                                     {% endfor %}
-                                {% endif %}
+                                </div>
                             </div>
                         {% endif %}
                     </div>
