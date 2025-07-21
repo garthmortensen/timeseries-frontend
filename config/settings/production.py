@@ -24,9 +24,6 @@ if app_host_env and app_host_env not in ALLOWED_HOSTS:
 if not ALLOWED_HOSTS:
     ALLOWED_HOSTS = ['spilloverlab.com', 'www.spilloverlab.com']
 
-# Trust the X-Forwarded-Host header from the Google Cloud Run proxy
-USE_X_FORWARDED_HOST = True
-
 # CSRF Trusted Origins - use APP_HOST
 CSRF_TRUSTED_ORIGINS = [
     'https://spilloverlab.com',
@@ -67,18 +64,15 @@ X_FRAME_OPTIONS = 'DENY'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # API Configuration for Production
-# Override the API URL to point to production API
-TIMESERIES_API_URL = 'https://api.spilloverlab.com'
+# Get the API URL from an environment variable. The base settings already provide a
+# default, so we just need to ensure production settings use the env var.
+TIMESERIES_API_URL = os.environ.get('API_URL', TIMESERIES_API_URL)
 
-# Update Content Security Policy to include production API domain
-CONTENT_SECURITY_POLICY = {
-    'DIRECTIVES': {
-        'default-src': ("'self'",),
-        'style-src': ("'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://fonts.googleapis.com"),
-        'script-src': ("'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://cdn.plot.ly", "https://www.googletagmanager.com", "https://unpkg.com"),
-        'font-src': ("'self'", "https://cdn.jsdelivr.net", "https://fonts.gstatic.com"),
-        'img-src': ("'self'", "data:"),
-        'connect-src': ("'self'", "https://api.spilloverlab.com", "https://www.googletagmanager.com", "https://www.google-analytics.com"),
-        'frame-src': ("'none'",),
-    }
-}
+
+# Update Content Security Policy to include the configured API domain
+# We start with the base policy and extend the connect-src directive
+csp_connect_src = list(CONTENT_SECURITY_POLICY['DIRECTIVES'].get('connect-src', ("'self'",)))
+if TIMESERIES_API_URL not in csp_connect_src:
+    csp_connect_src.append(TIMESERIES_API_URL)
+
+CONTENT_SECURITY_POLICY['DIRECTIVES']['connect-src'] = tuple(csp_connect_src)
