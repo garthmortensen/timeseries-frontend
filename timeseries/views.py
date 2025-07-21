@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
+from django.conf import settings
 import json
 import requests
 import logging
@@ -213,7 +214,7 @@ def run_pipeline_htmx(request):
         
         try:
             # Call the API
-            response = requests.post("http://localhost:8001/api/v1/run_pipeline", json=payload, timeout=120)
+            response = requests.post(f"{settings.TIMESERIES_API_URL}/api/v1/run_pipeline", json=payload, timeout=120)
             
             if response.status_code == 200:
                 # Parse and process the API response

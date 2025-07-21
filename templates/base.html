@@ -97,6 +97,13 @@
         integrity="sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2XoQrxeTUQyRjrOnlCoYta87iKBWq3EsdM2"
         crossorigin="anonymous"></script>
 
+    <!-- HTMX CSRF Token Configuration -->
+    <script>
+        document.body.addEventListener('htmx:configRequest', (event) => {
+            event.detail.headers['X-CSRFToken'] = '{{ csrf_token }}';
+        });
+    </script>
+
     <!-- Plotly.js -->
     <script src="https://cdn.plot.ly/plotly-3.0.1.min.js"
         charset="utf-8"

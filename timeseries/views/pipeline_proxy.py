@@ -4,6 +4,7 @@ from django.http import JsonResponse, HttpResponseRedirect
 from django.views.decorators.csrf import csrf_exempt
 from django.urls import reverse
 from django.shortcuts import render
+from django.conf import settings
 
 def run_pipeline_proxy(request):
     if request.method == "POST":
@@ -49,7 +50,7 @@ def run_pipeline_proxy(request):
             "spillover_params": spillover_params,
         }
         # Send to backend API
-        response = requests.post("http://localhost:8001/api/v1/run_pipeline", json=payload)
+        response = requests.post(f"{settings.TIMESERIES_API_URL}/api/v1/run_pipeline", json=payload)
         # Optionally, render a template with results or redirect
         if response.status_code == 200:
             return render(request, "timeseries/analysis_results.html", {"results": response.json()})
