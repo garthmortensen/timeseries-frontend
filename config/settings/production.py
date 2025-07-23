@@ -11,17 +11,22 @@ from .base import *
 DEBUG = False
 
 # Get allowed hosts from environment variable. This is the single source of truth for deployments.
-allowed_hosts_str = os.environ.get('ALLOWED_HOSTS')
+allowed_hosts_str = os.environ.get("ALLOWED_HOSTS")
 if allowed_hosts_str:
-    ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_str.split(',') if host.strip()]
+    ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_str.split(",")]
 else:
-    # Fallback for local testing of production settings if the env var is not set.
-    ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+    # If ALLOWED_HOSTS is not set, we'll default to an empty list
+    # and log a warning, as this should be explicitly set in production.
+    # For safety, Django will not run with an empty ALLOWED_HOSTS list if DEBUG is False.
+    ALLOWED_HOSTS = []
+    # You might want to add logging here to warn that ALLOWED_HOSTS is not set.
 
 # CSRF Trusted Origins - build directly from ALLOWED_HOSTS.
+# We filter out empty strings that might result from splitting an empty env var.
 CSRF_TRUSTED_ORIGINS = [f"https://{host}" for host in ALLOWED_HOSTS if host]
 # Add http origins for local testing if applicable
-if 'localhost' in ALLOWED_HOSTS:
+# This part is more for local testing of production settings.
+if "localhost" in ALLOWED_HOSTS:
     CSRF_TRUSTED_ORIGINS.append('http://localhost:8000')
     CSRF_TRUSTED_ORIGINS.append('http://127.0.0.1:8000')
 
