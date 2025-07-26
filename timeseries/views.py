@@ -237,17 +237,50 @@ def run_pipeline_htmx(request):
             if response.status_code == 200:
                 # Parse and process the API response
                 api_results = response.json()
-                print(f"DEBUG: API call successful, got {len(api_results)} top-level keys")
-                print(f"DEBUG: API response keys: {list(api_results.keys())}")
+                print(f"DEBUG: API call successful, got {len(api_results)} top-level keys", flush=True)
+                print(f"DEBUG: API response keys: {list(api_results.keys())}", flush=True)
+                
+                # Write to debug file immediately
+                try:
+                    with open('./logs/debug_view.log', 'a') as f:
+                        f.write(f"DEBUG: API call successful, got {len(api_results)} top-level keys\n")
+                        f.write(f"DEBUG: API response keys: {list(api_results.keys())}\n")
+                        f.flush()
+                except Exception as e:
+                    print(f"DEBUG: Could not write to debug file: {e}")
+                
                 logger.info("[HTMX] API call successful, processing results")
                 
                 # Import and use the ResultsProcessor
                 from .results_processor import ResultsProcessor
-                print("DEBUG: About to create ResultsProcessor")
+                print("DEBUG: About to create ResultsProcessor", flush=True)
+                
+                try:
+                    with open('./logs/debug_view.log', 'a') as f:
+                        f.write("DEBUG: About to create ResultsProcessor\n")
+                        f.flush()
+                except:
+                    pass
+                
                 processor = ResultsProcessor(api_results)
-                print("DEBUG: About to call process_all()")
+                print("DEBUG: About to call process_all()", flush=True)
+                
+                try:
+                    with open('./logs/debug_view.log', 'a') as f:
+                        f.write("DEBUG: About to call process_all()\n")
+                        f.flush()
+                except:
+                    pass
+                    
                 processed_results = processor.process_all()
-                print("DEBUG: process_all() completed successfully")
+                print("DEBUG: process_all() completed successfully", flush=True)
+                
+                try:
+                    with open('./logs/debug_view.log', 'a') as f:
+                        f.write("DEBUG: process_all() completed successfully\n")
+                        f.flush()
+                except:
+                    pass
                 
                 # Store processed results in session for the results page
                 request.session['analysis_results'] = processed_results

@@ -966,7 +966,19 @@ class ResultsProcessor:
         Process all results into a complete structured format for templates.
         This is the main method called by views to get all processed data.
         """
-        print("DEBUG: Starting process_all() method")
+        # Force debug output to both console and a file
+        import sys
+        debug_msg = "DEBUG: Starting process_all() method - THIS SHOULD APPEAR!"
+        print(debug_msg, flush=True)
+        sys.stdout.flush()
+        
+        # Also write to a debug file
+        try:
+            with open('./logs/debug_results_processor.log', 'a') as f:
+                f.write(f"{debug_msg}\n")
+                f.flush()
+        except:
+            pass
         
         processed_results = {
             'symbols': self.symbols,
@@ -981,7 +993,17 @@ class ResultsProcessor:
             'executive_summary': self.create_executive_summary()  # Add this for Overview tab
         }
         
-        print("DEBUG: Completed process_all() method")
+        debug_msg2 = "DEBUG: Completed process_all() method - THIS SHOULD ALSO APPEAR!"
+        print(debug_msg2, flush=True)
+        sys.stdout.flush()
+        
+        try:
+            with open('./logs/debug_results_processor.log', 'a') as f:
+                f.write(f"{debug_msg2}\n")
+                f.flush()
+        except:
+            pass
+        
         return processed_results
 
     def create_executive_summary(self) -> Dict[str, Any]:
@@ -990,6 +1012,14 @@ class ResultsProcessor:
         Extracts key information from each analysis component.
         """
         print("DEBUG: Creating executive summary")
+        
+        # Also write to debug file
+        try:
+            with open('./logs/debug_results_processor.log', 'a') as f:
+                f.write("DEBUG: Creating executive summary\n")
+                f.flush()
+        except:
+            pass
         
         summary = {}
         
