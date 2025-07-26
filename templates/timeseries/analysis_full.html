@@ -43,53 +43,6 @@
         display: block;
         margin-bottom: 0.25rem;
     }
-
-    /* Loading animation styles */
-    .loading-container {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(255, 255, 255, 0.95);
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-    }
-
-    .spinner {
-        width: 3rem;
-        height: 3rem;
-        border: 0.4rem solid #e9ecef;
-        border-top: 0.4rem solid #007bff;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-        margin-bottom: 2rem;
-    }
-
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-
-    .qa-text {
-        max-width: 600px;
-        text-align: center;
-        font-size: 1.2rem;
-        line-height: 1.6;
-        color: #333;
-        white-space: pre-line;
-    }
-
-    .advanced-settings {
-        display: none;
-    }
-    
-    .advanced-settings.show {
-        display: block;
-    }
 </style>
 {% endblock %}
 
@@ -103,28 +56,34 @@
 </div>
 
 <!-- Loading Screen -->
-<div id="loadingContainer" class="loading-container">
-    <div class="spinner"></div>
-    <div id="qaText" class="qa-text"></div>
+<div id="loading" class="text-center" style="display: none;">
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-2" id="qaText" style="white-space: pre-line;">Running analysis, please wait...</p>
 </div>
 
 <!-- Main Content -->
 <div id="mainContent">
-    <h1 class="mb-4">Comprehensive Analysis Configuration</h1>
+    <h1 class="mb-4">Analysis Configuration</h1>
 
     <div class="guide-text" style="font-size: 1.1em;">
         <strong>Markets are deeply interconnected</strong>, as the 2008 Global Financial Crisis proved beyond doubt. A shock in one can ripple through others—stocks, indexes, even regions.
         This analysis quantifies those spillovers, predicts volatility, and maps how risk moves between assets.<br><br>
-        <strong>Configure Your Analysis</strong> below to explore market dynamics, forecast volatility, and uncover contagion paths with full control over all parameters.
+        <strong>Choose Your Own Analysis</strong> below to explore market dynamics, forecast volatility, and uncover contagion paths.
     </div>
 
     <!-- Form -->
-    <form id="analysisForm" action="{% url 'timeseries:run_pipeline_htmx' %}" method="post">
+    <form id="analysis-form" method="post" action="/api_proxy/api/v1/run_pipeline/">
         {% csrf_token %}
         
         <!-- Data Source Configuration -->
         <div class="form-section">
-            <h3 class="section-header">Data Source Configuration</h3>
+            <h3 class="section-header">Define Data Source</h3>
+            
+            <div class="guide-text">
+                Use synthetic data for testing or actual market data.
+            </div>
             
             <div class="form-check mb-3">
                 <input class="form-check-input" type="radio" name="source_actual_or_synthetic_data" id="synthetic" value="synthetic" checked>
@@ -134,10 +93,10 @@
                 </label>
             </div>
             <div class="form-check mb-3">
-                <input class="form-check-input" type="radio" name="source_actual_or_synthetic_data" id="yfinance" value="actual_yfinance">
+                <input class="form-check-input" type="radio" name="source_actual_or_synthetic_data" id="yfinance" value="actual_stooq">
                 <label class="form-check-label" for="yfinance">
-                    <strong>Yahoo Finance Data</strong><br>
-                    <small class="text-muted">Real market data from Yahoo Finance API</small>
+                    <strong>Stooq Market Data</strong><br>
+                    <small class="text-muted">Real market data from Stooq data provider</small>
                 </label>
             </div>
             
@@ -156,78 +115,406 @@
             </div>
         </div>
 
-        <!-- Symbols Configuration -->
+        <!-- Date Range Configuration -->
         <div class="form-section">
-            <h3 class="section-header">Symbols Configuration</h3>
-            <div class="mb-3">
-                <label for="symbols" class="form-label">Stock Symbols (comma-separated, max 5)</label>
-                <input type="text" class="form-control" name="symbols" value="MSFT,AAPL,GOOGL" placeholder="e.g., MSFT,AAPL,GOOGL,TSLA,NVDA">
-                <div class="parameter-help">
-                    <strong>Examples:</strong> MSFT,AAPL,GOOGL for tech stocks; SPY,QQQ,IWM for ETFs; BTC-USD,ETH-USD for crypto
-                </div>
+            <h3 class="section-header">Date Range</h3>
+            
+            <div class="guide-text">
+                Specify the time period (max 5 years).
             </div>
             
-            <!-- Synthetic Data Anchor Prices -->
-            <div id="anchorPricesSection">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="data-start-date" class="form-label">Start Date</label>
+                        <input type="date" class="form-control" id="data-start-date" name="data_start_date" value="2023-01-01">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="data-end-date" class="form-label">End Date</label>
+                        <input type="date" class="form-control" id="data-end-date" name="data_end_date" value="2023-02-01">
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Symbols Configuration -->
+        <div class="form-section">
+            <h3 class="section-header">Select Symbols</h3>
+            
+            <div class="guide-text">
+                Define which symbols to analyze (max 5 symbols). Choose your preferred method for selecting symbols
+            </div>
+            
+            <!-- Symbol Selection Method -->
+            <div class="mb-4">
+                <h5>Selection Method</h5>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="radio" name="symbol_selection_method" id="symbol-method-manual" value="manual" checked>
+                    <label class="form-check-label" for="symbol-method-manual">
+                        <strong>Enter Symbols Manually</strong><br>
+                        <small class="text-muted">Type in specific stock symbols, ETFs, or indices</small>
+                    </label>
+                </div>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="radio" name="symbol_selection_method" id="symbol-method-predefined" value="predefined">
+                    <label class="form-check-label" for="symbol-method-predefined">
+                        <strong>Select from Predefined Lists</strong><br>
+                        <small class="text-muted">Choose from organized industry sectors and investment categories</small>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Manual Symbol Entry -->
+            <div id="manual-symbol-entry" style="display: block;">
+                <h5>Manual Symbol Entry</h5>
+                
+                <div id="market-params" style="display: none;">
+                    <div class="mb-3">
+                        <label for="symbols" class="form-label">Symbols (comma-separated)</label>
+                        <input type="text" class="form-control" id="symbols" name="symbols" value="MSFT, AAPL, NEM.US" placeholder="Enter symbols like AAPL,MSFT,GOOGL">
+                        <div class="parameter-help">
+                            MSFT, AAPL, NEM.US
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="synthetic-params" style="display: block;">
+                    <div class="mb-3">
+                        <label for="synthetic-symbols" class="form-label">Synthetic Symbols (comma-separated)</label>
+                        <input type="text" class="form-control" id="synthetic-symbols" name="synthetic_symbols" value="MSFT, AAPL, NEM.US" placeholder="Enter symbols like SYM1,SYM2,SYM3">
+                        <div class="parameter-help">
+                            MSFT, AAPL, NEM.US (artificial symbol names)
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="synthetic-anchor-prices" class="form-label">Anchor Prices (comma-separated)</label>
+                        <input type="text" class="form-control" id="synthetic-anchor-prices" name="synthetic_anchor_prices" value="10, 20, 30" placeholder="Enter prices like 100,200,50">
+                        <div class="parameter-help">
+                            10, 20, 30 (corresponding to symbols above)
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Predefined Lists Selection -->
+            <div id="predefined-symbol-selection" style="display: none;">
+                <h5>Select from Predefined Lists</h5>
+                
+                <!-- Most Traded Stocks in the USA -->
                 <div class="mb-3">
-                    <label for="synthetic_anchor_prices" class="form-label">Synthetic Anchor Prices (optional)</label>
-                    <input type="text" class="form-control" name="synthetic_anchor_prices" placeholder="e.g., 100,200,300">
-                    <div class="parameter-help">
-                        <strong>Leave blank for auto-generated prices</strong> or specify starting prices for each symbol
+                    <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#mostTradedStocks" aria-expanded="false" aria-controls="mostTradedStocks">
+                        <i class="bi bi-chevron-down"></i> US High Volume
+                    </button>
+                    <div class="collapse mt-2" id="mostTradedStocks">
+                        <div class="card card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="text-muted mb-2">Technology</h6>
+                                    <div class="form-check">
+                                        <input class="form-check-input industry-checkbox" type="checkbox" value="AAPL" id="stock-aapl" data-name="Apple Inc.">
+                                        <label class="form-check-label" for="stock-aapl">
+                                            <strong>AAPL</strong> - Apple<br>
+                                            <small class="text-muted">Technology hardware & equipment</small>
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input industry-checkbox" type="checkbox" value="NVDA" id="stock-nvda" data-name="NVIDIA Corporation">
+                                        <label class="form-check-label" for="stock-nvda">
+                                            <strong>NVDA</strong> - NVIDIA<br>
+                                            <small class="text-muted">Semiconductors & AI</small>
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="MSFT" id="stock-msft" data-name="Microsoft Corporation">
+                                        <label class="form-check-label" for="stock-msft">
+                                            <strong>MSFT</strong> - Microsoft<br>
+                                            <small class="text-muted">Software & cloud services</small>
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="TSM" id="stock-tsm" data-name="Taiwan Semiconductor">
+                                        <label class="form-check-label" for="stock-tsm">
+                                            <strong>TSM</strong> - Taiwan Semiconductor<br>
+                                            <small class="text-muted">Semiconductor manufacturing</small>
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="AMD" id="stock-amd" data-name="Advanced Micro Devices">
+                                        <label class="form-check-label" for="stock-amd">
+                                            <strong>AMD</strong> - AMD<br>
+                                            <small class="text-muted">Semiconductors & processors</small>
+                                        </label>
+                                    </div>
+                                    
+                                    <h6 class="text-muted mb-2 mt-3">Consumer Discretionary</h6>
+                                    <div class="form-check">
+                                        <input class="form-check-input industry-checkbox" type="checkbox" value="AMZN" id="stock-amzn" data-name="Amazon.com Inc.">
+                                        <label class="form-check-label" for="stock-amzn">
+                                            <strong>AMZN</strong> - Amazon<br>
+                                            <small class="text-muted">E-commerce & cloud services</small>
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="TSLA" id="stock-tsla" data-name="Tesla Inc.">
+                                        <label class="form-check-label" for="stock-tsla">
+                                            <strong>TSLA</strong> - Tesla<br>
+                                            <small class="text-muted">Electric vehicles & energy</small>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-muted mb-2">Communication Services</h6>
+                                    <div class="form-check">
+                                        <input class="form-check-input industry-checkbox" type="checkbox" value="GOOGL" id="stock-googl" data-name="Alphabet Inc.">
+                                        <label class="form-check-label" for="stock-googl">
+                                            <strong>GOOGL</strong> - Alphabet<br>
+                                            <small class="text-muted">Search & digital advertising</small>
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input industry-checkbox" type="checkbox" value="META" id="stock-meta" data-name="Meta Platforms Inc.">
+                                        <label class="form-check-label" for="stock-meta">
+                                            <strong>META</strong> - Meta<br>
+                                            <small class="text-muted">Social media & metaverse</small>
+                                        </label>
+                                    </div>
+                                    
+                                    <h6 class="text-muted mb-2 mt-3">Financials</h6>
+                                    <div class="form-check">
+                                        <input class="form-check-input industry-checkbox" type="checkbox" value="BRK.B" id="stock-brkb" data-name="Berkshire Hathaway Inc.">
+                                        <label class="form-check-label" for="stock-brkb">
+                                            <strong>BRK.B</strong> - Berkshire Hathaway<br>
+                                            <small class="text-muted">Diversified holding company</small>
+                                        </label>
+                                    </div>
+                                    
+                                    <h6 class="text-muted mb-2 mt-3">Healthcare</h6>
+                                    <div class="form-check">
+                                        <input class="form-check-input industry-checkbox" type="checkbox" value="JNJ" id="stock-jnj" data-name="Johnson & Johnson">
+                                        <label class="form-check-label" for="stock-jnj">
+                                            <strong>JNJ</strong> - Johnson & Johnson<br>
+                                            <small class="text-muted">Pharmaceuticals & medical devices</small>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Sector ETFs -->
+                <div class="mb-3">
+                    <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#sectorETFs" aria-expanded="false" aria-controls="sectorETFs">
+                        <i class="bi bi-chevron-down"></i> Sector ETFs
+                    </button>
+                    <div class="collapse mt-2" id="sectorETFs">
+                        <div class="card card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input industry-checkbox" type="checkbox" value="XLK" id="sector-xlk" data-name="Technology Select Sector SPDR">
+                                        <label class="form-check-label" for="sector-xlk">
+                                            <strong>XLK</strong> - Technology<br>
+                                            <small class="text-muted">Software, hardware, semiconductors</small>
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input industry-checkbox" type="checkbox" value="XLV" id="sector-xlv" data-name="Health Care Select Sector SPDR">
+                                        <label class="form-check-label" for="sector-xlv">
+                                            <strong>XLV</strong> - Healthcare<br>
+                                            <small class="text-muted">Pharmaceuticals, biotech, equipment</small>
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input industry-checkbox" type="checkbox" value="XLF" id="sector-xlf" data-name="Financial Select Sector SPDR">
+                                        <label class="form-check-label" for="sector-xlf">
+                                            <strong>XLF</strong> - Financials<br>
+                                            <small class="text-muted">Banks, insurance, investment companies</small>
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="XLE" id="sector-xle" data-name="Energy Select Sector SPDR">
+                                        <label class="form-check-label" for="sector-xle">
+                                            <strong>XLE</strong> - Energy<br>
+                                            <small class="text-muted">Oil, gas, renewable energy</small>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="XLY" id="sector-xly" data-name="Consumer Discretionary Select Sector SPDR">
+                                        <label class="form-check-label" for="sector-xly">
+                                            <strong>XLY</strong> - Consumer Discretionary<br>
+                                            <small class="text-muted">Retail, automotive, entertainment</small>
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="XLP" id="sector-xlp" data-name="Consumer Staples Select Sector SPDR">
+                                        <label class="form-check-label" for="sector-xlp">
+                                            <strong>XLP</strong> - Consumer Staples<br>
+                                            <small class="text-muted">Food, beverages, household products</small>
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input industry-checkbox" type="checkbox" value="XLI" id="sector-xli" data-name="Industrial Select Sector SPDR">
+                                        <label class="form-check-label" for="sector-xli">
+                                            <strong>XLI</strong> - Industrials<br>
+                                            <small class="text-muted">Aerospace, defense, manufacturing</small>
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input industry-checkbox" type="checkbox" value="XLU" id="sector-xlu" data-name="Utilities Select Sector SPDR">
+                                        <label class="form-check-label" for="sector-xlu">
+                                            <strong>XLU</strong> - Utilities<br>
+                                            <small class="text-muted">Electric, gas, water utilities</small>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Regional ETFs -->
+                <div class="mb-3">
+                    <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#regionalETFs" aria-expanded="false" aria-controls="regionalETFs">
+                        <i class="bi bi-chevron-down"></i> Regional & Country ETFs
+                    </button>
+                    <div class="collapse mt-2" id="regionalETFs">
+                        <div class="card card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input industry-checkbox" type="checkbox" value="VGK" id="regional-vgk" data-name="Vanguard FTSE Europe ETF">
+                                        <label class="form-check-label" for="regional-vgk">
+                                            <strong>VGK</strong> - Europe<br>
+                                            <small class="text-muted">European markets</small>
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input industry-checkbox" type="checkbox" value="EWJ" id="regional-ewj" data-name="iShares MSCI Japan ETF">
+                                        <label class="form-check-label" for="regional-ewj">
+                                            <strong>EWJ</strong> - Japan<br>
+                                            <small class="text-muted">Japanese equity market</small>
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input industry-checkbox" type="checkbox" value="EEM" id="regional-eem" data-name="iShares MSCI Emerging Markets ETF">
+                                        <label class="form-check-label" for="regional-eem">
+                                            <strong>EEM</strong> - Emerging Markets<br>
+                                            <small class="text-muted">Developing market equities</small>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input industry-checkbox" type="checkbox" value="FXI" id="regional-fxi" data-name="iShares China Large-Cap ETF">
+                                        <label class="form-check-label" for="regional-fxi">
+                                            <strong>FXI</strong> - China<br>
+                                            <small class="text-muted">Chinese large-cap stocks</small>
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input industry-checkbox" type="checkbox" value="INDA" id="regional-inda" data-name="iShares MSCI India ETF">
+                                        <label class="form-check-label" for="regional-inda">
+                                            <strong>INDA</strong> - India<br>
+                                            <small class="text-muted">Indian equity market</small>
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input industry-checkbox" type="checkbox" value="EFA" id="regional-efa" data-name="iShares MSCI EAFE ETF">
+                                        <label class="form-check-label" for="regional-efa">
+                                            <strong>EFA</strong> - International Developed<br>
+                                            <small class="text-muted">Europe, Australasia, Far East</small>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Selected Symbols Display -->
+                <div class="mt-3">
+                    <label class="form-label">Selected Symbols:</label>
+                    <div class="border rounded p-2 bg-light" id="selected-symbols-display" style="min-height: 40px;">
+                        <small class="text-muted">No symbols selected from industry groups</small>
+                    </div>
+                    <div class="form-text">
+                        <button type="button" class="btn btn-sm btn-outline-danger" id="clear-industry-selections">Clear All</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="switch-to-manual">Use These Symbols</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Data Processing -->
+        <!-- Data Preprocessing Configuration -->
         <div class="form-section">
-            <h3 class="section-header">Data Processing</h3>
+            <h3 class="section-header">Data Preprocessing</h3>
+            
+            <div class="guide-text">
+                Data normalization addresses the scale disparities between different stocks. Without proper scaling, a $3,000 Amazon stock would mathematically dominate a $50 Ford stock in correlation and volatility calculations, creating misleading results. Normalization transforms all assets to comparable scales while preserving their relative movement patterns and volatility characteristics, ensuring each asset contributes appropriately to portfolio-level metrics and spillover analysis.
+            </div>
+            
             <div class="mb-3">
-                <label for="scaling_method" class="form-label">Scaling Method</label>
-                <select class="form-select" name="scaling_method">
+                <label for="scaling-method" class="form-label">Scaling Method</label>
+                <select class="form-select" id="scaling-method" name="scaling_method">
                     <option value="standardize" selected>Standardize (Z-score)</option>
-                    <option value="normalize">Normalize (Min-Max)</option>
-                    <option value="robust">Robust Scaling</option>
+                    <option value="minmax">Min-Max Scaling</option>
                     <option value="none">No Scaling</option>
                 </select>
                 <div class="parameter-help">
-                    <strong>Standardize:</strong> Centers data around 0 with unit variance<br>
-                    <strong>Normalize:</strong> Scales to 0-1 range<br>
-                    <strong>Robust:</strong> Uses median and IQR, less sensitive to outliers
+                    <strong>Standardize:</strong> Centers data around zero with unit variance. Best for most analyses as it preserves relative relationships while making different assets comparable.<br>
+                    <strong>Min-Max:</strong> Scales to 0-1 range. Use when you need bounded values or when extreme outliers are important.<br>
+                    <strong>No Scaling:</strong> Keeps original prices. Only recommended when analyzing assets with similar price ranges or when absolute price levels matter.
                 </div>
             </div>
         </div>
 
         <!-- ARIMA Configuration -->
         <div class="form-section">
-            <h3 class="section-header">ARIMA Model Configuration</h3>
+            <h3 class="section-header">ARIMA Parameters</h3>
+            <div class="guide-text">
+                ARIMA models predict future prices by analyzing patterns in historical data. By examining past price movements, trends, and random fluctuations, ARIMA provides a data-driven forecast of potential future price trajectories. This enables users to anticipate market behavior and make informed decisions.
+            </div>
+            
             <div class="row">
                 <div class="col-md-3">
-                    <label for="arima_p" class="form-label">p (AR Order)</label>
-                    <input type="number" class="form-control" name="arima_p" value="2" min="0" max="10">
-                    <div class="parameter-help">
-                        <strong>Autoregressive terms:</strong> How many past values to include
+                    <div class="mb-3">
+                        <label for="arima-p" class="form-label">p: Auto-Regressive Component</label>
+                        <input type="number" class="form-control" id="arima-p" name="arima_p" min="0" max="10" value="2">
+                        <div class="parameter-help">
+                            The AR component assumes today's price depends on recent past prices. Think of it as "momentum" - if a stock has been rising for several days, AR captures the tendency for that trend to continue. Higher p values (3-5) capture longer-term momentum patterns but risk overfitting to noise. Start with p=1-2 for most financial series, increase if you see strong persistence in price movements.
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <label for="arima_d" class="form-label">d (Differencing)</label>
-                    <input type="number" class="form-control" name="arima_d" value="1" min="0" max="5">
-                    <div class="parameter-help">
-                        <strong>Differencing order:</strong> Usually 1 for non-stationary data
+                    <div class="mb-3">
+                        <label for="arima-d" class="form-label">d: Integration Component</label>
+                        <input type="number" class="form-control" id="arima-d" name="arima_d" min="0" max="5" value="0">
+                        <div class="parameter-help">
+                            Differencing removes trends to make the data stationary (constant mean/variance over time). Most financial prices are "integrated" - they wander randomly and don't revert to a mean. d=1 means taking first differences (today's price minus yesterday's), which usually converts trending price data into stationary returns. Use d=0 for already-stationary data like volatility indices, d=2 rarely needed except for highly trending series. This analysis pipeline automatically differences prices to returns, so this is default to 0.
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <label for="arima_q" class="form-label">q (MA Order)</label>
-                    <input type="number" class="form-control" name="arima_q" value="2" min="0" max="10">
-                    <div class="parameter-help">
-                        <strong>Moving average terms:</strong> Past forecast errors to include
+                    <div class="mb-3">
+                        <label for="arima-q" class="form-label">q: Moving Average Component</label>
+                        <input type="number" class="form-control" id="arima-q" name="arima_q" min="0" max="10" value="4">
+                        <div class="parameter-help">
+                            The MA component captures how today's price reacts to recent random shocks or surprises. Unlike AR which uses actual past prices, MA uses past forecast errors. This helps model temporary market overreactions or corrections. Higher q values (3-6) are useful for financial data since markets often show clustered volatility and mean reversion after shocks.
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <label for="arima_forecast_steps" class="form-label">Forecast Steps</label>
-                    <input type="number" class="form-control" name="arima_forecast_steps" value="10" min="1" max="50">
-                    <div class="parameter-help">
-                        <strong>Periods ahead:</strong> How many steps to forecast
+                    <div class="mb-3">
+                        <label for="arima-forecast-steps" class="form-label">Forecast Steps</label>
+                        <input type="number" class="form-control" id="arima-forecast-steps" name="arima_forecast_steps" min="1" max="20" value="10">
+                        <div class="parameter-help">
+                            Number of time periods to forecast into the future. Higher values (10-20) provide more detailed forecast plots but may be less reliable. Use 5-10 for daily data, 10-20 for weekly data. More than 20 steps is rarely meaningful for financial forecasting.
+                        </div>
                     </div>
                 </div>
             </div>
@@ -235,40 +522,42 @@
 
         <!-- GARCH Configuration -->
         <div class="form-section">
-            <h3 class="section-header">GARCH Model Configuration</h3>
+            <h3 class="section-header">GARCH Parameters</h3>
+            
+            <div class="guide-text">
+                GARCH models delve into market volatility, quantifying how much prices swing up and down over time. By identifying periods of heightened uncertainty (e.g., during market crashes) versus stable periods, GARCH models are indispensable for risk management and strategic planning. They help users understand and prepare for potential market turbulence.
+            </div>
+            
             <div class="row">
                 <div class="col-md-4">
-                    <label for="garch_p" class="form-label">p (ARCH Order)</label>
-                    <input type="number" class="form-control" name="garch_p" value="1" min="0" max="5">
-                    <div class="parameter-help">
-                        <strong>ARCH terms:</strong> Past squared errors affecting volatility
+                    <div class="mb-3">
+                        <label for="garch-p" class="form-label">p: ARCH</label>
+                        <input type="number" class="form-control" id="garch-p" name="garch_p" min="0" max="5" value="1">
+                        <div class="parameter-help">
+                            ARCH captures how today's volatility depends on recent large price movements. If yesterday had a big price swing, today's volatility will likely be elevated. p=1 is usually sufficient since volatility shocks decay quickly. Higher values (2-3) may help with extremely volatile assets like crypto or emerging market currencies.
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <label for="garch_q" class="form-label">q (GARCH Order)</label>
-                    <input type="number" class="form-control" name="garch_q" value="1" min="0" max="5">
-                    <div class="parameter-help">
-                        <strong>GARCH terms:</strong> Past conditional variances
+                    <div class="mb-3">
+                        <label for="garch-q" class="form-label">q: Generalized ARCH</label>
+                        <input type="number" class="form-control" id="garch-q" name="garch_q" min="0" max="5" value="1">
+                        <div class="parameter-help">
+                            GARCH adds persistence to volatility clustering - the tendency for volatile periods to persist over time. This captures the "volatility of volatility" phenomenon where market stress tends to continue for weeks or months. q=1 handles most cases; q=2 for assets with very persistent volatility clustering like VIX or commodity futures.
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <label for="garch_dist" class="form-label">Error Distribution</label>
-                    <select class="form-select" name="garch_dist">
-                        <option value="normal">Normal</option>
-                        <option value="t" selected>Student-t</option>
-                        <option value="skewt">Skewed Student-t</option>
-                    </select>
-                    <div class="parameter-help">
-                        <strong>Student-t:</strong> Better for financial data with fat tails
-                    </div>
-                </div>
-            </div>
-            <div class="row mt-3">
-                <div class="col-md-6">
-                    <label for="garch_forecast_steps" class="form-label">GARCH Forecast Steps</label>
-                    <input type="number" class="form-control" name="garch_forecast_steps" value="3" min="1" max="20">
-                    <div class="parameter-help">
-                        <strong>Volatility forecasts:</strong> How many periods of volatility to forecast
+                    <div class="mb-3">
+                        <label for="garch-dist" class="form-label">Distribution</label>
+                        <select class="form-select" id="garch-dist" name="garch_dist">
+                            <option value="normal">Normal</option>
+                            <option value="t" selected>Student's t</option>
+                            <option value="skewt">Skewed t</option>
+                        </select>
+                        <div class="parameter-help">
+                            Financial returns exhibit "fat tails" - extreme movements occur more frequently than normal distribution predicts. Student's t-distribution accommodates this reality, providing better risk estimates during market stress. Use normal distribution only for very stable, low-volatility assets. Consider skewed-t for assets with asymmetric return patterns.
+                        </div>
                     </div>
                 </div>
             </div>
@@ -277,12 +566,19 @@
         <!-- Spillover Analysis -->
         <div class="form-section">
             <h3 class="section-header">Spillover Analysis</h3>
+            
+            <div class="guide-text">
+                Spillover analysis uncovers how shocks in one market or asset propagate to others. For instance, a crash in the US stock market might ripple through European or Asian markets. This analysis sheds light on global market interconnectedness and contagion risks, enabling better risk assessment and diversification strategies.
+            </div>
+            
             <div class="form-check form-switch mb-3">
                 <input class="form-check-input" type="checkbox" name="spillover_enabled" id="enableSpillover" checked>
                 <label class="form-check-label" for="enableSpillover">
-                    <strong>Enable Spillover Analysis</strong><br>
-                    <small class="text-muted">Analyze how shocks propagate between assets using Diebold-Yilmaz methodology</small>
+                    <strong>Enable Spillover Analysis</strong>
                 </label>
+                <div class="parameter-help">
+                    Quantifies how much variance in each asset comes from shocks to other assets versus its own innovations. Essential for portfolio risk management and understanding correlation breakdown during crises. Disable only when analyzing single assets in isolation.
+                </div>
             </div>
             
             <!-- Advanced Spillover Settings -->
@@ -369,39 +665,6 @@
                         </label>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- Additional Analysis Options -->
-        <div class="form-section">
-            <h3 class="section-header">Additional Analysis Options</h3>
-            
-            <div class="form-check mb-2">
-                <input class="form-check-input" type="checkbox" name="include_stationarity_tests" id="includeStationarity" checked>
-                <label class="form-check-label" for="includeStationarity">
-                    <strong>Stationarity Tests</strong> - ADF, KPSS, Phillips-Perron
-                </label>
-            </div>
-            
-            <div class="form-check mb-2">
-                <input class="form-check-input" type="checkbox" name="include_cointegration" id="includeCointegration">
-                <label class="form-check-label" for="includeCointegration">
-                    <strong>Cointegration Analysis</strong> - Johansen test for long-run relationships
-                </label>
-            </div>
-            
-            <div class="form-check mb-2">
-                <input class="form-check-input" type="checkbox" name="include_correlation_analysis" id="includeCorrelation" checked>
-                <label class="form-check-label" for="includeCorrelation">
-                    <strong>Correlation Analysis</strong> - Dynamic and rolling correlations
-                </label>
-            </div>
-            
-            <div class="form-check mb-2">
-                <input class="form-check-input" type="checkbox" name="include_risk_metrics" id="includeRisk" checked>
-                <label class="form-check-label" for="includeRisk">
-                    <strong>Risk Metrics</strong> - VaR, Expected Shortfall, Maximum Drawdown
-                </label>
             </div>
         </div>
 
@@ -492,7 +755,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // Loading animation functions
 function startLoadingAnimation() {
     document.getElementById('mainContent').style.display = 'none';
-    document.getElementById('loadingContainer').style.display = 'flex';
+    document.getElementById('loading').style.display = 'flex';
     document.getElementById('submitBtn').disabled = true;
     document.getElementById('submitText').style.display = 'none';
     document.getElementById('submitSpinner').style.display = 'inline';
@@ -512,7 +775,7 @@ function startLoadingAnimation() {
 }
 
 function stopLoadingAnimation() {
-    document.getElementById('loadingContainer').style.display = 'none';
+    document.getElementById('loading').style.display = 'none';
     document.getElementById('mainContent').style.display = 'block';
     document.getElementById('submitBtn').disabled = false;
     document.getElementById('submitText').style.display = 'inline';
@@ -524,35 +787,419 @@ function stopLoadingAnimation() {
     }
 }
 
-// Form submission handling
-document.getElementById('analysisForm').addEventListener('submit', function(e) {
-    e.preventDefault();
+// Event handlers for form submission
+document.addEventListener('DOMContentLoaded', function() {
+    // Symbol selection method toggle
+    const manualRadio = document.getElementById('symbol-method-manual');
+    const predefinedRadio = document.getElementById('symbol-method-predefined');
+    const manualSection = document.getElementById('manual-symbol-entry');
+    const predefinedSection = document.getElementById('predefined-symbol-selection');
     
-    startLoadingAnimation();
-    
-    const formData = new FormData(this);
-    
-    fetch(this.action, {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-CSRFToken': formData.get('csrfmiddlewaretoken')
-        }
-    })
-    .then(response => response.text())
-    .then(data => {
-        stopLoadingAnimation();
-        
-        if (data.includes('redirect:')) {
-            const redirectUrl = data.split('redirect:')[1].trim();
-            window.location.href = redirectUrl;
+    function updateSymbolSelectionDisplay() {
+        if (manualRadio.checked) {
+            manualSection.style.display = 'block';
+            predefinedSection.style.display = 'none';
         } else {
-            alert('Analysis failed: ' + data);
+            manualSection.style.display = 'none';
+            predefinedSection.style.display = 'block';
         }
-    })
-    .catch(error => {
-        stopLoadingAnimation();
-        alert('Error: ' + error.message);
+    }
+    
+    manualRadio.addEventListener('change', updateSymbolSelectionDisplay);
+    predefinedRadio.addEventListener('change', updateSymbolSelectionDisplay);
+    
+    // Set initial state
+    updateSymbolSelectionDisplay();
+
+    // Toggle between market and synthetic data parameters
+    const syntheticRadio = document.getElementById('synthetic');
+    const yfinanceRadio = document.getElementById('yfinance');
+    const marketParams = document.getElementById('market-params');
+    const syntheticParams = document.getElementById('synthetic-params');
+    
+    // Initialize display based on which radio is checked
+    function updateDisplays() {
+        if (syntheticRadio.checked) {
+            marketParams.style.display = 'none';
+            syntheticParams.style.display = 'block';
+        } else {
+            // For actual data sources
+            marketParams.style.display = 'block';
+            syntheticParams.style.display = 'none';
+        }
+    }
+    
+    // Set initial state
+    updateDisplays();
+    
+    // Add event listeners for radio buttons
+    syntheticRadio.addEventListener('change', updateDisplays);
+    yfinanceRadio.addEventListener('change', updateDisplays);
+
+    // Industry selection functionality
+    const industryCheckboxes = document.querySelectorAll('.industry-checkbox');
+    const selectedDisplay = document.getElementById('selected-symbols-display');
+    const clearButton = document.getElementById('clear-industry-selections');
+    const switchToManualButton = document.getElementById('switch-to-manual');
+    
+    let selectedSymbols = new Set();
+    
+    // Update selected symbols display
+    function updateSelectedDisplay() {
+        if (selectedSymbols.size === 0) {
+            selectedDisplay.innerHTML = '<small class="text-muted">No symbols selected from industry groups</small>';
+        } else {
+            const symbolsArray = Array.from(selectedSymbols);
+            selectedDisplay.innerHTML = symbolsArray.map(symbol => 
+                `<span class="badge bg-primary me-1">${symbol}</span>`
+            ).join('');
+        }
+    }
+    
+    // Handle checkbox changes
+    industryCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            if (this.checked) {
+                selectedSymbols.add(this.value);
+            } else {
+                selectedSymbols.delete(this.value);
+            }
+            updateSelectedDisplay();
+        });
+    });
+    
+    // Clear all selections
+    clearButton.addEventListener('click', function() {
+        industryCheckboxes.forEach(checkbox => {
+            checkbox.checked = false;
+        });
+        selectedSymbols.clear();
+        updateSelectedDisplay();
+    });
+    
+    // Switch to manual entry with selected symbols
+    switchToManualButton.addEventListener('click', function() {
+        if (selectedSymbols.size === 0) {
+            alert('No symbols selected to use.');
+            return;
+        }
+        
+        const symbolsArray = Array.from(selectedSymbols);
+        const symbolsString = symbolsArray.join(',');
+        
+        // Switch to manual mode
+        manualRadio.checked = true;
+        updateSymbolSelectionDisplay();
+        
+        // Also trigger the data source display updates
+        updateDisplays();
+        
+        // Populate the appropriate field based on data source selection
+        if (syntheticRadio.checked) {
+            const syntheticSymbolsField = document.getElementById('synthetic-symbols');
+            syntheticSymbolsField.value = symbolsString;
+        } else {
+            const symbolsField = document.getElementById('symbols');
+            symbolsField.value = symbolsString;
+        }
+        
+        // Clear the industry selections after switching
+        clearButton.click();
+        
+        // Show success message
+        const originalText = switchToManualButton.textContent;
+        switchToManualButton.textContent = 'Switched!';
+        switchToManualButton.classList.remove('btn-outline-primary');
+        switchToManualButton.classList.add('btn-success');
+        
+        setTimeout(() => {
+            switchToManualButton.textContent = originalText;
+            switchToManualButton.classList.remove('btn-success');
+            switchToManualButton.classList.add('btn-outline-primary');
+        }, 1500);
+    });
+    
+    // Handle form submission
+    const form = document.getElementById('analysis-form');
+    const loadingIndicator = document.getElementById('loading');
+    const mainContent = document.getElementById('mainContent');
+    
+    // Cycling loading messages - Statistics Pop Quiz
+    let loadingMessageInterval;
+    const loadingMessages = [
+        'Loading...\nQ: When was the ROC curve created?',
+        'Loading...\nA: During WWII, for radar signal detection',
+        'Loading...\nQ: What does ARIMA tell you?',
+        'Loading...\nA: How past values and trends shape the future',
+        'Loading...\nQ: Who invented the correlation coefficient?',
+        'Loading...\nA: Karl Pearson in 1896',
+        'Loading...\nQ: What is the Central Limit Theorem about?',
+        'Loading...\nA: Sample means approach normal distribution',
+        'Loading...\nQ: What does GARCH tell you?',
+        'Loading...\nA: When volatility spikes are likely to return',
+        'Loading...\nQ: Who developed the Black-Scholes model?',
+        'Loading...\nA: Fischer Black, Myron Scholes, and Robert Merton in 1973',
+        'Loading...\nQ: What is the difference between Type I and Type II errors?',
+        'Loading...\nA: Type I: False positive, Type II: False negative',
+        'Loading...\nQ: What does VAR stand for in econometrics?',
+        'Loading...\nA: Vector AutoRegression',
+        'Loading...\nQ: Who created the concept of statistical significance?',
+        'Loading...\nA: Ronald Fisher in the 1920s',
+        'Loading...\nQ: What is heteroskedasticity?',
+        'Loading...\nA: When error variance is not constant across observations'
+    ];
+
+    let shuffledQuestionIndices = [];
+    let currentShuffledIndex = 0;
+    const displayDurationPerPair = 5000; // Total time for one Q&A (e.g., 5s)
+    const answerDelay = 2500;           // Time to show Q before showing A (e.g., 2.5s)
+    window.answerTimeoutId = null; // To store the timeout ID for the answer part
+
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    function prepareShuffledIndices() {
+        shuffledQuestionIndices = [];
+        for (let i = 0; i < loadingMessages.length; i += 2) {
+            // Ensure there's a corresponding answer
+            if (loadingMessages[i+1]) {
+                shuffledQuestionIndices.push(i);
+            }
+        }
+        shuffleArray(shuffledQuestionIndices);
+        currentShuffledIndex = 0;
+    }
+    
+    function startLoadingMessageCycle() {
+        const loadingText = loadingIndicator.querySelector('#qaText');
+        if (!loadingText) {
+            console.error('Could not find loading text element');
+            return;
+        }
+
+        prepareShuffledIndices();
+
+        if (shuffledQuestionIndices.length === 0) {
+            console.error('No Q&A pairs to display from loadingMessages.');
+            loadingText.textContent = 'Loading...'; // Fallback message
+            return;
+        }
+
+        function displayNextQAPair() {
+            if (currentShuffledIndex >= shuffledQuestionIndices.length) {
+                // Reshuffle and reset if we've gone through all pairs
+                prepareShuffledIndices();
+                // If still no pairs (e.g. loadingMessages was cleared), exit.
+                if (shuffledQuestionIndices.length === 0) {
+                    loadingText.textContent = 'Loading...';
+                    if(loadingMessageInterval) clearInterval(loadingMessageInterval);
+                    if(window.answerTimeoutId) clearTimeout(window.answerTimeoutId);
+                    return;
+                }
+            }
+
+            const questionIndex = shuffledQuestionIndices[currentShuffledIndex];
+            const question = loadingMessages[questionIndex];
+            const answer = loadingMessages[questionIndex + 1];
+
+            loadingText.textContent = question; // Display Question
+
+            if (window.answerTimeoutId) {
+                clearTimeout(window.answerTimeoutId); // Clear previous answer timeout
+            }
+
+            window.answerTimeoutId = setTimeout(() => {
+                // Only update to answer if the question is still displayed
+                if (loadingText.textContent === question) {
+                    loadingText.textContent = answer; // Display Answer
+                }
+            }, answerDelay);
+
+            currentShuffledIndex++;
+        }
+
+        // Initial display of the first Q&A pair
+        displayNextQAPair();
+
+        // Set interval for subsequent Q&A pairs
+        if (loadingMessageInterval) clearInterval(loadingMessageInterval); // Clear existing interval if any
+        loadingMessageInterval = setInterval(displayNextQAPair, displayDurationPerPair);
+    }
+    
+    function stopLoadingMessageCycle() {
+        if (loadingMessageInterval) {
+            clearInterval(loadingMessageInterval);
+            loadingMessageInterval = null;
+        }
+        if (window.answerTimeoutId) {
+            clearTimeout(window.answerTimeoutId);
+            window.answerTimeoutId = null;
+        }
+    }
+    
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Hide all content and show loading indicator
+        mainContent.style.display = 'none';
+        loadingIndicator.style.display = 'block';
+        
+        // Start cycling loading messages
+        startLoadingMessageCycle();
+        
+        // Prepare form data
+        const formData = new FormData(form);
+        const data = {};
+        
+        // Convert FormData to a plain object
+        for (const [key, value] of formData.entries()) {
+            data[key] = value;
+        }
+        
+        // Helper function to safely split and trim comma-separated values
+        function parseCommaSeparated(value, defaultArray = []) {
+            if (!value || value.trim() === '') {
+                return defaultArray;
+            }
+            return value.split(',').map(s => s.trim()).filter(s => s.length > 0);
+        }
+        
+        // Helper function to safely parse comma-separated numbers
+        function parseCommaSeparatedNumbers(value, defaultArray = []) {
+            if (!value || value.trim() === '') {
+                return defaultArray;
+            }
+            return value.split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
+        }
+        
+        // Special handling for symbols with defaults
+        if (data.symbols) {
+            data.symbols = parseCommaSeparated(data.symbols, ['MSFT', 'AAPL']);
+        }
+        
+        if (data.synthetic_symbols) {
+            data.synthetic_symbols = parseCommaSeparated(data.synthetic_symbols, ['SYM1', 'SYM2', 'SYM3']);
+        }
+        
+        // Handle synthetic anchor prices with defaults
+        if (data.synthetic_anchor_prices) {
+            data.synthetic_anchor_prices = parseCommaSeparatedNumbers(data.synthetic_anchor_prices, [100.0, 150.0, 200.0]);
+        }
+        
+        // If synthetic data is selected, update the symbols array
+        if (data.source_actual_or_synthetic_data === 'synthetic') {
+            // Use the synthetic symbols instead of the regular symbols
+            data.symbols = data.synthetic_symbols || ['SYM1', 'SYM2', 'SYM3'];
+            
+            // Ensure anchor prices array matches symbols length
+            if (!data.synthetic_anchor_prices || data.synthetic_anchor_prices.length !== data.symbols.length) {
+                data.synthetic_anchor_prices = [100.0, 150.0, 200.0].slice(0, data.symbols.length);
+            }
+            
+            // Clean up unused fields
+            delete data.synthetic_symbols;
+        } else {
+            // For actual data, ensure we have default symbols if none provided
+            if (!data.symbols || data.symbols.length === 0) {
+                data.symbols = ['MSFT', 'AAPL'];
+            }
+        }
+        
+        // Construct ARIMA and GARCH params objects with defaults
+        data.arima_params = {
+            p: parseInt(data.arima_p) || 2,
+            d: parseInt(data.arima_d) || 1,
+            q: parseInt(data.arima_q) || 2,
+            forecast_steps: parseInt(data.arima_forecast_steps) || 10
+        };
+        
+        data.garch_params = {
+            p: parseInt(data.garch_p) || 1,
+            q: parseInt(data.garch_q) || 1,
+            dist: data.garch_dist || 't'
+        };
+        
+        // Handle spillover options with defaults
+        data.spillover_enabled = document.querySelector('input[name="spillover_enabled"]').checked;
+        
+        if (data.spillover_enabled) {
+            data.spillover_params = {
+                forecast_horizon: parseInt(data.forecast_horizon) || 5,
+                method: data.spillover_method || 'diebold_yilmaz',
+                var_lag_selection_method: data.var_lag_selection_method || 'aic',
+                max_lags: parseInt(data.max_lags) || 10,
+                granger_significance_level: parseFloat(data.granger_significance_level) || 0.05,
+                include_granger: !!data.include_granger,
+                include_fevd_details: !!data.include_fevd_details
+            };
+        }
+        
+        // Remove individual parameters that are now in objects
+        delete data.arima_p;
+        delete data.arima_d;
+        delete data.arima_q;
+        delete data.arima_forecast_steps;
+        delete data.garch_p;
+        delete data.garch_q;
+        delete data.garch_dist;
+        delete data.forecast_horizon;
+        delete data.spillover_method;
+        delete data.var_lag_selection_method;
+        delete data.max_lags;
+        delete data.granger_significance_level;
+        delete data.include_granger;
+        delete data.include_fevd_details;
+        
+        console.log("Sending data to API:", data);
+        
+        // Send the AJAX request
+        fetch('/api_proxy/api/v1/run_pipeline/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': data.csrfmiddlewaretoken
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => {
+                    throw new Error(`API Error: ${JSON.stringify(err)}`);
+                });
+            }
+            return response.json();
+        })
+        .then(responseData => {
+            // Stop loading message cycle
+            stopLoadingMessageCycle();
+            
+            // Log the response data
+            console.log("API Response received:", responseData);
+            
+            try {
+                // Attempt to save to sessionStorage
+                sessionStorage.setItem('analysisResults', JSON.stringify(responseData));
+                console.log("Successfully saved to sessionStorage");
+            } catch (error) {
+                console.error("Error processing data or saving to sessionStorage:", error);
+            }
+            
+            // Redirect to results page
+            window.location.href = '/results/';
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            // Stop loading message cycle
+            stopLoadingMessageCycle();
+            // Show proper error message and restore form
+            loadingIndicator.style.display = 'none';
+            mainContent.style.display = 'block';
+            alert(`Error running analysis: ${error.message}`);
+        });
     });
 });
 </script>
