@@ -961,6 +961,27 @@ class ResultsProcessor:
         
         return processed_spillover
 
+    def process_granger_causality_results(self) -> Dict[str, Any]:
+        """Process standalone Granger Causality results."""
+        if 'granger_causality_results' not in self.raw_results:
+            return {}
+        
+        granger = self.raw_results['granger_causality_results']
+        
+        # Handle case where granger_causality_results is None or not a dictionary
+        if not granger or not isinstance(granger, dict):
+            return {
+                'causality_results': {},
+                'interpretations': {},
+                'metadata': {}
+            }
+        
+        return {
+            'causality_results': granger.get('causality_results', {}),
+            'interpretations': granger.get('interpretations', {}),
+            'metadata': granger.get('metadata', {})
+        }
+    
     def process_all(self) -> Dict[str, Any]:
         """
         Process all results into a complete structured format for templates.
@@ -989,6 +1010,7 @@ class ResultsProcessor:
             'garch_results': self.process_garch_results(),
             'var_results': self.process_var_results(),
             'spillover_results': self.process_spillover_results(),
+            'granger_causality_results': self.process_granger_causality_results(),  # Add this line
             'plots': self.create_plots(),  # This will call our plotting methods!
             'executive_summary': self.create_executive_summary()  # Add this for Overview tab
         }
