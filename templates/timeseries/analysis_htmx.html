@@ -211,55 +211,82 @@
 <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 <!-- Alpine.js -->
 <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+<!-- Shared Q&A Loading System -->
+<script src="{% static 'js/loading-qa.js' %}"></script>
 
 <script>
 function analysisApp() {
     return {
         isLoading: false,
         currentMessage: '',
-        messageIndex: 0,
-        messageInterval: null,
-        
-        messages: [
-            'Loading...\nQ: When was the ROC curve created?',
-            'Loading...\nA: During WWII, for radar signal detection',
-            'Loading...\nQ: What does ARIMA tell you?',
-            'Loading...\nA: How past values and trends shape the future',
-            'Loading...\nQ: Who invented the correlation coefficient?',
-            'Loading...\nA: Karl Pearson in 1896',
-            'Loading...\nQ: What is the Central Limit Theorem about?',
-            'Loading...\nA: Sample means approach normal distribution',
-            'Loading...\nQ: What does GARCH tell you?',
-            'Loading...\nA: When volatility spikes are likely to return',
-            'Loading...\nQ: Who developed the Black-Scholes model?',
-            'Loading...\nA: Fischer Black, Myron Scholes, and Robert Merton in 1973',
-            'Loading...\nQ: What is the difference between Type I and Type II errors?',
-            'Loading...\nA: Type I: False positive, Type II: False negative',
-            'Loading...\nQ: What does VAR stand for in econometrics?',
-            'Loading...\nA: Vector AutoRegression',
-            'Loading...\nQ: Who created the concept of statistical significance?',
-            'Loading...\nA: Ronald Fisher in the 1920s',
-            'Loading...\nQ: What is heteroskedasticity?',
-            'Loading...\nA: When error variance is not constant across observations'
-        ],
+        qaManager: null,
+
+        init() {
+            // Initialize the Q&A manager with a custom selector for this template
+            this.qaManager = new LoadingQAManager('.qa-text');
+        },
 
         startAnalysis() {
             this.isLoading = true;
-            // Start with a random question (even indices are questions)
-            const questionIndices = [];
-            for (let i = 0; i < this.messages.length; i += 2) {
-                questionIndices.push(i);
+            this.currentMessage = 'Loading...';
+            
+            // Use the shared Q&A system
+            if (this.qaManager) {
+                // Update the selector to target our Alpine.js reactive text
+                this.qaManager.textElementSelector = null; // We'll handle updates manually
+                this.qaManager.prepareShuffledIndices();
+                
+                if (this.qaManager.shuffledIndices.length > 0) {
+                    this.startMessageCycle();
+                }
             }
-            this.messageIndex = questionIndices[Math.floor(Math.random() * questionIndices.length)];
-            this.currentMessage = this.messages[this.messageIndex];
-            this.startMessageCycle();
         },
 
         startMessageCycle() {
-            this.messageInterval = setInterval(() => {
-                this.messageIndex = (this.messageIndex + 1) % this.messages.length;
-                this.currentMessage = this.messages[this.messageIndex];
-            }, 3000); // Change message every 3 seconds
+            // Use the shared Q&A messages but handle updates through Alpine.js
+            const messages = window.LOADING_QA_MESSAGES || [];
+            if (messages.length === 0) {
+                this.currentMessage = 'Loading...';
+                return;
+            }
+
+            // Start with a random question
+            const questionIndices = [];
+            for (let i = 0; i < messages.length; i += 2) {
+                if (messages[i + 1]) {
+                    questionIndices.push(i);
+                }
+            }
+            
+            let currentIndex = 0;
+            const shuffledIndices = [...questionIndices].sort(() => Math.random() - 0.5);
+            
+            const displayNextQA = () => {
+                if (currentIndex >= shuffledIndices.length) {
+                    currentIndex = 0; // Reset to start
+                }
+                
+                const questionIndex = shuffledIndices[currentIndex];
+                const question = messages[questionIndex];
+                const answer = messages[questionIndex + 1];
+                
+                this.currentMessage = question;
+                
+                // Show answer after 2.5 seconds
+                setTimeout(() => {
+                    if (this.isLoading && this.currentMessage === question) {
+                        this.currentMessage = answer;
+                    }
+                }, 2500);
+                
+                currentIndex++;
+            };
+            
+            // Start immediately
+            displayNextQA();
+            
+            // Continue every 5 seconds
+            this.messageInterval = setInterval(displayNextQA, 5000);
         },
 
         handleResponse(event) {

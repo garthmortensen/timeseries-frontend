@@ -681,40 +681,8 @@
     </form>
 </div>
 
+<script src="{% static 'js/loading-qa.js' %}"></script>
 <script>
-// Q&A messages for loading screen
-const qaMessages = [
-    'Loading...\nQ: When was the ROC curve created?',
-    'Loading...\nA: During WWII, for radar signal detection',
-    'Loading...\nQ: What does ARIMA tell you?',
-    'Loading...\nA: How past values and trends shape the future',
-    'Loading...\nQ: Who invented the correlation coefficient?',
-    'Loading...\nA: Karl Pearson in 1896',
-    'Loading...\nQ: What is the Central Limit Theorem about?',
-    'Loading...\nA: Sample means approach normal distribution',
-    'Loading...\nQ: What does GARCH tell you?',
-    'Loading...\nA: When volatility spikes are likely to return',
-    'Loading...\nQ: Who developed the Black-Scholes model?',
-    'Loading...\nA: Fischer Black, Myron Scholes, and Robert Merton in 1973',
-    'Loading...\nQ: What is the difference between Type I and Type II errors?',
-    'Loading...\nA: Type I: False positive, Type II: False negative',
-    'Loading...\nQ: What does VAR stand for in econometrics?',
-    'Loading...\nA: Vector AutoRegression',
-    'Loading...\nQ: Who created the concept of statistical significance?',
-    'Loading...\nA: Ronald Fisher in the 1920s',
-    'Loading...\nQ: What is heteroskedasticity?',
-    'Loading...\nA: When error variance is not constant across observations',
-    'Loading...\nQ: What is the Diebold-Yilmaz spillover index?',
-    'Loading...\nA: A measure of how much variance comes from spillovers',
-    'Loading...\nQ: Who developed the ARCH model?',
-    'Loading...\nA: Robert Engle in 1982 (Nobel Prize 2003)',
-    'Loading...\nQ: What does FEVD stand for?',
-    'Loading...\nA: Forecast Error Variance Decomposition'
-];
-
-let currentMessageIndex = 0;
-let messageInterval = null;
-
 // Show/hide advanced settings
 function toggleAdvanced(sectionId) {
     const section = document.getElementById(sectionId);
@@ -726,64 +694,6 @@ function toggleAdvanced(sectionId) {
     } else {
         section.classList.add('show');
         button.textContent = 'Hide Advanced Spillover Settings';
-    }
-}
-
-// Show/hide sections based on data source
-document.addEventListener('DOMContentLoaded', function() {
-    const syntheticRadio = document.getElementById('synthetic');
-    const yfinanceRadio = document.getElementById('yfinance');
-    const dateRangeSection = document.getElementById('dateRangeSection');
-    const anchorPricesSection = document.getElementById('anchorPricesSection');
-    
-    function updateDataSourceSettings() {
-        if (yfinanceRadio.checked) {
-            dateRangeSection.style.display = 'block';
-            anchorPricesSection.style.display = 'none';
-        } else {
-            dateRangeSection.style.display = 'none';
-            anchorPricesSection.style.display = 'block';
-        }
-    }
-    
-    syntheticRadio.addEventListener('change', updateDataSourceSettings);
-    yfinanceRadio.addEventListener('change', updateDataSourceSettings);
-    
-    updateDataSourceSettings(); // Set initial state
-});
-
-// Loading animation functions
-function startLoadingAnimation() {
-    document.getElementById('mainContent').style.display = 'none';
-    document.getElementById('loading').style.display = 'flex';
-    document.getElementById('submitBtn').disabled = true;
-    document.getElementById('submitText').style.display = 'none';
-    document.getElementById('submitSpinner').style.display = 'inline';
-    
-    // Start with a random question (even indices are questions)
-    const questionIndices = [];
-    for (let i = 0; i < qaMessages.length; i += 2) {
-        questionIndices.push(i);
-    }
-    currentMessageIndex = questionIndices[Math.floor(Math.random() * questionIndices.length)];
-    document.getElementById('qaText').textContent = qaMessages[currentMessageIndex];
-    
-    messageInterval = setInterval(() => {
-        currentMessageIndex = (currentMessageIndex + 1) % qaMessages.length;
-        document.getElementById('qaText').textContent = qaMessages[currentMessageIndex];
-    }, 3000); // Change message every 3 seconds
-}
-
-function stopLoadingAnimation() {
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('mainContent').style.display = 'block';
-    document.getElementById('submitBtn').disabled = false;
-    document.getElementById('submitText').style.display = 'inline';
-    document.getElementById('submitSpinner').style.display = 'none';
-    
-    if (messageInterval) {
-        clearInterval(messageInterval);
-        messageInterval = null;
     }
 }
 
@@ -924,123 +834,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const loadingIndicator = document.getElementById('loading');
     const mainContent = document.getElementById('mainContent');
     
-    // Cycling loading messages - Statistics Pop Quiz
-    let loadingMessageInterval;
-    const loadingMessages = [
-        'Loading...\nQ: When was the ROC curve created?',
-        'Loading...\nA: During WWII, for radar signal detection',
-        'Loading...\nQ: What does ARIMA tell you?',
-        'Loading...\nA: How past values and trends shape the future',
-        'Loading...\nQ: Who invented the correlation coefficient?',
-        'Loading...\nA: Karl Pearson in 1896',
-        'Loading...\nQ: What is the Central Limit Theorem about?',
-        'Loading...\nA: Sample means approach normal distribution',
-        'Loading...\nQ: What does GARCH tell you?',
-        'Loading...\nA: When volatility spikes are likely to return',
-        'Loading...\nQ: Who developed the Black-Scholes model?',
-        'Loading...\nA: Fischer Black, Myron Scholes, and Robert Merton in 1973',
-        'Loading...\nQ: What is the difference between Type I and Type II errors?',
-        'Loading...\nA: Type I: False positive, Type II: False negative',
-        'Loading...\nQ: What does VAR stand for in econometrics?',
-        'Loading...\nA: Vector AutoRegression',
-        'Loading...\nQ: Who created the concept of statistical significance?',
-        'Loading...\nA: Ronald Fisher in the 1920s',
-        'Loading...\nQ: What is heteroskedasticity?',
-        'Loading...\nA: When error variance is not constant across observations'
-    ];
-
-    let shuffledQuestionIndices = [];
-    let currentShuffledIndex = 0;
-    const displayDurationPerPair = 5000; // Total time for one Q&A (e.g., 5s)
-    const answerDelay = 2500;           // Time to show Q before showing A (e.g., 2.5s)
-    window.answerTimeoutId = null; // To store the timeout ID for the answer part
-
-    function shuffleArray(array) {
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
-        }
-    }
-
-    function prepareShuffledIndices() {
-        shuffledQuestionIndices = [];
-        for (let i = 0; i < loadingMessages.length; i += 2) {
-            // Ensure there's a corresponding answer
-            if (loadingMessages[i+1]) {
-                shuffledQuestionIndices.push(i);
-            }
-        }
-        shuffleArray(shuffledQuestionIndices);
-        currentShuffledIndex = 0;
-    }
-    
-    function startLoadingMessageCycle() {
-        const loadingText = loadingIndicator.querySelector('#qaText');
-        if (!loadingText) {
-            console.error('Could not find loading text element');
-            return;
-        }
-
-        prepareShuffledIndices();
-
-        if (shuffledQuestionIndices.length === 0) {
-            console.error('No Q&A pairs to display from loadingMessages.');
-            loadingText.textContent = 'Loading...'; // Fallback message
-            return;
-        }
-
-        function displayNextQAPair() {
-            if (currentShuffledIndex >= shuffledQuestionIndices.length) {
-                // Reshuffle and reset if we've gone through all pairs
-                prepareShuffledIndices();
-                // If still no pairs (e.g. loadingMessages was cleared), exit.
-                if (shuffledQuestionIndices.length === 0) {
-                    loadingText.textContent = 'Loading...';
-                    if(loadingMessageInterval) clearInterval(loadingMessageInterval);
-                    if(window.answerTimeoutId) clearTimeout(window.answerTimeoutId);
-                    return;
-                }
-            }
-
-            const questionIndex = shuffledQuestionIndices[currentShuffledIndex];
-            const question = loadingMessages[questionIndex];
-            const answer = loadingMessages[questionIndex + 1];
-
-            loadingText.textContent = question; // Display Question
-
-            if (window.answerTimeoutId) {
-                clearTimeout(window.answerTimeoutId); // Clear previous answer timeout
-            }
-
-            window.answerTimeoutId = setTimeout(() => {
-                // Only update to answer if the question is still displayed
-                if (loadingText.textContent === question) {
-                    loadingText.textContent = answer; // Display Answer
-                }
-            }, answerDelay);
-
-            currentShuffledIndex++;
-        }
-
-        // Initial display of the first Q&A pair
-        displayNextQAPair();
-
-        // Set interval for subsequent Q&A pairs
-        if (loadingMessageInterval) clearInterval(loadingMessageInterval); // Clear existing interval if any
-        loadingMessageInterval = setInterval(displayNextQAPair, displayDurationPerPair);
-    }
-    
-    function stopLoadingMessageCycle() {
-        if (loadingMessageInterval) {
-            clearInterval(loadingMessageInterval);
-            loadingMessageInterval = null;
-        }
-        if (window.answerTimeoutId) {
-            clearTimeout(window.answerTimeoutId);
-            window.answerTimeoutId = null;
-        }
-    }
-    
     form.addEventListener('submit', function(e) {
         e.preventDefault();
         
@@ -1048,8 +841,8 @@ document.addEventListener('DOMContentLoaded', function() {
         mainContent.style.display = 'none';
         loadingIndicator.style.display = 'block';
         
-        // Start cycling loading messages
-        startLoadingMessageCycle();
+        // Start cycling loading messages using shared system
+        window.loadingQA.start();
         
         // Prepare form data
         const formData = new FormData(form);
@@ -1175,7 +968,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(responseData => {
             // Stop loading message cycle
-            stopLoadingMessageCycle();
+            window.loadingQA.stop();
             
             // Log the response data
             console.log("API Response received:", responseData);
@@ -1194,7 +987,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => {
             console.error('Error:', error);
             // Stop loading message cycle
-            stopLoadingMessageCycle();
+            window.loadingQA.stop();
             // Show proper error message and restore form
             loadingIndicator.style.display = 'none';
             mainContent.style.display = 'block';
