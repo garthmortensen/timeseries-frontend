@@ -787,21 +787,139 @@
                             
                             <div class="row">
                                 <div class="col-md-6">
-                                    <h6>Model Parameters</h6>
+                                    <h6>Model Summary</h6>
                                     {% if garch.summary %}
-                                        <p><small>{{ garch.summary|truncatechars:200 }}</small></p>
+                                        <div class="bg-light p-2 rounded mb-3">
+                                            <small class="font-monospace">{{ garch.summary|truncatechars:400 }}</small>
+                                        </div>
+                                        
+                                        <!-- Extract key model information if available -->
+                                        {% if garch.interpretation.technical_details.model_specification %}
+                                            <table class="table table-sm">
+                                                <tr><td><strong>Model Order:</strong></td><td>{{ garch.interpretation.technical_details.model_specification.order|default:"-" }}</td></tr>
+                                                <tr><td><strong>Omega (ω):</strong></td><td>{{ garch.interpretation.technical_details.model_specification.omega|floatformat:6|default:"-" }}</td></tr>
+                                                <tr><td><strong>Alpha (α):</strong></td><td>{{ garch.interpretation.technical_details.model_specification.alpha|floatformat:6|default:"-" }}</td></tr>
+                                                <tr><td><strong>Beta (β):</strong></td><td>{{ garch.interpretation.technical_details.model_specification.beta|floatformat:6|default:"-" }}</td></tr>
+                                            </table>
+                                            
+                                            {% if garch.interpretation.technical_details.volatility_mechanics %}
+                                                <h6 class="mt-3">Volatility Mechanics</h6>
+                                                <table class="table table-bordered table-sm">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Metric</th>
+                                                            <th>Value</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr>
+                                                            <td>Persistence</td>
+                                                            <td>{{ garch.interpretation.technical_details.volatility_mechanics.persistence|floatformat:4|default:"-" }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>Half Life</td>
+                                                            <td>{{ garch.interpretation.technical_details.volatility_mechanics.half_life|floatformat:2|default:"-" }}</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td>Unconditional Variance</td>
+                                                            <td>{{ garch.interpretation.technical_details.volatility_mechanics.unconditional_variance|floatformat:6|default:"-" }}</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            {% endif %}
+                                        {% endif %}
+                                    {% else %}
+                                        <p class="text-muted">Model summary not available</p>
                                     {% endif %}
                                 </div>
                                 <div class="col-md-6">
                                     <h6>Volatility Forecast</h6>
                                     {% if garch.forecast %}
-                                        <p>{{ garch.forecast|length }} forecast periods</p>
-                                        {% if garch.forecast.0 %}
-                                            <p><strong>Next Period Volatility:</strong> {{ garch.forecast.0|floatformat:6 }}</p>
+                                        <table class="table table-sm">
+                                            <tr><td><strong>Forecast Periods:</strong></td><td>{{ garch.forecast|length }}</td></tr>
+                                            {% if garch.forecast.0 %}
+                                                <tr><td><strong>Next Period Volatility:</strong></td><td>{{ garch.forecast.0|floatformat:6 }}</td></tr>
+                                            {% endif %}
+                                            {% if garch.interpretation.technical_details.forecast_statistics %}
+                                                <tr><td><strong>Mean Forecast:</strong></td><td>{{ garch.interpretation.technical_details.forecast_statistics.mean_forecast|floatformat:6|default:"-" }}</td></tr>
+                                                <tr><td><strong>Forecast Volatility:</strong></td><td>{{ garch.interpretation.technical_details.forecast_statistics.forecast_volatility|floatformat:6|default:"-" }}</td></tr>
+                                                <tr><td><strong>Forecast Range:</strong></td><td>{{ garch.interpretation.technical_details.forecast_statistics.forecast_range|default:"-" }}</td></tr>
+                                                <tr><td><strong>Total Change:</strong></td><td>{{ garch.interpretation.technical_details.forecast_statistics.total_change|floatformat:4|default:"-" }}</td></tr>
+                                            {% endif %}
+                                        </table>
+                                        
+                                        {% if garch.forecast|length > 1 %}
+                                            <h6 class="mt-3">Forecast Values</h6>
+                                            <div class="table-responsive" style="max-height: 200px; overflow-y: auto;">
+                                                <table class="table table-sm table-striped">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Period</th>
+                                                            <th>Volatility</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for forecast_val in garch.forecast %}
+                                                            <tr>
+                                                                <td>{{ forloop.counter }}</td>
+                                                                <td>{{ forecast_val|floatformat:6 }}</td>
+                                                            </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
                                         {% endif %}
+                                    {% else %}
+                                        <p class="text-muted">No forecast data available</p>
                                     {% endif %}
                                 </div>
                             </div>
+                            
+                            {% if garch.interpretation.key_findings %}
+                                <div class="mt-3">
+                                    <h6>Key Findings</h6>
+                                    {% for finding_type, finding_data in garch.interpretation.key_findings.items %}
+                                        {% if finding_data %}
+                                            <div class="mb-3">
+                                                <strong>{{ finding_type|title|replace_underscore }}:</strong>
+                                                {% if finding_data is string %}
+                                                    <span>{{ finding_data }}</span>
+                                                {% elif finding_data.items %}
+                                                    <ul class="mb-0">
+                                                        {% for k, v in finding_data.items %}
+                                                            <li><strong>{{ k|title|replace_underscore }}:</strong> {{ v }}</li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                {% else %}
+                                                    <span>{{ finding_data }}</span>
+                                                {% endif %}
+                                            </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            
+                            {% if garch.interpretation.technical_details %}
+                                <div class="mt-3">
+                                    <h6>Technical Details</h6>
+                                    <div class="row">
+                                        {% if garch.interpretation.technical_details.model_specification.justification %}
+                                            <div class="col-12 mb-2">
+                                                <div class="alert alert-light">
+                                                    <strong>Model Specification:</strong> {{ garch.interpretation.technical_details.model_specification.justification }}
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                        {% if garch.interpretation.technical_details.volatility_mechanics.justification %}
+                                            <div class="col-12 mb-2">
+                                                <div class="alert alert-light">
+                                                    <strong>Volatility Mechanics:</strong> {{ garch.interpretation.technical_details.volatility_mechanics.justification }}
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endif %}
                         </div>
                     {% endfor %}
                 {% else %}
@@ -809,6 +927,52 @@
                 {% endif %}
             </div>
         </div>
+
+        <!-- GARCH Analysis Visualizations -->
+        {% if plots %}
+            {% for symbol in symbols %}
+                {% with plot_key='garch_analysis_'|add:symbol|lower %}
+                    {% if plots|lookup:plot_key %}
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">
+                                    <i class="bi bi-lightning me-2"></i> 
+                                    {{ symbol|upper }} - GARCH Analysis Visualization
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-info mb-3">
+                                    <i class="bi bi-info-circle"></i>
+                                    <strong>GARCH Components:</strong> This visualization shows the complete GARCH volatility analysis for {{ symbol|upper }}, including conditional volatility, standardized residuals, volatility clustering patterns, and volatility forecasts.
+                                    {% if garch_results|lookup:symbol.interpretation.technical_details.model_specification.order %}
+                                        <br><strong>Model Order:</strong> {{ garch_results|lookup:symbol.interpretation.technical_details.model_specification.order }}
+                                    {% endif %}
+                                </div>
+                                
+                                <div id="garch-plot-{{ symbol|lower }}" class="plotly-chart"></div>
+                                <script>
+                                    document.addEventListener('DOMContentLoaded', function() {
+                                        try {
+                                            var plotData = {{ plots|lookup:plot_key|safe }};
+                                            Plotly.newPlot('garch-plot-{{ symbol|lower }}', plotData.data, plotData.layout, {
+                                                responsive: true,
+                                                displayModeBar: true,
+                                                displaylogo: false,
+                                                modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d']
+                                            });
+                                        } catch (error) {
+                                            console.error('Error rendering GARCH plot for {{ symbol }}:', error);
+                                            document.getElementById('garch-plot-{{ symbol|lower }}').innerHTML = 
+                                                '<div class="alert alert-warning">Error loading GARCH chart for {{ symbol }}. Please try refreshing the page.</div>';
+                                        }
+                                    });
+                                </script>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endwith %}
+            {% endfor %}
+        {% endif %}
     </div>
 
     <!-- Spillover Analysis Tab -->
@@ -1448,7 +1612,7 @@
                                     </thead>
                                     <tbody>
                                         {% for timestamp in data_arrays.post_garch_data.timestamps|slice:":10" %}
-                                            <tr>
+                                                                                       <tr>
                                                 <td>{{ timestamp }}</td>
                                                 {% for symbol in symbols %}
                                                     <td>{{ data_arrays.post_garch_data.symbol_data|lookup:symbol|index:forloop.parentloop.counter0|floatformat:6 }}</td>
