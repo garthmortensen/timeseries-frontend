@@ -151,6 +151,9 @@ def api_proxy(request, api_path):
     """
     Generic API proxy.
     """
+    print(f"DEBUG: api_proxy called with path: {api_path}")
+    print(f"DEBUG: Request method: {request.method}")
+    print(f"DEBUG: This is the WRONG view - should be run_pipeline_htmx")
     return JsonResponse({"error": "API proxy not implemented"})
 
 def debug_data(request):
@@ -165,14 +168,19 @@ def run_pipeline_htmx(request):
     HTMX-compatible view for running analysis with simple redirect response.
     """
     if request.method == "POST":
+        print("DEBUG: run_pipeline_htmx called!")
+        
         # Support both JSON and form POSTs
         if request.content_type and "application/json" in request.content_type:
             try:
                 data = json.loads(request.body)
-            except Exception:
+                print(f"DEBUG: Received JSON data with keys: {list(data.keys())}")
+            except Exception as e:
+                print(f"DEBUG: Error parsing JSON: {e}")
                 data = {}
         else:
             data = request.POST
+            print("DEBUG: Received form POST data")
         
         logger.info("[HTMX] Starting analysis")
         
@@ -180,28 +188,35 @@ def run_pipeline_htmx(request):
         symbols = data.get("symbols", "MSFT,AAPL,GOOGL")
         if isinstance(symbols, str):
             symbols = [s.strip() for s in symbols.split(",") if s.strip()]
+        elif isinstance(symbols, list):
+            # symbols is already a list
+            pass
+        else:
+            symbols = ["MSFT", "AAPL", "GOOGL"]  # fallback
             
+        print(f"DEBUG: Processing symbols: {symbols}")
+        
         payload = {
             "source_actual_or_synthetic_data": data.get("source_actual_or_synthetic_data", "synthetic"),
             "symbols": symbols,
-            "synthetic_anchor_prices": [100.0, 200.0, 300.0][:len(symbols)],  # Default prices
-            "data_start_date": "2023-01-01",
-            "data_end_date": "2023-06-01",
-            "scaling_method": "standardize",
-            "arima_params": {
-                "p": int(data.get("arima_p", 2)),
-                "d": int(data.get("arima_d", 1)),
-                "q": int(data.get("arima_q", 2)),
+            "synthetic_anchor_prices": data.get("synthetic_anchor_prices", [100.0, 200.0, 300.0][:len(symbols)]),
+            "data_start_date": data.get("data_start_date", "2023-01-01"),
+            "data_end_date": data.get("data_end_date", "2023-06-01"),
+            "scaling_method": data.get("scaling_method", "standardize"),
+            "arima_params": data.get("arima_params", {
+                "p": 2,
+                "d": 1,
+                "q": 2,
                 "forecast_steps": 10,
-            },
-            "garch_params": {
-                "p": int(data.get("garch_p", 1)),
-                "q": int(data.get("garch_q", 1)),
+            }),
+            "garch_params": data.get("garch_params", {
+                "p": 1,
+                "q": 1,
                 "dist": "t",
                 "forecast_steps": 3,
-            },
-            "spillover_enabled": data.get("enable_spillover") == "on",
-            "spillover_params": {
+            }),
+            "spillover_enabled": data.get("spillover_enabled", True),
+            "spillover_params": data.get("spillover_params", {
                 "method": "diebold_yilmaz",
                 "forecast_horizon": 5,
                 "var_lag_selection_method": "aic",
@@ -209,41 +224,72 @@ def run_pipeline_htmx(request):
                 "granger_significance_level": 0.05,
                 "include_granger": True,
                 "include_fevd_details": True,
-            }
+            })
         }
+        
+        print(f"DEBUG: API payload prepared with symbols: {payload['symbols']}")
         
         try:
             # Call the API
+            print("DEBUG: About to call API")
             response = requests.post(f"{settings.TIMESERIES_API_URL}/api/v1/run_pipeline", json=payload, timeout=120)
             
             if response.status_code == 200:
                 # Parse and process the API response
                 api_results = response.json()
+                print(f"DEBUG: API call successful, got {len(api_results)} top-level keys")
+                print(f"DEBUG: API response keys: {list(api_results.keys())}")
                 logger.info("[HTMX] API call successful, processing results")
                 
                 # Import and use the ResultsProcessor
                 from .results_processor import ResultsProcessor
+                print("DEBUG: About to create ResultsProcessor")
                 processor = ResultsProcessor(api_results)
+                print("DEBUG: About to call process_all()")
                 processed_results = processor.process_all()
+                print("DEBUG: process_all() completed successfully")
                 
                 # Store processed results in session for the results page
                 request.session['analysis_results'] = processed_results
                 request.session['analysis_raw_results'] = api_results
                 
-                # Return simple redirect instruction for HTMX
-                return HttpResponse(f"redirect:{reverse('timeseries:results')}")
+                # Return JSON response with redirect URL for JavaScript
+                return JsonResponse({
+                    "success": True,
+                    "redirect_url": reverse('timeseries:results'),
+                    "message": "Analysis completed successfully"
+                })
             else:
+                print(f"DEBUG: API call failed with status {response.status_code}")
+                print(f"DEBUG: API response text: {response.text}")
                 logger.error(f"[HTMX] API call failed with status {response.status_code}")
-                return HttpResponse(f"Error: API call failed - {response.text}", status=500)
+                return JsonResponse({
+                    "success": False,
+                    "error": f"API call failed with status {response.status_code}: {response.text}"
+                }, status=500)
                 
         except requests.exceptions.Timeout:
+            print("DEBUG: API request timed out")
             logger.error("[HTMX] API request timed out")
-            return HttpResponse("Error: Analysis timed out", status=504)
+            return JsonResponse({
+                "success": False,
+                "error": "Analysis timed out"
+            }, status=504)
         except requests.exceptions.ConnectionError:
+            print("DEBUG: Failed to connect to API")
             logger.error("[HTMX] Failed to connect to API")
-            return HttpResponse("Error: Could not connect to analysis API", status=503)
+            return JsonResponse({
+                "success": False,
+                "error": "Could not connect to analysis API"
+            }, status=503)
         except Exception as e:
+            print(f"DEBUG: Unexpected error: {e}")
+            import traceback
+            traceback.print_exc()
             logger.exception("[HTMX] Unexpected error during API call")
-            return HttpResponse(f"Error: {str(e)}", status=500)
+            return JsonResponse({
+                "success": False,
+                "error": str(e)
+            }, status=500)
     else:
         return redirect(reverse("timeseries:analysis"))

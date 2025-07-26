@@ -39,12 +39,12 @@ class ResultsProcessor:
         # From returns_data
         if 'returns_data' in self.raw_results and self.raw_results['returns_data']:
             first_row = self.raw_results['returns_data'][0]
-            symbols = [key for key in first_row.keys() if key != 'index']
+            symbols = [key for key in first_row.keys() if key not in ['index', 'Date']]
         
         # From original_data
         elif 'original_data' in self.raw_results and self.raw_results['original_data']:
             first_row = self.raw_results['original_data'][0]
-            symbols = [key for key in first_row.keys() if key != 'index']
+            symbols = [key for key in first_row.keys() if key not in ['index', 'Date']]
             
         # From execution_configuration
         elif 'execution_configuration' in self.raw_results:
@@ -116,8 +116,14 @@ class ResultsProcessor:
         if len(data_array) > 2:
             logger.info(f"DEBUG: Third row: {data_array[2]}")
             
-        # Extract timestamps and symbol data
-        timestamps = [row.get('index') for row in data_array if 'index' in row]
+        # Extract timestamps - check for both 'Date' and 'index' fields
+        timestamps = []
+        for row in data_array:
+            if 'Date' in row:
+                timestamps.append(row['Date'])
+            elif 'index' in row:
+                timestamps.append(row['index'])
+        
         symbol_data = {}
         
         for symbol in self.symbols:
@@ -202,6 +208,8 @@ class ResultsProcessor:
             import json
             
             if 'original_data' not in self.raw_results or not self.raw_results['original_data']:
+                print("DEBUG: No original_data found in raw_results")
+                logger.error("DEBUG: No original_data found in raw_results")
                 return None
                 
             fig = go.Figure()
@@ -209,19 +217,46 @@ class ResultsProcessor:
             
             # Extract data from the original_data array
             original_data = self.raw_results['original_data']
+            print(f"DEBUG: Original data has {len(original_data)} rows")
+            print(f"DEBUG: First few rows: {original_data[:3] if len(original_data) >= 3 else original_data}")
+            print(f"DEBUG: Detected symbols: {self.symbols}")
             
-            # Get timestamps
-            timestamps = [row.get('index') for row in original_data if 'index' in row]
+            # Get timestamps - check for both 'Date' and 'index' fields
+            timestamps = []
+            for row in original_data:
+                if 'Date' in row:
+                    timestamps.append(row['Date'])
+                elif 'index' in row:
+                    timestamps.append(row['index'])
+                else:
+                    # If neither field exists, we can't create the plot
+                    print(f"DEBUG: No timestamp field found in row: {row}")
+                    
+            print(f"DEBUG: Extracted {len(timestamps)} timestamps")
+            print(f"DEBUG: First few timestamps: {timestamps[:5] if len(timestamps) >= 5 else timestamps}")
+            
+            if not timestamps:
+                print("DEBUG: No timestamps found - cannot create plot")
+                logger.error("DEBUG: No timestamps found - cannot create plot")
+                return None
             
             # Add trace for each symbol
             for i, symbol in enumerate(self.symbols):
-                prices = [row.get(symbol) for row in original_data if row.get(symbol) is not None]
-                valid_timestamps = [timestamps[j] for j, row in enumerate(original_data) if row.get(symbol) is not None]
+                prices = []
+                symbol_timestamps = []
                 
-                if prices and valid_timestamps:
+                for j, row in enumerate(original_data):
+                    if row.get(symbol) is not None and j < len(timestamps):
+                        prices.append(row[symbol])
+                        symbol_timestamps.append(timestamps[j])
+                
+                print(f"DEBUG: Symbol {symbol} - extracted {len(prices)} prices, {len(symbol_timestamps)} timestamps")
+                print(f"DEBUG: Symbol {symbol} first few prices: {prices[:5] if len(prices) >= 5 else prices}")
+                
+                if prices and symbol_timestamps:
                     color = color_palette[i % len(color_palette)]
                     fig.add_trace(go.Scatter(
-                        x=valid_timestamps,
+                        x=symbol_timestamps,
                         y=prices,
                         mode='lines',
                         name=symbol,
@@ -231,6 +266,9 @@ class ResultsProcessor:
                                     'Price: %{y:.2f}<br>' +
                                     '<extra></extra>'
                     ))
+                    print(f"DEBUG: Successfully added trace for {symbol}")
+                else:
+                    print(f"DEBUG: No data to plot for symbol {symbol}")
             
             # Update layout
             fig.update_layout(
@@ -256,10 +294,15 @@ class ResultsProcessor:
                 margin=dict(l=40, r=40, t=80, b=60)  # Reduced margins and made plot wider
             )
             
+            print("DEBUG: Successfully created plot JSON")
             return json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
             
         except Exception as e:
+            print(f"ERROR: Error creating original data plot for stats: {e}")
             logger.error(f"Error creating original data plot for stats: {e}")
+            import traceback
+            traceback.print_exc()
+            logger.error(f"DEBUG: Full traceback: {traceback.format_exc()}")
             return None
 
     def _create_returns_plot(self) -> Optional[str]:
@@ -279,18 +322,28 @@ class ResultsProcessor:
             # Extract data from the returns_data array
             returns_data = self.raw_results['returns_data']
             
-            # Get timestamps
-            timestamps = [row.get('index') for row in returns_data if 'index' in row]
+            # Get timestamps - check for both 'Date' and 'index' fields
+            timestamps = []
+            for row in returns_data:
+                if 'Date' in row:
+                    timestamps.append(row['Date'])
+                elif 'index' in row:
+                    timestamps.append(row['index'])
             
             # Add trace for each symbol
             for i, symbol in enumerate(self.symbols):
-                returns = [row.get(symbol) for row in returns_data if row.get(symbol) is not None]
-                valid_timestamps = [timestamps[j] for j, row in enumerate(returns_data) if row.get(symbol) is not None]
+                returns = []
+                symbol_timestamps = []
                 
-                if returns and valid_timestamps:
+                for j, row in enumerate(returns_data):
+                    if row.get(symbol) is not None and j < len(timestamps):
+                        returns.append(row[symbol])
+                        symbol_timestamps.append(timestamps[j])
+                
+                if returns and symbol_timestamps:
                     color = color_palette[i % len(color_palette)]
                     fig.add_trace(go.Scatter(
-                        x=valid_timestamps,
+                        x=symbol_timestamps,
                         y=returns,
                         mode='lines',
                         name=symbol,
@@ -350,18 +403,28 @@ class ResultsProcessor:
             # Extract data from the scaled_data array
             scaled_data = self.raw_results['scaled_data']
             
-            # Get timestamps
-            timestamps = [row.get('index') for row in scaled_data if 'index' in row]
+            # Get timestamps - check for both 'Date' and 'index' fields
+            timestamps = []
+            for row in scaled_data:
+                if 'Date' in row:
+                    timestamps.append(row['Date'])
+                elif 'index' in row:
+                    timestamps.append(row['index'])
             
             # Add trace for each symbol
             for i, symbol in enumerate(self.symbols):
-                scaled_values = [row.get(symbol) for row in scaled_data if row.get(symbol) is not None]
-                valid_timestamps = [timestamps[j] for j, row in enumerate(scaled_data) if row.get(symbol) is not None]
+                scaled_values = []
+                symbol_timestamps = []
                 
-                if scaled_values and valid_timestamps:
+                for j, row in enumerate(scaled_data):
+                    if row.get(symbol) is not None and j < len(timestamps):
+                        scaled_values.append(row[symbol])
+                        symbol_timestamps.append(timestamps[j])
+                
+                if scaled_values and symbol_timestamps:
                     color = color_palette[i % len(color_palette)]
                     fig.add_trace(go.Scatter(
-                        x=valid_timestamps,
+                        x=symbol_timestamps,
                         y=scaled_values,
                         mode='lines',
                         name=symbol,
@@ -421,18 +484,28 @@ class ResultsProcessor:
             # Extract data from the pre_garch_data array
             pre_garch_data = self.raw_results['pre_garch_data']
             
-            # Get timestamps
-            timestamps = [row.get('index') for row in pre_garch_data if 'index' in row]
+            # Get timestamps - check for both 'Date' and 'index' fields
+            timestamps = []
+            for row in pre_garch_data:
+                if 'Date' in row:
+                    timestamps.append(row['Date'])
+                elif 'index' in row:
+                    timestamps.append(row['index'])
             
             # Add trace for each symbol
             for i, symbol in enumerate(self.symbols):
-                pre_garch_values = [row.get(symbol) for row in pre_garch_data if row.get(symbol) is not None]
-                valid_timestamps = [timestamps[j] for j, row in enumerate(pre_garch_data) if row.get(symbol) is not None]
+                pre_garch_values = []
+                symbol_timestamps = []
                 
-                if pre_garch_values and valid_timestamps:
+                for j, row in enumerate(pre_garch_data):
+                    if row.get(symbol) is not None and j < len(timestamps):
+                        pre_garch_values.append(row[symbol])
+                        symbol_timestamps.append(timestamps[j])
+                
+                if pre_garch_values and symbol_timestamps:
                     color = color_palette[i % len(color_palette)]
                     fig.add_trace(go.Scatter(
-                        x=valid_timestamps,
+                        x=symbol_timestamps,
                         y=pre_garch_values,
                         mode='lines',
                         name=symbol,
@@ -492,18 +565,28 @@ class ResultsProcessor:
             # Extract data from the post_garch_data array
             post_garch_data = self.raw_results['post_garch_data']
             
-            # Get timestamps
-            timestamps = [row.get('index') for row in post_garch_data if 'index' in row]
+            # Get timestamps - check for both 'Date' and 'index' fields
+            timestamps = []
+            for row in post_garch_data:
+                if 'Date' in row:
+                    timestamps.append(row['Date'])
+                elif 'index' in row:
+                    timestamps.append(row['index'])
             
             # Add trace for each symbol
             for i, symbol in enumerate(self.symbols):
-                post_garch_values = [row.get(symbol) for row in post_garch_data if row.get(symbol) is not None]
-                valid_timestamps = [timestamps[j] for j, row in enumerate(post_garch_data) if row.get(symbol) is not None]
+                post_garch_values = []
+                symbol_timestamps = []
                 
-                if post_garch_values and valid_timestamps:
+                for j, row in enumerate(post_garch_data):
+                    if row.get(symbol) is not None and j < len(timestamps):
+                        post_garch_values.append(row[symbol])
+                        symbol_timestamps.append(timestamps[j])
+                
+                if post_garch_values and symbol_timestamps:
                     color = color_palette[i % len(color_palette)]
                     fig.add_trace(go.Scatter(
-                        x=valid_timestamps,
+                        x=symbol_timestamps,
                         y=post_garch_values,
                         mode='lines',
                         name=symbol,
@@ -877,100 +960,16 @@ class ResultsProcessor:
         processed_spillover['spillover_table_data'] = spillover_table_data
         
         return processed_spillover
-    
-    def process_granger_causality_results(self) -> Dict[str, Any]:
-        """Process Granger causality results."""
-        if 'granger_causality_results' not in self.raw_results:
-            return {}
-        
-        granger = self.raw_results['granger_causality_results']
-        
-        # Handle case where granger_causality_results is None or not a dictionary
-        if not granger or not isinstance(granger, dict):
-            return {
-                'causality_results': {},
-                'interpretations': {},
-                'metadata': {}
-            }
-        
-        return {
-            'causality_results': granger.get('causality_results', {}),
-            'interpretations': granger.get('interpretations', {}),
-            'metadata': granger.get('metadata', {})
-        }
-    
-    def get_executive_summary(self) -> Dict[str, Any]:
-        """Create an executive summary from all results."""
-        summary = {
-            'analysis_overview': {
-                'symbols_analyzed': self.symbols,
-                'total_symbols': len(self.symbols),
-                'analysis_complete': True
-            },
-            'key_insights': [],
-            'model_performance': {},
-            'business_recommendations': [],
-            'executive_summary': {},
-            'stationarity_summary': {},
-            'garch_summary': {}
-        }
-        
-        # Extract stationarity executive summaries
-        stationarity_results = self.process_stationarity_results()
-        if 'all_symbols_stationarity' in stationarity_results:
-            for symbol, result in stationarity_results['all_symbols_stationarity'].items():
-                interpretation = result.get('interpretation', {})
-                if 'executive_summary' in interpretation:
-                    exec_summary = interpretation['executive_summary']
-                    summary['stationarity_summary'][symbol] = exec_summary
-                    if 'bottom_line' in exec_summary:
-                        summary['key_insights'].append(f"{symbol} Stationarity: {exec_summary['bottom_line']}")
-        
-        # Extract key insights from ARIMA interpretations
-        arima_results = self.process_arima_results()
-        for symbol, result in arima_results.items():
-            interpretation = result.get('interpretation', {})
-            if 'executive_summary' in interpretation:
-                exec_summary = interpretation['executive_summary']
-                # Add all executive_summary fields for each symbol
-                summary['executive_summary'][symbol] = exec_summary
-                if 'bottom_line' in exec_summary:
-                    summary['key_insights'].append(f"{symbol}: {exec_summary['bottom_line']}")
-                if 'recommendation' in exec_summary:
-                    summary['business_recommendations'].append(f"{symbol}: {exec_summary['recommendation']}")
-        
-        # Extract GARCH executive summaries
-        garch_results = self.process_garch_results()
-        for symbol, result in garch_results.items():
-            interpretation = result.get('interpretation', {})
-            if 'executive_summary' in interpretation:
-                exec_summary = interpretation['executive_summary']
-                summary['garch_summary'][symbol] = exec_summary
-                if 'bottom_line' in exec_summary:
-                    summary['key_insights'].append(f"{symbol} GARCH: {exec_summary['bottom_line']}")
-                if 'recommendation' in exec_summary:
-                    summary['business_recommendations'].append(f"{symbol} GARCH: {exec_summary['recommendation']}")
-        
-        # Extract spillover insights
-        spillover_results = self.process_spillover_results()
-        if spillover_results.get('interpretation'):
-            summary['key_insights'].append(f"Spillover Analysis: {spillover_results['interpretation']}")
-        return summary
-    
+
     def process_all(self) -> Dict[str, Any]:
-        """Process all sections and return comprehensive results."""
-        logger.info("Processing comprehensive analysis results")
+        """
+        Process all results into a complete structured format for templates.
+        This is the main method called by views to get all processed data.
+        """
+        print("DEBUG: Starting process_all() method")
         
-        # DEBUG: Let's see the actual structure we're getting
-        logger.info(f"DEBUG: Full raw_results keys: {list(self.raw_results.keys())}")
-        
-        # Let's check if any of these sections contain configuration info
-        for key in ['stationarity_results', 'arima_results', 'garch_results', 'var_results']:
-            if key in self.raw_results and self.raw_results[key]:
-                section_keys = list(self.raw_results[key].keys()) if isinstance(self.raw_results[key], dict) else "Not a dict"
-                logger.info(f"DEBUG: {key} structure: {section_keys}")
-        
-        processed = {
+        processed_results = {
+            'symbols': self.symbols,
             'execution_configuration': self.process_execution_configuration(),
             'data_arrays': self.process_data_arrays(),
             'stationarity_results': self.process_stationarity_results(),
@@ -978,12 +977,74 @@ class ResultsProcessor:
             'garch_results': self.process_garch_results(),
             'var_results': self.process_var_results(),
             'spillover_results': self.process_spillover_results(),
-            'granger_causality_results': self.process_granger_causality_results(),
-            'executive_summary': self.get_executive_summary(),
-            'plots': self.create_plots(),  # Add plots generation
-            'symbols': self.symbols,
-            'raw_results': self.raw_results  # Keep for debugging/raw data tab
+            'plots': self.create_plots(),  # This will call our plotting methods!
+            'executive_summary': self.create_executive_summary()  # Add this for Overview tab
         }
         
-        logger.info(f"Processing complete for {len(self.symbols)} symbols")
-        return processed
+        print("DEBUG: Completed process_all() method")
+        return processed_results
+
+    def create_executive_summary(self) -> Dict[str, Any]:
+        """
+        Create executive summary data for the Overview tab.
+        Extracts key information from each analysis component.
+        """
+        print("DEBUG: Creating executive summary")
+        
+        summary = {}
+        
+        # Create stationarity summary
+        stationarity_data = self.process_stationarity_results()
+        if stationarity_data.get('all_symbols_stationarity'):
+            stationarity_summary = {}
+            for symbol, test_result in stationarity_data['all_symbols_stationarity'].items():
+                stationarity_summary[symbol] = {
+                    'status': 'Stationary' if test_result.get('is_stationary') else 'Non-Stationary',
+                    'test_statistic': f"{test_result.get('adf_statistic', 0):.4f}",
+                    'p_value': f"{test_result.get('p_value', 0):.4f}",
+                    'interpretation': test_result.get('interpretation', 'No interpretation available')
+                }
+            summary['stationarity_summary'] = stationarity_summary
+        
+        # Create ARIMA summary
+        arima_data = self.process_arima_results()
+        if arima_data:
+            arima_summary = {}
+            for symbol, arima_result in arima_data.items():
+                arima_summary[symbol] = {
+                    'model_specification': arima_result.get('summary', {}).get('model_specification', 'N/A'),
+                    'aic': f"{arima_result.get('summary', {}).get('aic', 0):.2f}",
+                    'bic': f"{arima_result.get('summary', {}).get('bic', 0):.2f}",
+                    'forecast_steps': arima_result.get('forecast', {}).get('forecast_steps', 'N/A')
+                }
+            summary['executive_summary'] = arima_summary  # Template expects this key name
+        
+        # Create GARCH summary
+        garch_data = self.process_garch_results()
+        if garch_data:
+            garch_summary = {}
+            for symbol, garch_result in garch_data.items():
+                forecast_data = garch_result.get('forecast', [])
+                next_volatility = forecast_data[0] if forecast_data and len(forecast_data) > 0 else 'N/A'
+                if isinstance(next_volatility, (int, float)):
+                    next_volatility = f"{next_volatility:.6f}"
+                
+                garch_summary[symbol] = {
+                    'model_type': 'GARCH',
+                    'forecast_periods': len(forecast_data) if forecast_data else 0,
+                    'next_period_volatility': next_volatility,
+                    'summary_available': bool(garch_result.get('summary'))
+                }
+            summary['garch_summary'] = garch_summary
+        
+        # Create spillover summary if available
+        spillover_data = self.process_spillover_results()
+        if spillover_data.get('total_spillover_index') is not None:
+            summary['spillover_summary'] = {
+                'total_spillover_index': f"{spillover_data['total_spillover_index']:.2f}%",
+                'interpretation': spillover_data.get('interpretation', 'No interpretation available'),
+                'symbols_analyzed': len(self.symbols)
+            }
+        
+        print(f"DEBUG: Created executive summary with keys: {list(summary.keys())}")
+        return summary

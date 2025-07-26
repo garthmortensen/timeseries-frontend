@@ -74,7 +74,7 @@
     </div>
 
     <!-- Form -->
-    <form id="analysis-form" method="post" action="/api_proxy/api/v1/run_pipeline/">
+    <form id="analysis-form" method="post" action="/api/run_pipeline_htmx">
         {% csrf_token %}
         
         <!-- Data Source Configuration -->
@@ -950,7 +950,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log("Sending data to API:", data);
         
         // Send the AJAX request
-        fetch('/api_proxy/api/v1/run_pipeline/', {
+        fetch('/api/run_pipeline_htmx', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -973,16 +973,18 @@ document.addEventListener('DOMContentLoaded', function() {
             // Log the response data
             console.log("API Response received:", responseData);
             
-            try {
-                // Attempt to save to sessionStorage
-                sessionStorage.setItem('analysisResults', JSON.stringify(responseData));
-                console.log("Successfully saved to sessionStorage");
-            } catch (error) {
-                console.error("Error processing data or saving to sessionStorage:", error);
+            // Check if the response indicates success
+            if (responseData.success) {
+                console.log("Analysis completed successfully, redirecting to results page");
+                // Redirect to the results page using the provided URL
+                window.location.href = responseData.redirect_url || '/results/';
+            } else {
+                // Handle error response
+                console.error("Analysis failed:", responseData.error);
+                loadingIndicator.style.display = 'none';
+                mainContent.style.display = 'block';
+                alert(`Error running analysis: ${responseData.error}`);
             }
-            
-            // Redirect to results page
-            window.location.href = '/results/';
         })
         .catch(error => {
             console.error('Error:', error);
