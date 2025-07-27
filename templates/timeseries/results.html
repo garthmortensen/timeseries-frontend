@@ -1299,18 +1299,12 @@
                                 <p class="text-muted mb-0">Raw financial data as received from the data source</p>
                             </div>
                             <div>
-                                <button hx-post="{% url 'timeseries:export_csv' 'original_data' %}" 
-                                        hx-indicator="#csv-loading-original" 
-                                        hx-target="#csv-result-original"
-                                        class="btn btn-success btn-sm">
+                                <a href="{% url 'timeseries:export_csv' 'original_data' %}" 
+                                   class="btn btn-success btn-sm">
                                     <i class="bi bi-download"></i> Export CSV
-                                </button>
-                                <div id="csv-loading-original" class="htmx-indicator spinner-border spinner-border-sm ms-2" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
+                                </a>
                             </div>
                         </div>
-                        <div id="csv-result-original"></div>
                         
                         {% if data_arrays.original_data %}
                             <div class="row mb-3">
@@ -1371,18 +1365,12 @@
                                 <p class="text-muted mb-0">Logarithmic returns calculated from price data</p>
                             </div>
                             <div>
-                                <button hx-post="{% url 'timeseries:export_csv' 'returns_data' %}" 
-                                        hx-indicator="#csv-loading-returns" 
-                                        hx-target="#csv-result-returns"
-                                        class="btn btn-success btn-sm">
+                                <a href="{% url 'timeseries:export_csv' 'returns_data' %}" 
+                                   class="btn btn-success btn-sm">
                                     <i class="bi bi-download"></i> Export CSV
-                                </button>
-                                <div id="csv-loading-returns" class="htmx-indicator spinner-border spinner-border-sm ms-2" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
+                                </a>
                             </div>
                         </div>
-                        <div id="csv-result-returns"></div>
                         
                         {% if data_arrays.returns_data %}
                             <div class="row mb-3">
@@ -1443,18 +1431,12 @@
                                 <p class="text-muted mb-0">Standardized returns data prepared for GARCH modeling</p>
                             </div>
                             <div>
-                                <button hx-post="{% url 'timeseries:export_csv' 'scaled_data' %}" 
-                                        hx-indicator="#csv-loading-scaled" 
-                                        hx-target="#csv-result-scaled"
-                                        class="btn btn-success btn-sm">
+                                <a href="{% url 'timeseries:export_csv' 'scaled_data' %}" 
+                                   class="btn btn-success btn-sm">
                                     <i class="bi bi-download"></i> Export CSV
-                                </button>
-                                <div id="csv-loading-scaled" class="htmx-indicator spinner-border spinner-border-sm ms-2" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
+                                </a>
                             </div>
                         </div>
-                        <div id="csv-result-scaled"></div>
                         
                         {% if data_arrays.scaled_data %}
                             <div class="row mb-3">
@@ -1515,18 +1497,12 @@
                                 <p class="text-muted mb-0">Data prepared and ready for GARCH model input</p>
                             </div>
                             <div>
-                                <button hx-post="{% url 'timeseries:export_csv' 'pre_garch_data' %}" 
-                                        hx-indicator="#csv-loading-pre-garch" 
-                                        hx-target="#csv-result-pre-garch"
-                                        class="btn btn-success btn-sm">
+                                <a href="{% url 'timeseries:export_csv' 'pre_garch_data' %}" 
+                                   class="btn btn-success btn-sm">
                                     <i class="bi bi-download"></i> Export CSV
-                                </button>
-                                <div id="csv-loading-pre-garch" class="htmx-indicator spinner-border spinner-border-sm ms-2" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
+                                </a>
                             </div>
                         </div>
-                        <div id="csv-result-pre-garch"></div>
                         
                         {% if data_arrays.pre_garch_data %}
                             <div class="row mb-3">
@@ -1587,18 +1563,12 @@
                                 <p class="text-muted mb-0">Data after GARCH volatility modeling and residual extraction</p>
                             </div>
                             <div>
-                                <button hx-post="{% url 'timeseries:export_csv' 'post_garch_data' %}" 
-                                        hx-indicator="#csv-loading-post-garch" 
-                                        hx-target="#csv-result-post-garch"
-                                        class="btn btn-success btn-sm">
+                                <a href="{% url 'timeseries:export_csv' 'post_garch_data' %}" 
+                                   class="btn btn-success btn-sm">
                                     <i class="bi bi-download"></i> Export CSV
-                                </button>
-                                <div id="csv-loading-post-garch" class="htmx-indicator spinner-border spinner-border-sm ms-2" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
+                                </a>
                             </div>
                         </div>
-                        <div id="csv-result-post-garch"></div>
                         
                         {% if data_arrays.post_garch_data %}
                             <div class="row mb-3">
