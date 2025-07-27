@@ -12,6 +12,25 @@
 
 {% block title %}Lab:Results{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Hide HTMX indicators by default */
+    .htmx-indicator {
+        display: none;
+    }
+    
+    /* Show HTMX indicators only during requests */
+    .htmx-request .htmx-indicator {
+        display: inline-block;
+    }
+    
+    /* Additional styling for better UX */
+    .plotly-chart {
+        min-height: 400px;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="mb-0">Analysis Results</h1>
