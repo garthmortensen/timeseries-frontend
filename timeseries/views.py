@@ -61,8 +61,14 @@ def download_api_response(request):
     raw_results = request.session.get('analysis_raw_results', None)
     if raw_results is not None:
         import json
+        from django.utils import timezone
+        
+        # Generate filename with timestamp (same format as CSV exports)
+        current_time = timezone.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"api_response_{current_time}.json"
+        
         response = HttpResponse(json.dumps(raw_results, indent=2), content_type='application/json')
-        response['Content-Disposition'] = 'attachment; filename="api_response.json"'
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
         return response
     else:
         return HttpResponse("No API response available to download.", content_type="text/plain")
