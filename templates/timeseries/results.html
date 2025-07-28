@@ -193,14 +193,27 @@
                                     <h6 class="mb-0"><i class="bi bi-lightning"></i> GARCH Analysis Summary</h6>
                                 </div>
                                 <div class="card-body">
-                                    {% for symbol, details in executive_summary.garch_summary.items %}
+                                    {% for symbol, garch_data in garch_results.items %}
                                         <div class="border-start border-warning border-3 ps-3 mb-3">
                                             <h6 class="text-warning mb-2">{{ symbol|upper }}</h6>
-                                            <ul class="mb-0">
-                                                {% for key, value in details.items %}
-                                                    <li><strong>{{ key|title|replace_underscore }}:</strong> {{ value }}</li>
-                                                {% endfor %}
-                                            </ul>
+                                            {% if garch_data.interpretation.executive_summary %}
+                                                {% if garch_data.interpretation.executive_summary.bottom_line %}
+                                                    <p class="mb-1"><strong>Summary:</strong> {{ garch_data.interpretation.executive_summary.bottom_line }}</p>
+                                                {% endif %}
+                                                {% if garch_data.interpretation.executive_summary.business_impact %}
+                                                    <p class="mb-1"><strong>Business Impact:</strong> {{ garch_data.interpretation.executive_summary.business_impact }}</p>
+                                                {% endif %}
+                                                {% if garch_data.interpretation.executive_summary.recommendation %}
+                                                    <p class="mb-1"><strong>Recommendation:</strong> {{ garch_data.interpretation.executive_summary.recommendation }}</p>
+                                                {% endif %}
+                                                {% if garch_data.interpretation.executive_summary.justification %}
+                                                    <p class="mb-0"><strong>Justification:</strong> {{ garch_data.interpretation.executive_summary.justification }}</p>
+                                                {% endif %}
+                                            {% else %}
+                                                <p class="mb-1"><strong>Model Type:</strong> GARCH</p>
+                                                <p class="mb-1"><strong>Forecast Periods:</strong> {{ garch_data.forecast|length|default:"N/A" }}</p>
+                                                <p class="mb-0"><strong>Next Period Volatility:</strong> {{ garch_data.forecast.0|floatformat:6|default:"N/A" }}</p>
+                                            {% endif %}
                                         </div>
                                     {% endfor %}
                                 </div>
@@ -1245,7 +1258,7 @@
                                                 {% elif row.net_spillover %}
                                                     <span class="text-danger">{{ row.net_spillover|floatformat:2 }}</span>
                                                 {% else %}
-                                                    -
+                                                    <span class="text-muted">{{ row.net_spillover|floatformat:2 }}</span>
                                                 {% endif %}
                                             </td>
                                         </tr>
