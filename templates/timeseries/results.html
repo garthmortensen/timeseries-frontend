@@ -139,31 +139,48 @@
                                     {% for symbol, details in executive_summary.stationarity_summary.items %}
                                         <div class="border-start border-primary border-3 ps-3 mb-3">
                                             <h6 class="text-primary mb-2">{{ symbol|upper }}</h6>
-                                            <ul class="mb-0">
-                                                {% for key, value in details.items %}
-                                                    <li><strong>{{ key|title|replace_underscore }}:</strong> {{ value }}</li>
-                                                {% endfor %}
-                                            </ul>
+                                            {% if details.interpretation.executive_summary.justification %}
+                                                <p class="mb-0"><strong>Interpretation:</strong> {{ details.interpretation.executive_summary.justification }}</p>
+                                            {% else %}
+                                                <ul class="mb-0">
+                                                    {% for key, value in details.items %}
+                                                        <li><strong>{{ key|title|replace_underscore }}:</strong> {{ value }}</li>
+                                                    {% endfor %}
+                                                </ul>
+                                            {% endif %}
                                         </div>
                                     {% endfor %}
                                 </div>
                             </div>
                         {% endif %}
                         
-                        {% if executive_summary.executive_summary %}
+                        {% if arima_results %}
                             <div class="card mb-3">
                                 <div class="card-header bg-success text-white">
                                     <h6 class="mb-0"><i class="bi bi-graph-up-arrow"></i> ARIMA Analysis Summary</h6>
                                 </div>
                                 <div class="card-body">
-                                    {% for symbol, details in executive_summary.executive_summary.items %}
+                                    {% for symbol, arima_data in arima_results.items %}
                                         <div class="border-start border-success border-3 ps-3 mb-3">
                                             <h6 class="text-success mb-2">{{ symbol|upper }}</h6>
-                                            <ul class="mb-0">
-                                                {% for key, value in details.items %}
-                                                    <li><strong>{{ key|title|replace_underscore }}:</strong> {{ value }}</li>
-                                                {% endfor %}
-                                            </ul>
+                                            {% if arima_data.interpretation.executive_summary %}
+                                                {% if arima_data.interpretation.executive_summary.bottom_line %}
+                                                    <p class="mb-1"><strong>Summary:</strong> {{ arima_data.interpretation.executive_summary.bottom_line }}</p>
+                                                {% endif %}
+                                                {% if arima_data.interpretation.executive_summary.business_impact %}
+                                                    <p class="mb-1"><strong>Business Impact:</strong> {{ arima_data.interpretation.executive_summary.business_impact }}</p>
+                                                {% endif %}
+                                                {% if arima_data.interpretation.executive_summary.recommendation %}
+                                                    <p class="mb-1"><strong>Recommendation:</strong> {{ arima_data.interpretation.executive_summary.recommendation }}</p>
+                                                {% endif %}
+                                                {% if arima_data.interpretation.executive_summary.justification %}
+                                                    <p class="mb-0"><strong>Justification:</strong> {{ arima_data.interpretation.executive_summary.justification }}</p>
+                                                {% endif %}
+                                            {% else %}
+                                                <p class="mb-1"><strong>Model:</strong> {{ arima_data.summary.model_specification|default:"N/A" }}</p>
+                                                <p class="mb-1"><strong>AIC:</strong> {{ arima_data.summary.aic|floatformat:2|default:"N/A" }}</p>
+                                                <p class="mb-0"><strong>Forecast Steps:</strong> {{ arima_data.forecast.forecast_steps|default:"N/A" }}</p>
+                                            {% endif %}
                                         </div>
                                     {% endfor %}
                                 </div>
@@ -186,6 +203,194 @@
                                             </ul>
                                         </div>
                                     {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        {% if spillover_results %}
+                            <div class="card mb-3">
+                                <div class="card-header bg-info text-white">
+                                    <h6 class="mb-0"><i class="bi bi-arrows-angle-expand"></i> Spillover Analysis Summary</h6>
+                                </div>
+                                <div class="card-body">
+                                    {% if spillover_results.total_spillover_index %}
+                                        <div class="alert alert-info mb-3">
+                                            <strong>Total Spillover Index:</strong> {{ spillover_results.total_spillover_index|floatformat:2 }}%
+                                            <br><small>Percentage of forecast error variance from cross-asset spillovers</small>
+                                        </div>
+                                    {% endif %}
+                                    
+                                    {% if spillover_results.directional_spillover %}
+                                        <h6 class="text-info mb-2">Directional Spillover Effects</h6>
+                                        {% for symbol, spillover_data in spillover_results.directional_spillover.items %}
+                                            <div class="border-start border-info border-3 ps-3 mb-2">
+                                                <strong>{{ symbol|upper }}:</strong>
+                                                <span class="text-muted">TO {{ spillover_data.to|floatformat:1 }}% | FROM {{ spillover_data.from|floatformat:1 }}%</span>
+                                            </div>
+                                        {% endfor %}
+                                    {% endif %}
+                                    
+                                    {% if spillover_results.net_spillover %}
+                                        <h6 class="text-info mb-2 mt-3">Net Spillover Effects</h6>
+                                        {% for symbol, net_value in spillover_results.net_spillover.items %}
+                                            <div class="border-start border-info border-3 ps-3 mb-2">
+                                                <strong>{{ symbol|upper }}:</strong>
+                                                {% if net_value > 0 %}
+                                                    <span class="text-success">+{{ net_value|floatformat:1 }}% (Net Transmitter)</span>
+                                                {% elif net_value < 0 %}
+                                                    <span class="text-danger">{{ net_value|floatformat:1 }}% (Net Receiver)</span>
+                                                {% else %}
+                                                    <span class="text-muted">{{ net_value|floatformat:1 }}% (Neutral)</span>
+                                                {% endif %}
+                                            </div>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        {% if var_results.fevd_interpretation %}
+                            <div class="card mb-3">
+                                <div class="card-header bg-secondary text-white">
+                                    <h6 class="mb-0"><i class="bi bi-diagram-3"></i> Forecast Error Variance Decomposition (FEVD)</h6>
+                                </div>
+                                <div class="card-body">
+                                    {% for symbol, interpretation in var_results.fevd_interpretation.items %}
+                                        <div class="border-start border-secondary border-3 ps-3 mb-3">
+                                            <h6 class="text-secondary mb-2">{{ symbol|upper }}</h6>
+                                            <p class="mb-0 small">{{ interpretation }}</p>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        {% if granger_causality_results.causality_results %}
+                            <div class="card mb-3">
+                                <div class="card-header bg-dark text-white">
+                                    <h6 class="mb-0"><i class="bi bi-arrow-through-heart"></i> Granger Causality Summary</h6>
+                                </div>
+                                <div class="card-body">
+                                    {% with total_pairs=granger_causality_results.causality_results|length %}
+                                        {% with significant_5pct=0 significant_1pct=0 %}
+                                            {% for relationship, test in granger_causality_results.causality_results.items %}
+                                                {% if test.significance_summary.significant_at_5pct %}
+                                                    {% with significant_5pct=significant_5pct|add:1 %}{% endwith %}
+                                                {% endif %}
+                                                {% if test.significance_summary.significant_at_1pct %}
+                                                    {% with significant_1pct=significant_1pct|add:1 %}{% endwith %}
+                                                {% endif %}
+                                            {% endfor %}
+                                            
+                                            <div class="row">
+                                                <div class="col-md-4">
+                                                    <div class="text-center">
+                                                        <h5 class="text-dark mb-1">{{ total_pairs }}</h5>
+                                                        <small class="text-muted">Total Pairs Tested</small>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="text-center">
+                                                        <h5 class="text-warning mb-1">{{ granger_causality_results.metadata.significant_at_5pct|default:0 }}</h5>
+                                                        <small class="text-muted">Significant at 5%</small>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="text-center">
+                                                        <h5 class="text-danger mb-1">{{ granger_causality_results.metadata.significant_at_1pct|default:0 }}</h5>
+                                                        <small class="text-muted">Significant at 1%</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            {% if spillover_results.interpretation %}
+                                                <div class="alert alert-light mt-3 mb-0">
+                                                    <small><strong>Analysis Summary:</strong> {{ spillover_results.interpretation }}</small>
+                                                </div>
+                                            {% endif %}
+                                        {% endwith %}
+                                    {% endwith %}
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        {% if multivariate_garch_results.cc_correlation %}
+                            <div class="card mb-3">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0"><i class="bi bi-grid-3x3"></i> Multivariate GARCH Correlation Matrix</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-bordered">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th></th>
+                                                    {% for symbol in symbols %}
+                                                        <th class="text-center">{{ symbol }}</th>
+                                                    {% endfor %}
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for row_symbol in symbols %}
+                                                    <tr>
+                                                        <th class="bg-light">{{ row_symbol }}</th>
+                                                        {% for col_symbol in symbols %}
+                                                            <td class="text-center">
+                                                                {% if row_symbol == col_symbol %}
+                                                                    <strong>1.000</strong>
+                                                                {% else %}
+                                                                    {% with correlation=multivariate_garch_results.cc_correlation|lookup:row_symbol|lookup:col_symbol %}
+                                                                        {% if correlation > 0.7 %}
+                                                                            <span class="text-success"><strong>{{ correlation|floatformat:3 }}</strong></span>
+                                                                        {% elif correlation > 0.3 %}
+                                                                            <span class="text-warning">{{ correlation|floatformat:3 }}</span>
+                                                                        {% else %}
+                                                                            <span class="text-muted">{{ correlation|floatformat:3 }}</span>
+                                                                        {% endif %}
+                                                                    {% endwith %}
+                                                                {% endif %}
+                                                            </td>
+                                                        {% endfor %}
+                                                    </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="mt-2">
+                                        <small class="text-muted">
+                                            <span class="text-success">■</span> High correlation (>0.7) &nbsp;
+                                            <span class="text-warning">■</span> Moderate correlation (0.3-0.7) &nbsp;
+                                            <span class="text-muted">■</span> Low correlation (<0.3)
+                                        </small>
+                                    </div>
+                                    
+                                    {% if multivariate_garch_results.interpretations.CCC_GARCH %}
+                                        <div class="alert alert-light mt-3 mb-0">
+                                            <small><strong>CCC-GARCH Interpretation:</strong> {{ multivariate_garch_results.interpretations.CCC_GARCH|truncatechars:300 }}</small>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        {% if var_results.interpretation %}
+                            <div class="card mb-3">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0"><i class="bi bi-bezier2"></i> Vector Autoregression (VAR) Summary</h6>
+                                </div>
+                                <div class="card-body">
+                                    {% if var_results.selected_lag %}
+                                        <div class="mb-2">
+                                            <strong>Selected Lag:</strong> {{ var_results.selected_lag }}
+                                            {% if var_results.ic_used %}
+                                                <small class="text-muted">({{ var_results.ic_used }} criterion)</small>
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+                                    
+                                    <div class="alert alert-light mb-0">
+                                        <small>{{ var_results.interpretation }}</small>
+                                    </div>
                                 </div>
                             </div>
                         {% endif %}
