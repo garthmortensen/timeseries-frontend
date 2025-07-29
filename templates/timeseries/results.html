@@ -24,17 +24,9 @@
         display: inline-block;
     }
     
-    /* Updated styling for better plot sizing */
+    /* Additional styling for better UX */
     .plotly-chart {
-        min-height: 500px;
-        height: 60vh;
-        width: 100%;
-    }
-    
-    /* Ensure plot containers take full width */
-    .plotly-chart .plotly-graph-div {
-        width: 100% !important;
-        height: 100% !important;
+        min-height: 400px;
     }
 </style>
 {% endblock %}
@@ -571,19 +563,11 @@
                         document.addEventListener('DOMContentLoaded', function() {
                             try {
                                 var plotData = {{ plots.original_data_stats|safe }};
-                                // Ensure layout has autosize enabled
-                                plotData.layout.autosize = true;
-                                plotData.layout.width = undefined;
-                                plotData.layout.height = undefined;
-                                
                                 Plotly.newPlot('original-data-plot', plotData.data, plotData.layout, {
                                     responsive: true,
                                     displayModeBar: true,
                                     displaylogo: false,
                                     modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d']
-                                }).then(function() {
-                                    // Force resize to container after plot creation
-                                    Plotly.Plots.resize('original-data-plot');
                                 });
                             } catch (error) {
                                 console.error('Error rendering original data plot:', error);
@@ -618,19 +602,11 @@
                         document.addEventListener('DOMContentLoaded', function() {
                             try {
                                 var plotData = {{ plots.returns_data_plot|safe }};
-                                // Ensure layout has autosize enabled
-                                plotData.layout.autosize = true;
-                                plotData.layout.width = undefined;
-                                plotData.layout.height = undefined;
-                                
                                 Plotly.newPlot('returns-data-plot', plotData.data, plotData.layout, {
                                     responsive: true,
                                     displayModeBar: true,
                                     displaylogo: false,
                                     modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d']
-                                }).then(function() {
-                                    // Force resize to container after plot creation
-                                    Plotly.Plots.resize('returns-data-plot');
                                 });
                             } catch (error) {
                                 console.error('Error rendering returns plot:', error);
@@ -665,19 +641,11 @@
                         document.addEventListener('DOMContentLoaded', function() {
                             try {
                                 var plotData = {{ plots.scaled_data_plot|safe }};
-                                // Ensure layout has autosize enabled
-                                plotData.layout.autosize = true;
-                                plotData.layout.width = undefined;
-                                plotData.layout.height = undefined;
-                                
                                 Plotly.newPlot('scaled-data-plot', plotData.data, plotData.layout, {
                                     responsive: true,
                                     displayModeBar: true,
                                     displaylogo: false,
                                     modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d']
-                                }).then(function() {
-                                    // Force resize to container after plot creation
-                                    Plotly.Plots.resize('scaled-data-plot');
                                 });
                             } catch (error) {
                                 console.error('Error rendering scaled data plot:', error);
@@ -712,19 +680,11 @@
                         document.addEventListener('DOMContentLoaded', function() {
                             try {
                                 var plotData = {{ plots.pre_garch_plot|safe }};
-                                // Ensure layout has autosize enabled
-                                plotData.layout.autosize = true;
-                                plotData.layout.width = undefined;
-                                plotData.layout.height = undefined;
-                                
                                 Plotly.newPlot('pre-garch-plot', plotData.data, plotData.layout, {
                                     responsive: true,
                                     displayModeBar: true,
                                     displaylogo: false,
                                     modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d']
-                                }).then(function() {
-                                    // Force resize to container after plot creation
-                                    Plotly.Plots.resize('pre-garch-plot');
                                 });
                             } catch (error) {
                                 console.error('Error rendering pre-GARCH plot:', error);
@@ -759,19 +719,11 @@
                         document.addEventListener('DOMContentLoaded', function() {
                             try {
                                 var plotData = {{ plots.post_garch_plot|safe }};
-                                // Ensure layout has autosize enabled
-                                plotData.layout.autosize = true;
-                                plotData.layout.width = undefined;
-                                plotData.layout.height = undefined;
-                                
                                 Plotly.newPlot('post-garch-plot', plotData.data, plotData.layout, {
                                     responsive: true,
                                     displayModeBar: true,
                                     displaylogo: false,
                                     modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d']
-                                }).then(function() {
-                                    // Force resize to container after plot creation
-                                    Plotly.Plots.resize('post-garch-plot');
                                 });
                             } catch (error) {
                                 console.error('Error rendering post-GARCH plot:', error);
@@ -1595,9 +1547,9 @@
                             <div class="card-body">
                                 <div class="alert alert-info mb-3">
                                     <i class="bi bi-info-circle"></i>
-                                    <strong>GARCH Components:</strong> This visualization shows the complete GARCH analysis for {{ symbol|upper }}, including fitted volatility vs actual data, standardized residuals, and forecasted volatility.
-                                    {% if garch_results|lookup:symbol.forecast.forecast_method %}
-                                        <br><strong>Forecast Method:</strong> {{ garch_results|lookup:symbol.forecast.forecast_method }}
+                                    <strong>GARCH Components:</strong> This visualization shows the complete GARCH volatility analysis for {{ symbol|upper }}, including conditional volatility, standardized residuals, volatility clustering patterns, and volatility forecasts.
+                                    {% if garch_results|lookup:symbol.interpretation.technical_details.model_specification.order %}
+                                        <br><strong>Model Order:</strong> {{ garch_results|lookup:symbol.interpretation.technical_details.model_specification.order }}
                                     {% endif %}
                                 </div>
                                 
@@ -2258,6 +2210,31 @@
         </div>
     </div>
 </div>
+
+<script>
+// Ensure Plotly charts resize when the Time Series tab is shown
+document.addEventListener('DOMContentLoaded', function() {
+    var timeSeriesTab = document.querySelector('button[data-bs-target="#time-series"]');
+    if (timeSeriesTab) {
+        timeSeriesTab.addEventListener('shown.bs.tab', function() {
+            // List all plot IDs in the Time Series tab
+            var plotIds = [
+                'original-data-plot',
+                'returns-data-plot',
+                'scaled-data-plot',
+                'pre-garch-plot',
+                'post-garch-plot'
+            ];
+            plotIds.forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el && el.children.length > 0) {
+                    try { Plotly.Plots.resize(el); } catch (e) {}
+                }
+            });
+        });
+    }
+});
+</script>
 
 {% endif %}
 {% endblock %}
