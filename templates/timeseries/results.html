@@ -24,9 +24,17 @@
         display: inline-block;
     }
     
-    /* Additional styling for better UX */
+    /* Updated styling for better plot sizing */
     .plotly-chart {
-        min-height: 400px;
+        min-height: 500px;
+        height: 60vh;
+        width: 100%;
+    }
+    
+    /* Ensure plot containers take full width */
+    .plotly-chart .plotly-graph-div {
+        width: 100% !important;
+        height: 100% !important;
     }
 </style>
 {% endblock %}
@@ -174,7 +182,7 @@
                                                     <p class="mb-1"><strong>Recommendation:</strong> {{ arima_data.interpretation.executive_summary.recommendation }}</p>
                                                 {% endif %}
                                                 {% if arima_data.interpretation.executive_summary.justification %}
-                                                    <p class="mb-0"><strong>Justification:</strong> {{ arima_data.interpretation.executive_summary.justification }}</p>
+                                                    <p class="mb-1"><strong>Justification:</strong> {{ arima_data.interpretation.executive_summary.justification }}</p>
                                                 {% endif %}
                                             {% else %}
                                                 <p class="mb-1"><strong>Model:</strong> {{ arima_data.summary.model_specification|default:"N/A" }}</p>
@@ -563,11 +571,19 @@
                         document.addEventListener('DOMContentLoaded', function() {
                             try {
                                 var plotData = {{ plots.original_data_stats|safe }};
+                                // Ensure layout has autosize enabled
+                                plotData.layout.autosize = true;
+                                plotData.layout.width = undefined;
+                                plotData.layout.height = undefined;
+                                
                                 Plotly.newPlot('original-data-plot', plotData.data, plotData.layout, {
                                     responsive: true,
                                     displayModeBar: true,
                                     displaylogo: false,
                                     modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d']
+                                }).then(function() {
+                                    // Force resize to container after plot creation
+                                    Plotly.Plots.resize('original-data-plot');
                                 });
                             } catch (error) {
                                 console.error('Error rendering original data plot:', error);
@@ -602,11 +618,19 @@
                         document.addEventListener('DOMContentLoaded', function() {
                             try {
                                 var plotData = {{ plots.returns_data_plot|safe }};
+                                // Ensure layout has autosize enabled
+                                plotData.layout.autosize = true;
+                                plotData.layout.width = undefined;
+                                plotData.layout.height = undefined;
+                                
                                 Plotly.newPlot('returns-data-plot', plotData.data, plotData.layout, {
                                     responsive: true,
                                     displayModeBar: true,
                                     displaylogo: false,
                                     modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d']
+                                }).then(function() {
+                                    // Force resize to container after plot creation
+                                    Plotly.Plots.resize('returns-data-plot');
                                 });
                             } catch (error) {
                                 console.error('Error rendering returns plot:', error);
@@ -641,11 +665,19 @@
                         document.addEventListener('DOMContentLoaded', function() {
                             try {
                                 var plotData = {{ plots.scaled_data_plot|safe }};
+                                // Ensure layout has autosize enabled
+                                plotData.layout.autosize = true;
+                                plotData.layout.width = undefined;
+                                plotData.layout.height = undefined;
+                                
                                 Plotly.newPlot('scaled-data-plot', plotData.data, plotData.layout, {
                                     responsive: true,
                                     displayModeBar: true,
                                     displaylogo: false,
                                     modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d']
+                                }).then(function() {
+                                    // Force resize to container after plot creation
+                                    Plotly.Plots.resize('scaled-data-plot');
                                 });
                             } catch (error) {
                                 console.error('Error rendering scaled data plot:', error);
@@ -680,11 +712,19 @@
                         document.addEventListener('DOMContentLoaded', function() {
                             try {
                                 var plotData = {{ plots.pre_garch_plot|safe }};
+                                // Ensure layout has autosize enabled
+                                plotData.layout.autosize = true;
+                                plotData.layout.width = undefined;
+                                plotData.layout.height = undefined;
+                                
                                 Plotly.newPlot('pre-garch-plot', plotData.data, plotData.layout, {
                                     responsive: true,
                                     displayModeBar: true,
                                     displaylogo: false,
                                     modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d']
+                                }).then(function() {
+                                    // Force resize to container after plot creation
+                                    Plotly.Plots.resize('pre-garch-plot');
                                 });
                             } catch (error) {
                                 console.error('Error rendering pre-GARCH plot:', error);
@@ -719,11 +759,19 @@
                         document.addEventListener('DOMContentLoaded', function() {
                             try {
                                 var plotData = {{ plots.post_garch_plot|safe }};
+                                // Ensure layout has autosize enabled
+                                plotData.layout.autosize = true;
+                                plotData.layout.width = undefined;
+                                plotData.layout.height = undefined;
+                                
                                 Plotly.newPlot('post-garch-plot', plotData.data, plotData.layout, {
                                     responsive: true,
                                     displayModeBar: true,
                                     displaylogo: false,
                                     modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d']
+                                }).then(function() {
+                                    // Force resize to container after plot creation
+                                    Plotly.Plots.resize('post-garch-plot');
                                 });
                             } catch (error) {
                                 console.error('Error rendering post-GARCH plot:', error);
@@ -746,49 +794,122 @@
     <div class="tab-pane fade {% if active_tab == 'statistical-tests' %}show active{% endif %}" id="statistical-tests" role="tabpanel" aria-labelledby="statistical-tests-tab">
         <!-- Stationarity Tests -->
         <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="card-title mb-0"><i class="bi bi-activity me-2"></i> Stationarity Tests (ADF)</h5>
+            <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #6c5ce7, #74b9ff);">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-activity me-2"></i> 
+                    Stationarity Tests (Augmented Dickey-Fuller)
+                </h5>
+                <small class="opacity-75">Statistical tests to determine if time series data has constant statistical properties over time</small>
             </div>
-            <div class="card-body">
+            <div class="card-body p-0">
                 {% if stationarity_results.all_symbols_stationarity %}
-                    <div class="table-responsive">
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Symbol</th>
-                                    <th>Status</th>
-                                    <th>Test Statistic</th>
-                                    <th>P-Value</th>
-                                    <th>Critical Values (1%, 5%, 10%)</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for symbol, test in stationarity_results.all_symbols_stationarity.items %}
-                                    <tr>
-                                        <td><strong>{{ symbol }}</strong></td>
-                                        <td>
+                    <div class="row g-0">
+                        {% for symbol, test in stationarity_results.all_symbols_stationarity.items %}
+                            <div class="col-lg-6 col-xl-4">
+                                <div class="card border-0 border-end border-bottom h-100" style="border-color: #e9ecef !important;">
+                                    <div class="card-header bg-light border-0 d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <h6 class="mb-0 fw-bold text-dark">{{ symbol|upper }}</h6>
+                                            <small class="text-muted">Stationarity Test Results</small>
+                                        </div>
+                                        <div class="text-end">
                                             {% if test.is_stationary %}
-                                                <span class="badge bg-success">Stationary</span>
+                                                <span class="badge bg-success rounded-pill px-3 py-2">
+                                                    <i class="bi bi-check-circle me-1"></i>Stationary
+                                                </span>
                                             {% else %}
-                                                <span class="badge bg-warning">Non-Stationary</span>
+                                                <span class="badge bg-warning text-dark rounded-pill px-3 py-2">
+                                                    <i class="bi bi-exclamation-triangle me-1"></i>Non-Stationary
+                                                </span>
                                             {% endif %}
-                                        </td>
-                                        <td>{{ test.adf_statistic|floatformat:4 }}</td>
-                                        <td>{{ test.p_value|floatformat:4 }}</td>
-                                        <td>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <!-- Test Statistics Section -->
+                                        <div class="mb-4">
+                                            <h6 class="text-primary mb-3 d-flex align-items-center">
+                                                <i class="bi bi-bar-chart-line me-2"></i>Test Statistics
+                                            </h6>
+                                            <div class="row g-3">
+                                                <div class="col-6">
+                                                    <div class="bg-light rounded p-3 text-center">
+                                                        <div class="fw-bold text-dark">{{ test.adf_statistic|floatformat:4 }}</div>
+                                                        <small class="text-muted">ADF Statistic</small>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="bg-light rounded p-3 text-center">
+                                                        <div class="fw-bold text-dark">{{ test.p_value|floatformat:6 }}</div>
+                                                        <small class="text-muted">P-value</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Critical Values Section -->
+                                        <div>
+                                            <h6 class="text-primary mb-3 d-flex align-items-center">
+                                                <i class="bi bi-target me-2"></i>Critical Values
+                                            </h6>
                                             {% if test.critical_values %}
-                                                {% for key, value in test.critical_values.items %}
-                                                    {{ value|floatformat:3 }}{% if not forloop.last %}, {% endif %}
-                                                {% endfor %}
+                                                <div class="space-y-2">
+                                                    {% for level, value in test.critical_values.items %}
+                                                        <div class="d-flex justify-content-between align-items-center p-2 rounded" 
+                                                             style="background-color: {% if test.adf_statistic < value %}#d4edda{% else %}#f8d7da{% endif %};">
+                                                            <div class="d-flex align-items-center">
+                                                                {% if test.adf_statistic < value %}
+                                                                    <span class="text-success me-2 fs-5">✅</span>
+                                                                    <span class="text-success fw-medium">Critical Value ({{ level }})</span>
+                                                                {% else %}
+                                                                    <span class="text-danger me-2 fs-5">❌</span>
+                                                                    <span class="text-danger fw-medium">Critical Value ({{ level }})</span>
+                                                                {% endif %}
+                                                            </div>
+                                                            <div class="text-end">
+                                                                <span class="fw-bold">{{ value|floatformat:4 }}</span>
+                                                            </div>
+                                                        </div>
+                                                    {% endfor %}
+                                                </div>
+                                            {% else %}
+                                                <div class="text-muted text-center p-3">
+                                                    <i class="bi bi-info-circle me-2"></i>
+                                                    No critical values available
+                                                </div>
                                             {% endif %}
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Interpretation Guide -->
+                    <div class="card-footer bg-light border-top">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h6 class="mb-2 text-dark">
+                                    <i class="bi bi-lightbulb me-2 text-warning"></i>
+                                    Interpretation Guide
+                                </h6>
+                                <p class="mb-0 small text-muted">
+                                    A time series is <strong>stationary</strong> if the ADF statistic is less than the critical value. 
+                                    Stationary series have constant mean, variance, and autocorrelation over time, making them suitable for many forecasting models.
+                                </p>
+                            </div>
+                            <div class="col-md-4 text-md-end mt-2 mt-md-0">
+                                <div class="d-flex flex-column flex-md-row gap-2 justify-content-md-end">
+                                    <span class="badge bg-success">✅ Stationary at level</span>
+                                    <span class="badge bg-danger">❌ Non-stationary at level</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 {% else %}
-                    <p class="text-muted">No stationarity test results available.</p>
+                    <div class="text-center p-5">
+                        <i class="bi bi-exclamation-circle text-muted" style="font-size: 3rem;"></i>
+                        <p class="text-muted mt-3 mb-0">No stationarity test results available.</p>
+                    </div>
                 {% endif %}
             </div>
         </div>
@@ -842,116 +963,252 @@
     <!-- ARIMA Tab -->
     <div class="tab-pane fade {% if active_tab == 'arima' %}show active{% endif %}" id="arima" role="tabpanel" aria-labelledby="arima-tab">
         <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="card-title mb-0"><i class="bi bi-graph-up-arrow"></i> ARIMA Model Results</h5>
+            <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #00b894, #00cec9);">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-graph-up-arrow me-2"></i> 
+                    ARIMA Model Results (AutoRegressive Integrated Moving Average)
+                </h5>
+                <small class="opacity-75">Time series forecasting models that capture trends, patterns, and temporal dependencies in financial data</small>
             </div>
             <div class="card-body">
                 {% if arima_results %}
-                    {% for symbol, arima in arima_results.items %}
-                        <div class="border rounded p-3 mb-3">
-                            <h6><strong>{{ symbol }}</strong></h6>
-                            
-                            {% if arima.interpretation.executive_summary %}
-                                <div class="alert alert-info">
-                                    <strong>Executive Summary:</strong> {{ arima.interpretation.executive_summary.bottom_line }}
-                                </div>
-                            {% endif %}
-                            
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <h6>Model Summary</h6>
-                                    {% if arima.summary %}
-                                        <table class="table table-sm">
-                                            <tr><td><strong>Model:</strong></td><td>{{ arima.summary.model_specification|default:"-" }}</td></tr>
-                                            <tr><td><strong>AIC:</strong></td><td>{{ arima.summary.aic|floatformat:2|default:"-" }}</td></tr>
-                                            <tr><td><strong>BIC:</strong></td><td>{{ arima.summary.bic|floatformat:2|default:"-" }}</td></tr>
-                                            <tr><td><strong>HQIC:</strong></td><td>{{ arima.summary.hqic|floatformat:2|default:"-" }}</td></tr>
-                                            <tr><td><strong>Log Likelihood:</strong></td><td>{{ arima.summary.log_likelihood|floatformat:2|default:"-" }}</td></tr>
-                                            <tr><td><strong>Sample Size:</strong></td><td>{{ arima.summary.sample_size|default:"-" }}</td></tr>
-                                        </table>
-                                        <h6 class="mt-3">Parameters</h6>
-                                        <table class="table table-bordered table-sm">
-                                            <thead>
-                                                <tr>
-                                                    <th>Parameter</th>
-                                                    <th>Value</th>
-                                                    <th>P-Value</th>
-                                                    <th>Significance</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {% for param in param_list %}
-                                                    <tr>
-                                                        <td>{{ param }}</td>
-                                                        <td>{{ arima.summary.parameters|lookup:param|floatformat:4|default:"-" }}</td>
-                                                        <td>{{ arima.summary.parameter_pvalues|lookup:param|floatformat:4|default:"-" }}</td>
-                                                        <td>{{ arima.summary.parameter_significance|lookup:param|default:"-" }}</td>
-                                                    </tr>
-                                                {% endfor %}
-                                            </tbody>
-                                        </table>
-                                        {% if arima.summary.residual_statistics %}
-                                        <h6 class="mt-3">Residual Statistics</h6>
-                                        <table class="table table-bordered table-sm">
-                                            <thead>
-                                                <tr>
-                                                    <th>Statistic</th>
-                                                    <th>Value</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {% for stat, value in arima.summary.residual_statistics.items %}
-                                                    <tr>
-                                                        <td>{{ stat|title|replace_underscore }}</td>
-                                                        <td>{{ value|floatformat:4|default:"-" }}</td>
-                                                    </tr>
-                                                {% endfor %}
-                                            </tbody>
-                                        </table>
-                                    {% endif %}
-                                    {% endif %}
-                                </div>
-                                <div class="col-md-6">
-                                    <h6>Forecast Summary</h6>
-                                    {% if arima.forecast %}
-                                        <table class="table table-sm">
-                                            <tr><td><strong>Forecast Steps:</strong></td><td>{{ arima.forecast.forecast_steps|default:"-" }}</td></tr>
-                                            <tr><td><strong>Method:</strong></td><td>{{ arima.forecast.forecast_method|default:"-" }}</td></tr>
-                                            {% if arima.forecast.point_forecasts %}
-                                                <tr><td><strong>Next Value:</strong></td><td>{{ arima.forecast.point_forecasts.0|floatformat:4 }}</td></tr>
+                    <div class="row g-0">
+                        {% for symbol, arima in arima_results.items %}
+                            <div class="col-12">
+                                <div class="card border-0 border-bottom" style="border-color: #e9ecef !important;">
+                                    <div class="card-header bg-light border-0 d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <h6 class="mb-0 fw-bold text-dark">{{ symbol|upper }}</h6>
+                                            <small class="text-muted">ARIMA Model Analysis</small>
+                                        </div>
+                                        <div class="text-end">
+                                            {% if arima.summary.model_specification %}
+                                                <span class="badge bg-success rounded-pill px-3 py-2">
+                                                    <i class="bi bi-check-circle me-1"></i>{{ arima.summary.model_specification }}
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-secondary rounded-pill px-3 py-2">
+                                                    <i class="bi bi-gear me-1"></i>Model Fitted
+                                                </span>
                                             {% endif %}
-                                        </table>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            
-                            {% if arima.interpretation.key_findings %}
-                                <div class="mt-2">
-                                    <h6>Key Findings</h6>
-                                    {% for finding_type, finding_text in arima.interpretation.key_findings.items %}
-                                        {% if finding_text %}
-                                            <div class="mb-2">
-                                                <strong>{{ finding_type|title|replace_underscore }}:</strong>
-                                                {% if finding_text is string %}
-                                                    <span>{{ finding_text }}</span>
-                                                {% elif finding_text.items %}
-                                                    <ul class="mb-0">
-                                                        {% for k, v in finding_text.items %}
-                                                            <li><strong>{{ k|title|replace_underscore }}:</strong> {{ v }}</li>
-                                                        {% endfor %}
-                                                    </ul>
-                                                {% else %}
-                                                    <span>{{ finding_text }}</span>
-                                                {% endif %}
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Executive Summary Section -->
+                                    <div class="card-body">
+                                        {% if arima.interpretation.executive_summary %}
+                                            <div class="alert alert-primary border-0 mb-4" style="background-color: #e3f2fd;">
+                                                <h6 class="text-primary mb-2 d-flex align-items-center">
+                                                    <i class="bi bi-lightbulb me-2"></i>Executive Summary
+                                                </h6>
+                                                <p class="mb-0">{{ arima.interpretation.executive_summary.bottom_line }}</p>
                                             </div>
                                         {% endif %}
-                                    {% endfor %}
+                                        
+                                        <!-- Key Findings Section -->
+                                        {% if arima.interpretation.key_findings %}
+                                            <div class="mb-4">
+                                                <h6 class="text-primary mb-3 d-flex align-items-center">
+                                                    <i class="bi bi-key me-2"></i>Key Findings
+                                                </h6>
+                                                <div class="row">
+                                                    {% for finding_type, finding_text in arima.interpretation.key_findings.items %}
+                                                        {% if finding_text %}
+                                                            <div class="col-12 mb-3">
+                                                                <div class="card border-0 bg-light">
+                                                                    <div class="card-body p-3">
+                                                                        <h6 class="card-title text-secondary mb-2">{{ finding_type|title|replace_underscore }}</h6>
+                                                                        {% if finding_text is string %}
+                                                                            <p class="card-text mb-0">{{ finding_text }}</p>
+                                                                        {% elif finding_text.items %}
+                                                                            <ul class="mb-0">
+                                                                                {% for k, v in finding_text.items %}
+                                                                                    <li><strong>{{ k|title|replace_underscore }}:</strong> {{ v }}</li>
+                                                                                {% endfor %}
+                                                                            </ul>
+                                                                        {% else %}
+                                                                            <p class="card-text mb-0">{{ finding_text }}</p>
+                                                                        {% endif %}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                        
+                                        <div class="row">
+                                            <!-- Model Summary Section -->
+                                            <div class="col-md-6 mb-4">
+                                                <h6 class="text-primary mb-3 d-flex align-items-center">
+                                                    <i class="bi bi-cpu me-2"></i>Model Summary
+                                                </h6>
+                                                {% if arima.summary %}
+                                                    <div class="row g-3 mb-3">
+                                                        <div class="col-6">
+                                                            <div class="bg-light rounded p-3 text-center">
+                                                                <div class="fw-bold text-dark">{{ arima.summary.aic|floatformat:2|default:"-" }}</div>
+                                                                <small class="text-muted">AIC</small>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <div class="bg-light rounded p-3 text-center">
+                                                                <div class="fw-bold text-dark">{{ arima.summary.bic|floatformat:2|default:"-" }}</div>
+                                                                <small class="text-muted">BIC</small>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <div class="bg-light rounded p-3 text-center">
+                                                                <div class="fw-bold text-dark">{{ arima.summary.log_likelihood|floatformat:2|default:"-" }}</div>
+                                                                <small class="text-muted">Log Likelihood</small>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <div class="bg-light rounded p-3 text-center">
+                                                                <div class="fw-bold text-dark">{{ arima.summary.sample_size|default:"-" }}</div>
+                                                                <small class="text-muted">Sample Size</small>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                {% else %}
+                                                    <div class="text-center p-3">
+                                                        <i class="bi bi-info-circle text-muted" style="font-size: 2rem;"></i>
+                                                        <p class="text-muted mt-2 mb-0">Model summary not available</p>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                            
+                                            <!-- Forecast Summary Section -->
+                                            <div class="col-md-6 mb-4">
+                                                <h6 class="text-primary mb-3 d-flex align-items-center">
+                                                    <i class="bi bi-graph-up-arrow me-2"></i>Forecast Summary
+                                                </h6>
+                                                {% if arima.forecast %}
+                                                    <div class="row g-3 mb-3">
+                                                        <div class="col-6">
+                                                            <div class="bg-light rounded p-3 text-center">
+                                                                <div class="fw-bold text-dark">{{ arima.forecast.forecast_steps|default:"-" }}</div>
+                                                                <small class="text-muted">Forecast Steps</small>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <div class="bg-light rounded p-3 text-center">
+                                                                <div class="fw-bold text-dark">{{ arima.forecast.forecast_method|default:"-" }}</div>
+                                                                <small class="text-muted">Method</small>
+                                                            </div>
+                                                        </div>
+                                                        {% if arima.forecast.point_forecasts %}
+                                                            <div class="col-12">
+                                                                <div class="bg-success bg-opacity-10 rounded p-3 text-center border border-success border-opacity-25">
+                                                                    <div class="fw-bold text-success">{{ arima.forecast.point_forecasts.0|floatformat:4 }}</div>
+                                                                    <small class="text-success">Next Period Forecast</small>
+                                                                </div>
+                                                            </div>
+                                                        {% endif %}
+                                                    </div>
+                                                {% else %}
+                                                    <div class="text-center p-3">
+                                                        <i class="bi bi-exclamation-circle text-muted" style="font-size: 2rem;"></i>
+                                                        <p class="text-muted mt-2 mb-0">No forecast data available</p>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Model Parameters Section -->
+                                        {% if arima.summary.parameters %}
+                                            <div class="mb-4">
+                                                <h6 class="text-primary mb-3 d-flex align-items-center">
+                                                    <i class="bi bi-sliders me-2"></i>Model Parameters
+                                                </h6>
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm table-bordered">
+                                                        <thead class="table-light">
+                                                            <tr>
+                                                                <th>Parameter</th>
+                                                                <th>Value</th>
+                                                                <th>P-Value</th>
+                                                                <th>Significance</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {% for param, value in arima.summary.parameters.items %}
+                                                                <tr>
+                                                                    <td class="fw-medium">{{ param }}</td>
+                                                                    <td>{{ value|floatformat:4|default:"-" }}</td>
+                                                                    <td>{{ arima.summary.parameter_pvalues|lookup:param|floatformat:4|default:"-" }}</td>
+                                                                    <td>
+                                                                        {% with significance=arima.summary.parameter_significance|lookup:param %}
+                                                                            {% if significance == "***" %}
+                                                                                <span class="badge bg-success">***</span>
+                                                                            {% elif significance == "**" %}
+                                                                                <span class="badge bg-warning">**</span>
+                                                                            {% elif significance == "*" %}
+                                                                                <span class="badge bg-info">*</span>
+                                                                            {% else %}
+                                                                                <span class="badge bg-secondary">{{ significance|default:"-" }}</span>
+                                                                            {% endif %}
+                                                                        {% endwith %}
+                                                                    </td>
+                                                                </tr>
+                                                            {% endfor %}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                        
+                                        <!-- Residual Statistics Section -->
+                                        {% if arima.summary.residual_statistics %}
+                                            <div class="mb-4">
+                                                <h6 class="text-primary mb-3 d-flex align-items-center">
+                                                    <i class="bi bi-bar-chart-line me-2"></i>Residual Statistics
+                                                </h6>
+                                                <div class="row g-3">
+                                                    {% for stat, value in arima.summary.residual_statistics.items %}
+                                                        <div class="col-md-3 col-sm-6">
+                                                            <div class="bg-light rounded p-3 text-center">
+                                                                <div class="fw-bold text-dark">{{ value|floatformat:4|default:"-" }}</div>
+                                                                <small class="text-muted">{{ stat|title|replace_underscore }}</small>
+                                                            </div>
+                                                        </div>
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    </div>
                                 </div>
-                            {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Interpretation Guide -->
+                    <div class="card-footer bg-light border-top">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h6 class="mb-2 text-dark">
+                                    <i class="bi bi-lightbulb me-2 text-warning"></i>
+                                    ARIMA Model Guide
+                                </h6>
+                                <p class="mb-0 small text-muted">
+                                    ARIMA models capture <strong>autoregressive</strong> patterns, <strong>differencing</strong> for stationarity, and <strong>moving average</strong> components. 
+                                    Lower AIC/BIC values indicate better model fit. Parameter significance: <span class="badge bg-success">***</span> p&lt;0.001, <span class="badge bg-warning">**</span> p&lt;0.01, <span class="badge bg-info">*</span> p&lt;0.05
+                                </p>
+                            </div>
+                            <div class="col-md-4 text-md-end mt-2 mt-md-0">
+                                <div class="d-flex flex-column gap-2">
+                                    <span class="badge bg-primary">AR: Past values influence</span>
+                                    <span class="badge bg-info">MA: Past errors influence</span>
+                                </div>
+                            </div>
                         </div>
-                    {% endfor %}
+                    </div>
                 {% else %}
-                    <p class="text-muted">No ARIMA results available.</p>
+                    <div class="text-center p-5">
+                        <i class="bi bi-exclamation-circle text-muted" style="font-size: 3rem;"></i>
+                        <p class="text-muted mt-3 mb-0">No ARIMA results available.</p>
+                    </div>
                 {% endif %}
             </div>
         </div>
@@ -1007,160 +1264,318 @@
     <!-- GARCH Tab -->
     <div class="tab-pane fade {% if active_tab == 'garch' %}show active{% endif %}" id="garch" role="tabpanel" aria-labelledby="garch-tab">
         <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="card-title mb-0"><i class="bi bi-lightning"></i> GARCH Model Results</h5>
+            <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #fd79a8, #e84393);">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-lightning me-2"></i> 
+                    GARCH Model Results (Generalized AutoRegressive Conditional Heteroskedasticity)
+                </h5>
+                <small class="opacity-75">Volatility modeling that captures time-varying variance and volatility clustering in financial returns</small>
             </div>
-            <div class="card-body">
+            <div class="card-body p-0">
                 {% if garch_results %}
-                    {% for symbol, garch in garch_results.items %}
-                        <div class="border rounded p-3 mb-3">
-                            <h6><strong>{{ symbol }}</strong></h6>
-                            
-                            {% if garch.interpretation.executive_summary %}
-                                <div class="alert alert-warning">
-                                    <strong>Volatility Summary:</strong> {{ garch.interpretation.executive_summary.bottom_line }}
-                                </div>
-                            {% endif %}
-                            
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <h6>Model Summary</h6>
-                                    {% if garch.summary %}
-                                        <div class="bg-light p-2 rounded mb-3">
-                                            <small class="font-monospace">{{ garch.summary|truncatechars:400 }}</small>
+                    <div class="row g-0">
+                        {% for symbol, garch in garch_results.items %}
+                            <div class="col-12">
+                                <div class="card border-0 border-bottom" style="border-color: #e9ecef !important;">
+                                    <div class="card-header bg-light border-0 d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <h6 class="mb-0 fw-bold text-dark">{{ symbol|upper }}</h6>
+                                            <small class="text-muted">GARCH Volatility Analysis</small>
                                         </div>
-                                        
-                                        <!-- Extract key model information if available -->
-                                        {% if garch.interpretation.technical_details.model_specification %}
-                                            <table class="table table-sm">
-                                                <tr><td><strong>Model Order:</strong></td><td>{{ garch.interpretation.technical_details.model_specification.order|default:"-" }}</td></tr>
-                                                <tr><td><strong>Omega (ω):</strong></td><td>{{ garch.interpretation.technical_details.model_specification.omega|floatformat:6|default:"-" }}</td></tr>
-                                                <tr><td><strong>Alpha (α):</strong></td><td>{{ garch.interpretation.technical_details.model_specification.alpha|floatformat:6|default:"-" }}</td></tr>
-                                                <tr><td><strong>Beta (β):</strong></td><td>{{ garch.interpretation.technical_details.model_specification.beta|floatformat:6|default:"-" }}</td></tr>
-                                            </table>
-                                            
-                                            {% if garch.interpretation.technical_details.volatility_mechanics %}
-                                                <h6 class="mt-3">Volatility Mechanics</h6>
-                                                <table class="table table-bordered table-sm">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Metric</th>
-                                                            <th>Value</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        <tr>
-                                                            <td>Persistence</td>
-                                                            <td>{{ garch.interpretation.technical_details.volatility_mechanics.persistence|floatformat:4|default:"-" }}</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td>Half Life</td>
-                                                            <td>{{ garch.interpretation.technical_details.volatility_mechanics.half_life|floatformat:2|default:"-" }}</td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td>Unconditional Variance</td>
-                                                            <td>{{ garch.interpretation.technical_details.volatility_mechanics.unconditional_variance|floatformat:6|default:"-" }}</td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
+                                        <div class="text-end">
+                                            {% if garch.interpretation.technical_details.model_specification.order %}
+                                                <span class="badge bg-success rounded-pill px-3 py-2">
+                                                    <i class="bi bi-check-circle me-1"></i>{{ garch.interpretation.technical_details.model_specification.order }}
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-secondary rounded-pill px-3 py-2">
+                                                    <i class="bi bi-lightning me-1"></i>GARCH Model
+                                                </span>
                                             {% endif %}
-                                        {% endif %}
-                                    {% else %}
-                                        <p class="text-muted">Model summary not available</p>
-                                    {% endif %}
-                                </div>
-                                <div class="col-md-6">
-                                    <h6>Volatility Forecast</h6>
-                                    {% if garch.forecast %}
-                                        <table class="table table-sm">
-                                            <tr><td><strong>Forecast Periods:</strong></td><td>{{ garch.forecast|length }}</td></tr>
-                                            {% if garch.forecast.0 %}
-                                                <tr><td><strong>Next Period Volatility:</strong></td><td>{{ garch.forecast.0|floatformat:6 }}</td></tr>
-                                            {% endif %}
-                                            {% if garch.interpretation.technical_details.forecast_statistics %}
-                                                <tr><td><strong>Mean Forecast:</strong></td><td>{{ garch.interpretation.technical_details.forecast_statistics.mean_forecast|floatformat:6|default:"-" }}</td></tr>
-                                                <tr><td><strong>Forecast Volatility:</strong></td><td>{{ garch.interpretation.technical_details.forecast_statistics.forecast_volatility|floatformat:6|default:"-" }}</td></tr>
-                                                <tr><td><strong>Forecast Range:</strong></td><td>{{ garch.interpretation.technical_details.forecast_statistics.forecast_range|default:"-" }}</td></tr>
-                                                <tr><td><strong>Total Change:</strong></td><td>{{ garch.interpretation.technical_details.forecast_statistics.total_change|floatformat:4|default:"-" }}</td></tr>
-                                            {% endif %}
-                                        </table>
-                                        
-                                        {% if garch.forecast|length > 1 %}
-                                            <h6 class="mt-3">Forecast Values</h6>
-                                            <div class="table-responsive" style="max-height: 200px; overflow-y: auto;">
-                                                <table class="table table-sm table-striped">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Period</th>
-                                                            <th>Volatility</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {% for forecast_val in garch.forecast %}
-                                                            <tr>
-                                                                <td>{{ forloop.counter }}</td>
-                                                                <td>{{ forecast_val|floatformat:6 }}</td>
-                                                            </tr>
-                                                        {% endfor %}
-                                                    </tbody>
-                                                </table>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <!-- Executive Summary Section -->
+                                        {% if garch.interpretation.executive_summary %}
+                                            <div class="alert alert-warning border-0 mb-4" style="background-color: #fff3cd;">
+                                                <h6 class="text-warning mb-2 d-flex align-items-center">
+                                                    <i class="bi bi-lightbulb me-2"></i>Executive Summary
+                                                </h6>
+                                                <p class="mb-0">{{ garch.interpretation.executive_summary.bottom_line }}</p>
                                             </div>
                                         {% endif %}
-                                    {% else %}
-                                        <p class="text-muted">No forecast data available</p>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            
-                            {% if garch.interpretation.key_findings %}
-                                <div class="mt-3">
-                                    <h6>Key Findings</h6>
-                                    {% for finding_type, finding_data in garch.interpretation.key_findings.items %}
-                                        {% if finding_data %}
-                                            <div class="mb-3">
-                                                <strong>{{ finding_type|title|replace_underscore }}:</strong>
-                                                {% if finding_data is string %}
-                                                    <span>{{ finding_data }}</span>
-                                                {% elif finding_data.items %}
-                                                    <ul class="mb-0">
-                                                        {% for k, v in finding_data.items %}
-                                                            <li><strong>{{ k|title|replace_underscore }}:</strong> {{ v }}</li>
-                                                        {% endfor %}
-                                                    </ul>
-                                                {% else %}
-                                                    <span>{{ finding_data }}</span>
-                                                {% endif %}
-                                            </div>
-                                        {% endif %}
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                            
-                            {% if garch.interpretation.technical_details %}
-                                <div class="mt-3">
-                                    <h6>Technical Details</h6>
-                                    <div class="row">
-                                        {% if garch.interpretation.technical_details.model_specification.justification %}
-                                            <div class="col-12 mb-2">
-                                                <div class="alert alert-light">
-                                                    <strong>Model Specification:</strong> {{ garch.interpretation.technical_details.model_specification.justification }}
+                                        
+                                        <!-- Key Findings Section -->
+                                        {% if garch.interpretation.key_findings %}
+                                            <div class="mb-4">
+                                                <h6 class="text-primary mb-3 d-flex align-items-center">
+                                                    <i class="bi bi-key me-2"></i>Key Findings
+                                                </h6>
+                                                <div class="row">
+                                                    {% for finding_type, finding_data in garch.interpretation.key_findings.items %}
+                                                        {% if finding_data %}
+                                                            <div class="col-12 mb-3">
+                                                                <div class="card border-0 bg-light">
+                                                                    <div class="card-body p-3">
+                                                                        <h6 class="card-title text-secondary mb-2">{{ finding_type|title|replace_underscore }}</h6>
+                                                                        {% if finding_data is string %}
+                                                                            <p class="card-text mb-0">{{ finding_data }}</p>
+                                                                        {% elif finding_data.items %}
+                                                                            <ul class="mb-0">
+                                                                                {% for k, v in finding_data.items %}
+                                                                                    <li><strong>{{ k|title|replace_underscore }}:</strong> {{ v }}</li>
+                                                                                {% endfor %}
+                                                                            </ul>
+                                                                        {% else %}
+                                                                            <p class="card-text mb-0">{{ finding_data }}</p>
+                                                                        {% endif %}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        {% endif %}
+                                                    {% endfor %}
                                                 </div>
                                             </div>
                                         {% endif %}
-                                        {% if garch.interpretation.technical_details.volatility_mechanics.justification %}
-                                            <div class="col-12 mb-2">
-                                                <div class="alert alert-light">
-                                                    <strong>Volatility Mechanics:</strong> {{ garch.interpretation.technical_details.volatility_mechanics.justification }}
+                                        
+                                        <div class="row">
+                                            <!-- Model Summary Section -->
+                                            <div class="col-md-6 mb-4">
+                                                <h6 class="text-primary mb-3 d-flex align-items-center">
+                                                    <i class="bi bi-cpu me-2"></i>Model Summary
+                                                </h6>
+                                                {% if garch.interpretation.technical_details.model_specification %}
+                                                    <div class="row g-3 mb-3">
+                                                        <div class="col-6">
+                                                            <div class="bg-light rounded p-3 text-center">
+                                                                <div class="fw-bold text-dark">{{ garch.interpretation.technical_details.model_specification.omega|floatformat:6|default:"-" }}</div>
+                                                                <small class="text-muted">Omega (ω)</small>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <div class="bg-light rounded p-3 text-center">
+                                                                <div class="fw-bold text-dark">{{ garch.interpretation.technical_details.model_specification.alpha|floatformat:6|default:"-" }}</div>
+                                                                <small class="text-muted">Alpha (α)</small>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <div class="bg-light rounded p-3 text-center">
+                                                                <div class="fw-bold text-dark">{{ garch.interpretation.technical_details.model_specification.beta|floatformat:6|default:"-" }}</div>
+                                                                <small class="text-muted">Beta (β)</small>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <div class="bg-light rounded p-3 text-center">
+                                                                <div class="fw-bold text-dark">{{ garch.interpretation.technical_details.model_specification.order|default:"-" }}</div>
+                                                                <small class="text-muted">Model Order</small>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                {% else %}
+                                                    <div class="text-center p-3">
+                                                        <i class="bi bi-info-circle text-muted" style="font-size: 2rem;"></i>
+                                                        <p class="text-muted mt-2 mb-0">Model specification not available</p>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                            
+                                            <!-- Volatility Forecast Section -->
+                                            <div class="col-md-6 mb-4">
+                                                <h6 class="text-primary mb-3 d-flex align-items-center">
+                                                    <i class="bi bi-graph-up-arrow me-2"></i>Volatility Forecast
+                                                </h6>
+                                                {% if garch.forecast %}
+                                                    <div class="row g-3 mb-3">
+                                                        <div class="col-6">
+                                                            <div class="bg-light rounded p-3 text-center">
+                                                                <div class="fw-bold text-dark">{{ garch.forecast|length }}</div>
+                                                                <small class="text-muted">Forecast Periods</small>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <div class="bg-light rounded p-3 text-center">
+                                                                <div class="fw-bold text-dark">{{ garch.interpretation.technical_details.forecast_statistics.mean_forecast|floatformat:6|default:"-" }}</div>
+                                                                <small class="text-muted">Mean Forecast</small>
+                                                            </div>
+                                                        </div>
+                                                        {% if garch.forecast.0 %}
+                                                            <div class="col-12">
+                                                                <div class="bg-warning bg-opacity-10 rounded p-3 text-center border border-warning border-opacity-25">
+                                                                    <div class="fw-bold text-warning">{{ garch.forecast.0|floatformat:6 }}</div>
+                                                                    <small class="text-warning">Next Period Volatility</small>
+                                                                </div>
+                                                            </div>
+                                                        {% endif %}
+                                                    </div>
+                                                {% else %}
+                                                    <div class="text-center p-3">
+                                                        <i class="bi bi-exclamation-circle text-muted" style="font-size: 2rem;"></i>
+                                                        <p class="text-muted mt-2 mb-0">No forecast data available</p>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Volatility Mechanics Section -->
+                                        {% if garch.interpretation.technical_details.volatility_mechanics %}
+                                            <div class="mb-4">
+                                                <h6 class="text-primary mb-3 d-flex align-items-center">
+                                                    <i class="bi bi-sliders me-2"></i>Volatility Mechanics
+                                                </h6>
+                                                <div class="row g-3">
+                                                    <div class="col-md-4 col-sm-6">
+                                                        <div class="bg-light rounded p-3 text-center">
+                                                            <div class="fw-bold text-dark">{{ garch.interpretation.technical_details.volatility_mechanics.persistence|floatformat:4|default:"-" }}</div>
+                                                            <small class="text-muted">Persistence</small>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-4 col-sm-6">
+                                                        <div class="bg-light rounded p-3 text-center">
+                                                            <div class="fw-bold text-dark">{{ garch.interpretation.technical_details.volatility_mechanics.half_life|floatformat:2|default:"-" }}</div>
+                                                            <small class="text-muted">Half Life</small>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-4 col-sm-6">
+                                                        <div class="bg-light rounded p-3 text-center">
+                                                            <div class="fw-bold text-dark">{{ garch.interpretation.technical_details.volatility_mechanics.unconditional_variance|floatformat:6|default:"-" }}</div>
+                                                            <small class="text-muted">Unconditional Variance</small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                        
+                                        <!-- Forecast Statistics Section -->
+                                        {% if garch.interpretation.technical_details.forecast_statistics %}
+                                            <div class="mb-4">
+                                                <h6 class="text-primary mb-3 d-flex align-items-center">
+                                                    <i class="bi bi-bar-chart-line me-2"></i>Forecast Statistics
+                                                </h6>
+                                                <div class="row g-3">
+                                                    <div class="col-md-3 col-sm-6">
+                                                        <div class="bg-light rounded p-3 text-center">
+                                                            <div class="fw-bold text-dark">{{ garch.interpretation.technical_details.forecast_statistics.forecast_volatility|floatformat:6|default:"-" }}</div>
+                                                            <small class="text-muted">Forecast Volatility</small>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-3 col-sm-6">
+                                                        <div class="bg-light rounded p-3 text-center">
+                                                            <div class="fw-bold text-dark">{{ garch.interpretation.technical_details.forecast_statistics.total_change|floatformat:4|default:"-" }}</div>
+                                                            <small class="text-muted">Total Change</small>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6 col-sm-12">
+                                                        <div class="bg-light rounded p-3 text-center">
+                                                            <div class="fw-bold text-dark">{{ garch.interpretation.technical_details.forecast_statistics.forecast_range|default:"-" }}</div>
+                                                            <small class="text-muted">Forecast Range</small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                        
+                                        <!-- Model Summary Text Section -->
+                                        {% if garch.summary %}
+                                            <div class="mb-4">
+                                                <h6 class="text-primary mb-3 d-flex align-items-center">
+                                                    <i class="bi bi-file-text me-2"></i>Model Output Summary
+                                                </h6>
+                                                <div class="bg-light p-3 rounded">
+                                                    <small class="font-monospace">{{ garch.summary|truncatechars:400 }}</small>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                        
+                                        <!-- Technical Details Section -->
+                                        {% if garch.interpretation.technical_details %}
+                                            <div class="mb-4">
+                                                <h6 class="text-primary mb-3 d-flex align-items-center">
+                                                    <i class="bi bi-gear me-2"></i>Technical Details
+                                                </h6>
+                                                <div class="row">
+                                                    {% if garch.interpretation.technical_details.model_specification.justification %}
+                                                        <div class="col-12 mb-3">
+                                                            <div class="card border-0 bg-light">
+                                                                <div class="card-body p-3">
+                                                                    <h6 class="card-title text-secondary mb-2">Model Specification</h6>
+                                                                    <p class="card-text mb-0">{{ garch.interpretation.technical_details.model_specification.justification }}</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    {% endif %}
+                                                    {% if garch.interpretation.technical_details.volatility_mechanics.justification %}
+                                                        <div class="col-12 mb-3">
+                                                            <div class="card border-0 bg-light">
+                                                                <div class="card-body p-3">
+                                                                    <h6 class="card-title text-secondary mb-2">Volatility Mechanics</h6>
+                                                                    <p class="card-text mb-0">{{ garch.interpretation.technical_details.volatility_mechanics.justification }}</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                        
+                                        <!-- Forecast Values Table -->
+                                        {% if garch.forecast and garch.forecast|length > 1 %}
+                                            <div class="mb-4">
+                                                <h6 class="text-primary mb-3 d-flex align-items-center">
+                                                    <i class="bi bi-table me-2"></i>Detailed Forecast Values
+                                                </h6>
+                                                <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                                                    <table class="table table-sm table-striped">
+                                                        <thead class="table-light sticky-top">
+                                                            <tr>
+                                                                <th>Period</th>
+                                                                <th>Volatility Forecast</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {% for forecast_val in garch.forecast %}
+                                                                <tr>
+                                                                    <td class="fw-medium">{{ forloop.counter }}</td>
+                                                                    <td>{{ forecast_val|floatformat:6 }}</td>
+                                                                </tr>
+                                                            {% endfor %}
+                                                        </tbody>
+                                                    </table>
                                                 </div>
                                             </div>
                                         {% endif %}
                                     </div>
                                 </div>
-                            {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Interpretation Guide -->
+                    <div class="card-footer bg-light border-top">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h6 class="mb-2 text-dark">
+                                    <i class="bi bi-lightbulb me-2 text-warning"></i>
+                                    GARCH Model Guide
+                                </h6>
+                                <p class="mb-0 small text-muted">
+                                    GARCH models capture <strong>volatility clustering</strong> where high volatility periods are followed by high volatility. 
+                                    Parameters: <span class="badge bg-info">ω (constant)</span> <span class="badge bg-warning">α (ARCH effect)</span> <span class="badge bg-success">β (persistence)</span>. 
+                                    Higher α+β indicates stronger volatility persistence.
+                                </p>
+                            </div>
+                            <div class="col-md-4 text-md-end mt-2 mt-md-0">
+                                <div class="d-flex flex-column gap-2">
+                                    <span class="badge bg-danger">High α: Strong shock impact</span>
+                                    <span class="badge bg-primary">High β: Long memory</span>
+                                </div>
+                            </div>
                         </div>
-                    {% endfor %}
+                    </div>
                 {% else %}
-                    <p class="text-muted">No GARCH results available.</p>
+                    <div class="text-center p-5">
+                        <i class="bi bi-exclamation-circle text-muted" style="font-size: 3rem;"></i>
+                        <p class="text-muted mt-3 mb-0">No GARCH results available.</p>
+                    </div>
                 {% endif %}
             </div>
         </div>
@@ -1180,9 +1595,9 @@
                             <div class="card-body">
                                 <div class="alert alert-info mb-3">
                                     <i class="bi bi-info-circle"></i>
-                                    <strong>GARCH Components:</strong> This visualization shows the complete GARCH volatility analysis for {{ symbol|upper }}, including conditional volatility, standardized residuals, volatility clustering patterns, and volatility forecasts.
-                                    {% if garch_results|lookup:symbol.interpretation.technical_details.model_specification.order %}
-                                        <br><strong>Model Order:</strong> {{ garch_results|lookup:symbol.interpretation.technical_details.model_specification.order }}
+                                    <strong>GARCH Components:</strong> This visualization shows the complete GARCH analysis for {{ symbol|upper }}, including fitted volatility vs actual data, standardized residuals, and forecasted volatility.
+                                    {% if garch_results|lookup:symbol.forecast.forecast_method %}
+                                        <br><strong>Forecast Method:</strong> {{ garch_results|lookup:symbol.forecast.forecast_method }}
                                     {% endif %}
                                 </div>
                                 
@@ -1561,7 +1976,7 @@
                                                     <td>{{ data_arrays.original_data.symbol_data|lookup:symbol|index:forloop.parentloop.counter0|floatformat:4 }}</td>
                                                 {% endfor %}
                                             </tr>
-                                        {% endfor %}
+                                                                               {% endfor %}
                                     </tbody>
                                 </table>
                             </div>
