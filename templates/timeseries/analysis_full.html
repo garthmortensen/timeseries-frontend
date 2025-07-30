@@ -150,6 +150,7 @@
                 Define which symbols to analyze (max 5 symbols). Choose your preferred method for selecting symbols
             </div>
             
+            <div id="symbols-error" class="mb-2"></div>
             <!-- Symbol Selection Method -->
             <div class="mb-4">
                 <h5>Selection Method</h5>
@@ -198,6 +199,7 @@
                             10, 20, 30 (corresponding to symbols above)
                         </div>
                     </div>
+                    <div id="synthetic-symbols-error" class="mb-2"></div>
                 </div>
             </div>
 
@@ -1031,6 +1033,82 @@ document.addEventListener('DOMContentLoaded', function() {
         mainContent.style.display = 'block';
         return;
     }
+    
+    // Enforce max 5 symbols for Select Symbols
+    const symbolsErrorDiv = document.getElementById('symbols-error');
+    // For predefined (checkbox) selection
+    industryCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function(e) {
+            const checkedCount = document.querySelectorAll('.industry-checkbox:checked').length;
+            if (checkedCount > 5) {
+                this.checked = false;
+                symbolsErrorDiv.innerHTML = '<div class="alert alert-warning py-2 px-3 mb-2">Maximum 5 symbols can be selected.</div>';
+            } else {
+                symbolsErrorDiv.innerHTML = '';
+            }
+        });
+    });
+    // For manual entry (text input)
+    function checkManualSymbolsLimit() {
+        let val = '';
+        if (syntheticRadio.checked) {
+            val = document.getElementById('synthetic-symbols').value;
+        } else {
+            val = document.getElementById('symbols').value;
+        }
+        const count = val.split(',').map(s => s.trim()).filter(s => s.length > 0).length;
+        if (count > 5) {
+            symbolsErrorDiv.innerHTML = '<div class="alert alert-warning py-2 px-3 mb-2">Maximum 5 symbols allowed in manual entry.</div>';
+        } else {
+            symbolsErrorDiv.innerHTML = '';
+        }
+    }
+    document.getElementById('symbols').addEventListener('input', checkManualSymbolsLimit);
+    document.getElementById('synthetic-symbols').addEventListener('input', checkManualSymbolsLimit);
+
+    // Synthetic symbols and anchor prices count match validation
+    const syntheticSymbolsInput = document.getElementById('synthetic-symbols');
+    const syntheticAnchorPricesInput = document.getElementById('synthetic-anchor-prices');
+    const syntheticSymbolsErrorDiv = document.getElementById('synthetic-symbols-error');
+    function checkSyntheticSymbolsAnchorPrices() {
+        const symbols = syntheticSymbolsInput.value.split(',').map(s => s.trim()).filter(s => s.length > 0);
+        const prices = syntheticAnchorPricesInput.value.split(',').map(s => s.trim()).filter(s => s.length > 0);
+        if (symbols.length !== prices.length) {
+            syntheticSymbolsErrorDiv.innerHTML = '<div class="alert alert-warning py-2 px-3 mb-2">Synthetic Symbols and Anchor Prices must have the same number of items.</div>';
+        } else {
+            syntheticSymbolsErrorDiv.innerHTML = '';
+        }
+    }
+    syntheticSymbolsInput.addEventListener('input', checkSyntheticSymbolsAnchorPrices);
+    syntheticAnchorPricesInput.addEventListener('input', checkSyntheticSymbolsAnchorPrices);
 });
 </script>
+
+<script>
+        // Date range max 5 years notification
+        document.addEventListener('DOMContentLoaded', function() {
+            const startInput = document.getElementById('data-start-date');
+            const endInput = document.getElementById('data-end-date');
+            const errorDiv = document.getElementById('date-range-error');
+
+            function checkDateRange() {
+                const start = startInput.value;
+                const end = endInput.value;
+                if (start && end) {
+                    const startDate = new Date(start);
+                    const endDate = new Date(end);
+                    const diffDays = (endDate - startDate) / (1000 * 60 * 60 * 24);
+                    if (diffDays > 1826) {
+                        errorDiv.innerHTML = '<div class="alert alert-warning py-2 px-3 mb-2">Maximum date range is 5 years.</div>';
+                    } else {
+                        errorDiv.innerHTML = '';
+                    }
+                } else {
+                    errorDiv.innerHTML = '';
+                }
+            }
+            startInput.addEventListener('change', checkDateRange);
+            endInput.addEventListener('change', checkDateRange);
+        });
+        </script>
 {% endblock %}

@@ -258,26 +258,6 @@ def run_pipeline_htmx(request):
         if len(symbols) > 5:
             return JsonResponse({"success": False, "error": "You can select up to 5 symbols only."}, status=400)
         
-        # Backend validation: synthetic symbols and anchor prices must match in count
-        if data.get("source_actual_or_synthetic_data") == "synthetic":
-            synthetic_symbols = data.get("synthetic_symbols")
-            synthetic_anchor_prices = data.get("synthetic_anchor_prices")
-            # Accept both comma-separated string and list
-            if isinstance(synthetic_symbols, str):
-                symbol_list = [s.strip() for s in synthetic_symbols.split(',') if s.strip()]
-            elif isinstance(synthetic_symbols, list):
-                symbol_list = [s.strip() for s in synthetic_symbols if s.strip()]
-            else:
-                symbol_list = []
-            if isinstance(synthetic_anchor_prices, str):
-                price_list = [p.strip() for p in synthetic_anchor_prices.split(',') if p.strip()]
-            elif isinstance(synthetic_anchor_prices, list):
-                price_list = [str(p).strip() for p in synthetic_anchor_prices if str(p).strip()]
-            else:
-                price_list = []
-            if len(symbol_list) != len(price_list):
-                return JsonResponse({"success": False, "error": "Number of synthetic symbols must match number of anchor prices."}, status=400)
-        
         try:
             # Call the API
             print("DEBUG: About to call API")
