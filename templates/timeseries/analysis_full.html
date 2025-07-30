@@ -969,22 +969,21 @@ document.addEventListener('DOMContentLoaded', function() {
             body: JSON.stringify(data)
         })
         .then(response => {
-            const contentType = response.headers.get("content-type");
-            if (response.ok) {
-                if (contentType && contentType.indexOf("application/json") !== -1) {
-                    return response.json();
-                } else {
-                    return response.text().then(text => {
-                        // Throw an error if we expected JSON but didn't get it
-                        throw new Error(`Expected JSON response, but got content-type: ${contentType}. Response body: ${text}`);
-                    });
-                }
-            } else {
-                // If response is not ok, get text and throw that.
+            if (!response.ok) {
+                // Get text from response, which could be HTML for 500 errors
                 return response.text().then(text => {
-                    throw new Error(`API Error: ${response.status} ${response.statusText}. Response: ${text}`);
+                    // Try to parse it as JSON, but fall back to raw text if it fails
+                    let errorDetails;
+                    try {
+                        errorDetails = JSON.parse(text);
+                    } catch (e) {
+                        errorDetails = text;
+                    }
+                    // Throw an error that includes the status and the detailed response body
+                    throw new Error(`API Error: ${response.status} ${response.statusText}. Response: ${JSON.stringify(errorDetails)}`);
                 });
             }
+            return response.json();
         })
         .then(responseData => {
             // Stop loading message cycle
