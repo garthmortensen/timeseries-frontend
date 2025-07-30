@@ -2212,27 +2212,49 @@
 </div>
 
 <script>
-// Ensure Plotly charts resize when the Time Series tab is shown
-document.addEventListener('DOMContentLoaded', function() {
-    var timeSeriesTab = document.querySelector('button[data-bs-target="#time-series"]');
-    if (timeSeriesTab) {
-        timeSeriesTab.addEventListener('shown.bs.tab', function() {
-            // List all plot IDs in the Time Series tab
-            var plotIds = [
-                'original-data-plot',
-                'returns-data-plot',
-                'scaled-data-plot',
-                'pre-garch-plot',
-                'post-garch-plot'
-            ];
-            plotIds.forEach(function(id) {
+// Ensure Plotly charts resize when the Time Series or ARIMA tab is shown
+function resizePlotsForTab(tabSelector, plotIdPrefix, plotIdList) {
+    var tab = document.querySelector(tabSelector);
+    if (tab) {
+        tab.addEventListener('shown.bs.tab', function() {
+            // Resize all static plots
+            plotIdList.forEach(function(id) {
                 var el = document.getElementById(id);
                 if (el && el.children.length > 0) {
                     try { Plotly.Plots.resize(el); } catch (e) {}
                 }
             });
+            // Resize all ARIMA analysis plots (dynamic per symbol)
+            if (plotIdPrefix) {
+                document.querySelectorAll('[id^="' + plotIdPrefix + '"]').forEach(function(el) {
+                    if (el && el.children.length > 0) {
+                        try { Plotly.Plots.resize(el); } catch (e) {}
+                    }
+                });
+            }
         });
     }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Time Series tab
+    resizePlotsForTab(
+        'button[data-bs-target="#time-series"]',
+        null,
+        [
+            'original-data-plot',
+            'returns-data-plot',
+            'scaled-data-plot',
+            'pre-garch-plot',
+            'post-garch-plot'
+        ]
+    );
+    // ARIMA tab (dynamic per symbol)
+    resizePlotsForTab(
+        'button[data-bs-target="#arima"]',
+        'arima-plot-',
+        []
+    );
 });
 </script>
 

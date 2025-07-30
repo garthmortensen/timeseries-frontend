@@ -627,191 +627,128 @@ class ResultsProcessor:
             return None
     
     def _create_arima_plots(self) -> Dict[str, str]:
-        """Create ARIMA analysis plots for each symbol."""
+        """Create ARIMA analysis plots for each symbol, Series tab style: one subplot per symbol, clean layout."""
         arima_plots = {}
-        
         try:
             import plotly.graph_objects as go
             import plotly.express as px
             import plotly.utils
             import json
             from plotly.subplots import make_subplots
-            
+
             if 'arima_results' not in self.raw_results or not self.raw_results['arima_results']:
                 return {}
-                
             arima_results = self.raw_results['arima_results']
             if 'all_symbols_arima' not in arima_results:
                 return {}
-                
             all_symbols = arima_results['all_symbols_arima']
             color_palette = px.colors.qualitative.Set2
-            
+
             for i, (symbol, arima_data) in enumerate(all_symbols.items()):
-                if 'summary' not in arima_data:
-                    continue
-                    
-                summary = arima_data['summary']
+                summary = arima_data.get('summary', {})
                 forecast_data = arima_data.get('forecast', {})
-                
-                # Create subplot figure with 2x2 layout
-                fig = make_subplots(
-                    rows=2, cols=2,
-                    subplot_titles=(
-                        f'{symbol} - Fitted Values vs Actual',
-                        f'{symbol} - Residuals',
-                        f'{symbol} - Filtered Series (Mean Removed)',
-                        f'{symbol} - Forecast'
-                    ),
-                    vertical_spacing=0.12,
-                    horizontal_spacing=0.1
-                )
-                
+                # Get actual data (returns or prices)
+                actual_x, actual_y = [], []
+                if 'returns_data' in self.raw_results and self.raw_results['returns_data']:
+                    actual_x = [row.get('Date') or row.get('index') for row in self.raw_results['returns_data'] if row.get(symbol) is not None]
+                    actual_y = [row.get(symbol) for row in self.raw_results['returns_data'] if row.get(symbol) is not None]
+                elif 'original_data' in self.raw_results and self.raw_results['original_data']:
+                    actual_x = [row.get('Date') or row.get('index') for row in self.raw_results['original_data'] if row.get(symbol) is not None]
+                    actual_y = [row.get(symbol) for row in self.raw_results['original_data'] if row.get(symbol) is not None]
+                # Fitted values
+                fitted_x, fitted_y = [], []
+                fitted = summary.get('fitted_values', {})
+                if fitted:
+                    fitted_x = list(fitted.keys())
+                    fitted_y = list(fitted.values())
+                # Forecast
+                forecast_y = forecast_data.get('point_forecasts', [])
+                forecast_x = []
+                if fitted_x and forecast_y:
+                    # Try to extend dates
+                    from datetime import datetime, timedelta
+                    try:
+                        last_date = fitted_x[-1]
+                        dt = datetime.strptime(last_date, "%Y-%m-%d")
+                        forecast_x = [(dt + timedelta(days=j+1)).strftime("%Y-%m-%d") for j in range(len(forecast_y))]
+                    except:
+                        forecast_x = [f"Forecast_{j+1}" for j in range(len(forecast_y))]
+                # Confidence intervals (optional)
+                ci_upper = forecast_data.get('upper', [])
+                ci_lower = forecast_data.get('lower', [])
+                # Build figure
+                fig = go.Figure()
                 color = color_palette[i % len(color_palette)]
-                
-                # Extract data
-                fitted_values = summary.get('fitted_values', {})
-                residuals = summary.get('residuals', {})
-                conditional_filtering = summary.get('conditional_mean_filtering', {})
-                filtered_series = conditional_filtering.get('filtered_series', {})
-                point_forecasts = forecast_data.get('point_forecasts', [])
-                
-                # Get timestamps and data for fitted values
-                if fitted_values:
-                    timestamps = list(fitted_values.keys())
-                    fitted_vals = list(fitted_values.values())
-                    
-                    # Plot 1: Fitted Values vs Actual (using returns data as actual)
-                    if 'returns_data' in self.raw_results and self.raw_results['returns_data']:
-                        returns_data = self.raw_results['returns_data']
-                        actual_values = [row.get(symbol) for row in returns_data if row.get(symbol) is not None]
-                        actual_timestamps = [row.get('index') for row in returns_data if row.get(symbol) is not None]
-                        
-                        if len(actual_values) >= len(fitted_vals):
-                            actual_values = actual_values[:len(fitted_vals)]
-                            actual_timestamps = actual_timestamps[:len(fitted_vals)]
-                            
-                            fig.add_trace(
-                                go.Scatter(
-                                    x=actual_timestamps,
-                                    y=actual_values,
-                                    mode='lines',
-                                    name='Actual',
-                                    line=dict(color='black', width=1),
-                                    showlegend=True
-                                ),
-                                row=1, col=1
-                            )
-                    
-                    fig.add_trace(
+                # Actual
+                if actual_x and actual_y:
+                    fig.add_trace(go.Scatter(
+                        x=actual_x,
+                        y=actual_y,
+                        mode='lines',
+                        name=f"{symbol} Actual",
+                        line=dict(color=color, width=2, dash='solid'),
+                        hovertemplate=f'<b>{symbol}</b><br>Date: %{{x}}<br>Value: %{{y:.4f}}<extra></extra>'
+                    ))
+                # Fitted
+                if fitted_x and fitted_y:
+                    fig.add_trace(go.Scatter(
+                        x=fitted_x,
+                        y=fitted_y,
+                        mode='lines',
+                        name=f"{symbol} Fitted",
+                        line=dict(color=color, width=2, dash='dot'),
+                        hovertemplate=f'<b>{symbol} Fitted</b><br>Date: %{{x}}<br>Value: %{{y:.4f}}<extra></extra>'
+                    ))
+                # Forecast
+                if forecast_x and forecast_y:
+                    fig.add_trace(go.Scatter(
+                        x=forecast_x,
+                        y=forecast_y,
+                        mode='lines+markers',
+                        name=f"{symbol} Forecast",
+                        line=dict(color=color, width=2, dash='dash'),
+                        marker=dict(size=6),
+                        hovertemplate=f'<b>{symbol} Forecast</b><br>Date: %{{x}}<br>Value: %{{y:.4f}}<extra></extra>'
+                    ))
+                # Confidence interval
+                if forecast_x and ci_upper and ci_lower and len(ci_upper) == len(forecast_x) and len(ci_lower) == len(forecast_x):
+                    fig.add_traces([
                         go.Scatter(
-                            x=timestamps,
-                            y=fitted_vals,
-                            mode='lines',
-                            name='Fitted',
-                            line=dict(color=color, width=2),
+                            x=forecast_x + forecast_x[::-1],
+                            y=ci_upper + ci_lower[::-1],
+                            fill='toself',
+                            fillcolor='rgba(100,100,200,0.15)',
+                            line=dict(color='rgba(255,255,255,0)'),
+                            hoverinfo='skip',
+                            name=f"{symbol} 95% CI",
                             showlegend=True
-                        ),
-                        row=1, col=1
-                    )
-                
-                # Plot 2: Residuals
-                if residuals:
-                    res_timestamps = list(residuals.keys())
-                    res_values = list(residuals.values())
-                    
-                    fig.add_trace(
-                        go.Scatter(
-                            x=res_timestamps,
-                            y=res_values,
-                            mode='lines',
-                            name='Residuals',
-                            line=dict(color='red', width=1),
-                            showlegend=True
-                        ),
-                        row=1, col=2
-                    )
-                    
-                    # Add zero line for residuals
-                    fig.add_hline(y=0, line_dash="dash", line_color="gray", opacity=0.5, row=1, col=2)
-                
-                # Plot 3: Filtered Series (Mean Removed)
-                if filtered_series:
-                    filt_timestamps = list(filtered_series.keys())
-                    filt_values = list(filtered_series.values())
-                    
-                    fig.add_trace(
-                        go.Scatter(
-                            x=filt_timestamps,
-                            y=filt_values,
-                            mode='lines',
-                            name='Filtered Series',
-                            line=dict(color='green', width=1.5),
-                            showlegend=True
-                        ),
-                        row=2, col=1
-                    )
-                    
-                    # Add zero line for filtered series
-                    fig.add_hline(y=0, line_dash="dash", line_color="gray", opacity=0.5, row=2, col=1)
-                
-                # Plot 4: Point Forecasts
-                if point_forecasts:
-                    # Create forecast timestamps (assuming they follow the last timestamp)
-                    if fitted_values:
-                        last_timestamp = max(fitted_values.keys())
-                        # Simple increment for demo - in practice you'd calculate proper future dates
-                        forecast_timestamps = [f"Forecast_{j+1}" for j in range(len(point_forecasts))]
-                        
-                        fig.add_trace(
-                            go.Scatter(
-                                x=forecast_timestamps,
-                                y=point_forecasts,
-                                mode='lines+markers',
-                                name='Point Forecasts',
-                                line=dict(color='purple', width=2),
-                                marker=dict(size=6),
-                                showlegend=True
-                            ),
-                            row=2, col=2
                         )
-                
-                # Update layout
+                    ])
+                # Layout
                 fig.update_layout(
                     title=dict(
-                        text=f"ARIMA Analysis - {symbol} ({forecast_data.get('model_specification', 'ARIMA')})",
+                        text=f"ARIMA Model Fit and Forecast - {symbol}",
                         x=0.5,
-                        font=dict(size=16)
+                        font=dict(size=20)
                     ),
-                    height=600,
+                    xaxis_title="Date",
+                    yaxis_title="Value",
+                    hovermode='x unified',
+                    template='plotly_white',
                     showlegend=True,
                     legend=dict(
                         orientation="h",
                         yanchor="bottom",
-                        y=-0.1,
-                        xanchor="center",
-                        x=0.5
+                        y=1.02,
+                        xanchor="right",
+                        x=1
                     ),
-                    template='plotly_white',
-                    margin=dict(l=80, r=80, t=120, b=120)  # Increased padding on all sides
+                    height=400,
+                    margin=dict(l=50, r=50, t=80, b=50)
                 )
-                
-                # Update axes labels
-                fig.update_xaxes(title_text="Date", row=1, col=1)
-                fig.update_xaxes(title_text="Date", row=1, col=2)
-                fig.update_xaxes(title_text="Date", row=2, col=1)
-                fig.update_xaxes(title_text="Forecast Period", row=2, col=2)
-                
-                fig.update_yaxes(title_text="Value", row=1, col=1)
-                fig.update_yaxes(title_text="Residual", row=1, col=2)
-                fig.update_yaxes(title_text="Filtered Value", row=2, col=1)
-                fig.update_yaxes(title_text="Forecast Value", row=2, col=2)
-                
                 arima_plots[f'arima_analysis_{symbol.lower()}'] = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-                
         except Exception as e:
             logger.error(f"Error creating ARIMA plots: {e}")
-            
         return arima_plots
     
     def process_stationarity_results(self) -> Dict[str, Any]:

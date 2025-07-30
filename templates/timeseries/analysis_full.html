@@ -133,10 +133,13 @@
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label for="data-end-date" class="form-label">End Date</label>
-                        <input type="date" class="form-control" id="data-end-date" name="data_end_date" value="2023-07-01">
+                        <input type="date" class="form-control" id="data-end-date" name="data_end_date" value="2023-07-01"
+                            hx-post="/validate-date-range/" hx-trigger="change from:#data-start-date,change" hx-target="#date-range-validation" hx-include="#data-start-date">
                     </div>
                 </div>
             </div>
+            <div id="date-range-validation"></div>
+            <div id="date-range-error" class="mb-2"></div>
         </div>
         
         <!-- Symbols Configuration -->
@@ -172,7 +175,7 @@
                 
                 <div id="market-params" style="display: none;">
                     <div class="mb-3">
-                        <label for="symbols" class="form-label">Symbols (comma-separated)</label>
+                        <label for="symbols" class="form-label">Symbols (comma-separated, max 5)</label>
                         <input type="text" class="form-control" id="symbols" name="symbols" value="MSFT, AAPL, NEM.US" placeholder="Enter symbols like AAPL,MSFT,GOOGL">
                         <div class="parameter-help">
                             MSFT, AAPL, NEM.US
@@ -227,21 +230,21 @@
                                         </label>
                                     </div>
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" value="MSFT" id="stock-msft" data-name="Microsoft Corporation">
+                                        <input class="form-check-input industry-checkbox" type="checkbox" value="MSFT" id="stock-msft" data-name="Microsoft Corporation">
                                         <label class="form-check-label" for="stock-msft">
                                             <strong>MSFT</strong> - Microsoft<br>
                                             <small class="text-muted">Software & cloud services</small>
                                         </label>
                                     </div>
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" value="TSM" id="stock-tsm" data-name="Taiwan Semiconductor">
+                                        <input class="form-check-input industry-checkbox" type="checkbox" value="TSM" id="stock-tsm" data-name="Taiwan Semiconductor">
                                         <label class="form-check-label" for="stock-tsm">
                                             <strong>TSM</strong> - Taiwan Semiconductor<br>
                                             <small class="text-muted">Semiconductor manufacturing</small>
                                         </label>
                                     </div>
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" value="AMD" id="stock-amd" data-name="Advanced Micro Devices">
+                                        <input class="form-check-input industry-checkbox" type="checkbox" value="AMD" id="stock-amd" data-name="Advanced Micro Devices">
                                         <label class="form-check-label" for="stock-amd">
                                             <strong>AMD</strong> - AMD<br>
                                             <small class="text-muted">Semiconductors & processors</small>
@@ -257,7 +260,7 @@
                                         </label>
                                     </div>
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" value="TSLA" id="stock-tsla" data-name="Tesla Inc.">
+                                        <input class="form-check-input industry-checkbox" type="checkbox" value="TSLA" id="stock-tsla" data-name="Tesla Inc.">
                                         <label class="form-check-label" for="stock-tsla">
                                             <strong>TSLA</strong> - Tesla<br>
                                             <small class="text-muted">Electric vehicles & energy</small>
@@ -335,7 +338,7 @@
                                         </label>
                                     </div>
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" value="XLE" id="sector-xle" data-name="Energy Select Sector SPDR">
+                                        <input class="form-check-input industry-checkbox" type="checkbox" value="XLE" id="sector-xle" data-name="Energy Select Sector SPDR">
                                         <label class="form-check-label" for="sector-xle">
                                             <strong>XLE</strong> - Energy<br>
                                             <small class="text-muted">Oil, gas, renewable energy</small>
@@ -344,14 +347,14 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" value="XLY" id="sector-xly" data-name="Consumer Discretionary Select Sector SPDR">
+                                        <input class="form-check-input industry-checkbox" type="checkbox" value="XLY" id="sector-xly" data-name="Consumer Discretionary Select Sector SPDR">
                                         <label class="form-check-label" for="sector-xly">
                                             <strong>XLY</strong> - Consumer Discretionary<br>
                                             <small class="text-muted">Retail, automotive, entertainment</small>
                                         </label>
                                     </div>
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" value="XLP" id="sector-xlp" data-name="Consumer Staples Select Sector SPDR">
+                                        <input class="form-check-input industry-checkbox" type="checkbox" value="XLP" id="sector-xlp" data-name="Consumer Staples Select Sector SPDR">
                                         <label class="form-check-label" for="sector-xlp">
                                             <strong>XLP</strong> - Consumer Staples<br>
                                             <small class="text-muted">Food, beverages, household products</small>
@@ -477,7 +480,8 @@
         <div class="form-section">
             <h3 class="section-header">ARIMA Parameters</h3>
             <div class="guide-text">
-                ARIMA models predict future prices by analyzing patterns in historical data. By examining past price movements, trends, and random fluctuations, ARIMA provides a data-driven forecast of potential future price trajectories. This enables users to anticipate market behavior and make informed decisions.
+                ARIMA models predict future prices by analyzing patterns in historical data. By examining past price movements, trends, and random fluctuations, ARIMA provides a data-driven forecast of potential future price trajectories. This enables users to anticipate market behavior and make informed decisions.<br>
+                <strong>Limits:</strong> p ≤ 5, d ≤ 2, q ≤ 5, Forecast Steps ≤ 20
             </div>
             
             <div class="row">
@@ -525,7 +529,8 @@
             <h3 class="section-header">GARCH Parameters</h3>
             
             <div class="guide-text">
-                GARCH models delve into market volatility, quantifying how much prices swing up and down over time. By identifying periods of heightened uncertainty (e.g., during market crashes) versus stable periods, GARCH models are indispensable for risk management and strategic planning. They help users understand and prepare for potential market turbulence.
+                GARCH models delve into market volatility, quantifying how much prices swing up and down over time. By identifying periods of heightened uncertainty (e.g., during market crashes) versus stable periods, GARCH models are indispensable for risk management and strategic planning. They help users understand and prepare for potential market turbulence.<br>
+                <strong>Limits:</strong> p ≤ 3, q ≤ 3
             </div>
             
             <div class="row">
@@ -678,6 +683,9 @@
                 </span>
             </button>
         </div>
+        
+        <!-- Error Display -->
+        <div id="form-error"></div>
     </form>
 </div>
 
@@ -969,10 +977,8 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(responseData => {
             // Stop loading message cycle
             window.loadingQA.stop();
-            
             // Log the response data
             console.log("API Response received:", responseData);
-            
             // Check if the response indicates success
             if (responseData.success) {
                 console.log("Analysis completed successfully, redirecting to results page");
@@ -983,7 +989,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error("Analysis failed:", responseData.error);
                 loadingIndicator.style.display = 'none';
                 mainContent.style.display = 'block';
-                alert(`Error running analysis: ${responseData.error}`);
+                // Show error as Bootstrap alert
+                const formError = document.getElementById('form-error');
+                formError.innerHTML = `<div class='alert alert-danger py-2 px-3 mb-2'>${responseData.error}</div>`;
             }
         })
         .catch(error => {
@@ -993,9 +1001,36 @@ document.addEventListener('DOMContentLoaded', function() {
             // Show proper error message and restore form
             loadingIndicator.style.display = 'none';
             mainContent.style.display = 'block';
-            alert(`Error running analysis: ${error.message}`);
+            // Show error as Bootstrap alert
+            const formError = document.getElementById('form-error');
+            formError.innerHTML = `<div class='alert alert-danger py-2 px-3 mb-2'>${error.message}</div>`;
         });
     });
+    
+    // Simple validation for ARIMA and GARCH parameter upper limits
+    // ARIMA: p, d, q, forecast_steps
+    const arimaP = parseInt(document.getElementById('arima-p').value, 10);
+    const arimaD = parseInt(document.getElementById('arima-d').value, 10);
+    const arimaQ = parseInt(document.getElementById('arima-q').value, 10);
+    const arimaForecast = parseInt(document.getElementById('arima-forecast-steps').value, 10);
+    // GARCH: p, q
+    const garchP = parseInt(document.getElementById('garch-p').value, 10);
+    const garchQ = parseInt(document.getElementById('garch-q').value, 10);
+    // Reasonable upper limits
+    let paramError = '';
+    if (arimaP > 5) paramError = 'ARIMA p (AR order) cannot exceed 5.';
+    else if (arimaD > 2) paramError = 'ARIMA d (differencing order) cannot exceed 2.';
+    else if (arimaQ > 5) paramError = 'ARIMA q (MA order) cannot exceed 5.';
+    else if (arimaForecast > 20) paramError = 'ARIMA forecast steps cannot exceed 20.';
+    else if (garchP > 3) paramError = 'GARCH p (ARCH order) cannot exceed 3.';
+    else if (garchQ > 3) paramError = 'GARCH q (GARCH order) cannot exceed 3.';
+    if (paramError) {
+        const formError = document.getElementById('form-error');
+        formError.innerHTML = `<div class='alert alert-danger py-2 px-3 mb-2'>${paramError}</div>`;
+        loadingIndicator.style.display = 'none';
+        mainContent.style.display = 'block';
+        return;
+    }
 });
 </script>
 {% endblock %}

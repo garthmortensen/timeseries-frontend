@@ -3,6 +3,9 @@ from django.http import HttpResponse, JsonResponse
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
+from django.utils.dateparse import parse_date
+from django.views.decorators.http import require_POST
+from datetime import timedelta
 import json
 import requests
 import logging
@@ -234,6 +237,46 @@ def run_pipeline_htmx(request):
         }
         
         print(f"DEBUG: API payload prepared with symbols: {payload['symbols']}")
+        
+        # Backend date range validation (security)
+        from datetime import datetime
+        start = data.get("data_start_date")
+        end = data.get("data_end_date")
+        try:
+            start_date = datetime.strptime(start, "%Y-%m-%d") if start else None
+            end_date = datetime.strptime(end, "%Y-%m-%d") if end else None
+        except Exception:
+            start_date = end_date = None
+        if not start_date or not end_date:
+            return JsonResponse({"success": False, "error": "Invalid start or end date."}, status=400)
+        if end_date < start_date:
+            return JsonResponse({"success": False, "error": "End date must be after start date."}, status=400)
+        if (end_date - start_date).days > 1826:
+            return JsonResponse({"success": False, "error": "Date range cannot exceed 5 years."}, status=400)
+        
+        # Backend symbol count validation (security)
+        if len(symbols) > 5:
+            return JsonResponse({"success": False, "error": "You can select up to 5 symbols only."}, status=400)
+        
+        # Backend validation: synthetic symbols and anchor prices must match in count
+        if data.get("source_actual_or_synthetic_data") == "synthetic":
+            synthetic_symbols = data.get("synthetic_symbols")
+            synthetic_anchor_prices = data.get("synthetic_anchor_prices")
+            # Accept both comma-separated string and list
+            if isinstance(synthetic_symbols, str):
+                symbol_list = [s.strip() for s in synthetic_symbols.split(',') if s.strip()]
+            elif isinstance(synthetic_symbols, list):
+                symbol_list = [s.strip() for s in synthetic_symbols if s.strip()]
+            else:
+                symbol_list = []
+            if isinstance(synthetic_anchor_prices, str):
+                price_list = [p.strip() for p in synthetic_anchor_prices.split(',') if p.strip()]
+            elif isinstance(synthetic_anchor_prices, list):
+                price_list = [str(p).strip() for p in synthetic_anchor_prices if str(p).strip()]
+            else:
+                price_list = []
+            if len(symbol_list) != len(price_list):
+                return JsonResponse({"success": False, "error": "Number of synthetic symbols must match number of anchor prices."}, status=400)
         
         try:
             # Call the API
