@@ -50,6 +50,27 @@ else:
     # Set to False unless Django itself needs to enforce HTTPS.
     SECURE_SSL_REDIRECT = False
 
+# Database configuration for Cloud Run
+# Use in-memory SQLite for Cloud Run since we don't need persistent data
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': ':memory:',
+    }
+}
+
+# Cache configuration for sessions
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-session-cache',
+    }
+}
+
+# Use cache-based sessions instead of database sessions
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_CACHE_ALIAS = 'default'
+
 # Security settings
 SESSION_COOKIE_SECURE = True # Consider making this conditional if issues arise in local HTTP
 CSRF_COOKIE_SECURE = True    # Consider making this conditional if issues arise in local HTTP
