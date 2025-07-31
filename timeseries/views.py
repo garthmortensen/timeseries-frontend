@@ -176,7 +176,10 @@ def run_pipeline_htmx(request):
     """
     HTMX-compatible view for running analysis with simple redirect response.
     """
-    if request.method == "POST":
+    if request.method != "POST":
+        return redirect(reverse("timeseries:analysis"))
+
+    try:
         print("DEBUG: run_pipeline_htmx called!")
         
         # Support both JSON and form POSTs
@@ -258,100 +261,97 @@ def run_pipeline_htmx(request):
         if len(symbols) > 5:
             return JsonResponse({"success": False, "error": "You can select up to 5 symbols only."}, status=400)
         
-        try:
-            # Call the API
-            print("DEBUG: About to call API")
-            response = requests.post(f"{settings.TIMESERIES_API_URL}/api/v1/run_pipeline", json=payload, timeout=120)
+        # Call the API using requests
+        print("DEBUG: About to call API")
+        response = requests.post(f"{settings.TIMESERIES_API_URL}/api/v1/run_pipeline", json=payload, timeout=120)
+        
+        if response.status_code == 200:
+            # Parse and process the API response
+            api_results = response.json()
+            print(f"DEBUG: API call successful, got {len(api_results)} top-level keys", flush=True)
+            print(f"DEBUG: API response keys: {list(api_results.keys())}", flush=True)
             
-            if response.status_code == 200:
-                # Parse and process the API response
-                api_results = response.json()
-                print(f"DEBUG: API call successful, got {len(api_results)} top-level keys", flush=True)
-                print(f"DEBUG: API response keys: {list(api_results.keys())}", flush=True)
-                
-                # Write to debug file immediately
-                try:
-                    with open('./logs/debug_view.log', 'a') as f:
-                        f.write(f"DEBUG: API call successful, got {len(api_results)} top-level keys\n")
-                        f.write(f"DEBUG: API response keys: {list(api_results.keys())}\n")
-                        f.flush()
-                except Exception as e:
-                    print(f"DEBUG: Could not write to debug file: {e}")
-                
-                logger.info("[HTMX] API call successful, processing results")
-                
-                # Import and use the ResultsProcessor
-                from .results_processor import ResultsProcessor
-                print("DEBUG: About to create ResultsProcessor", flush=True)
-                
-                try:
-                    with open('./logs/debug_view.log', 'a') as f:
-                        f.write("DEBUG: About to create ResultsProcessor\n")
-                        f.flush()
-                except:
-                    pass
-                
-                processor = ResultsProcessor(api_results)
-                print("DEBUG: About to call process_all()", flush=True)
-                
-                try:
-                    with open('./logs/debug_view.log', 'a') as f:
-                        f.write("DEBUG: About to call process_all()\n")
-                        f.flush()
-                except:
-                    pass
+            # Write to debug file immediately
+            try:
+                with open('./logs/debug_view.log', 'a') as f:
+                    f.write(f"DEBUG: API call successful, got {len(api_results)} top-level keys\n")
+                    f.write(f"DEBUG: API response keys: {list(api_results.keys())}\n")
+                    f.flush()
+            except Exception as e:
+                print(f"DEBUG: Could not write to debug file: {e}")
+            
+            logger.info("[HTMX] API call successful, processing results")
+            
+            # Import and use the ResultsProcessor
+            from .results_processor import ResultsProcessor
+            print("DEBUG: About to create ResultsProcessor", flush=True)
+            
+            try:
+                with open('./logs/debug_view.log', 'a') as f:
+                    f.write("DEBUG: About to create ResultsProcessor\n")
+                    f.flush()
+            except:
+                pass
+            
+            processor = ResultsProcessor(api_results)
+            print("DEBUG: About to call process_all()", flush=True)
+            
+            try:
+                with open('./logs/debug_view.log', 'a') as f:
+                    f.write("DEBUG: About to call process_all()\n")
+                    f.flush()
+            except:
+                pass
                     
-                processed_results = processor.process_all()
-                print("DEBUG: process_all() completed successfully", flush=True)
-                
-                try:
-                    with open('./logs/debug_view.log', 'a') as f:
-                        f.write("DEBUG: process_all() completed successfully\n")
-                        f.flush()
-                except:
-                    pass
-                
-                # Store processed results in session for the results page
-                request.session['analysis_results'] = processed_results
-                request.session['analysis_raw_results'] = api_results
-                
-                # Return JSON response with redirect URL for JavaScript
-                return JsonResponse({
-                    "success": True,
-                    "redirect_url": reverse('timeseries:results'),
-                    "message": "Analysis completed successfully"
-                })
-            else:
-                print(f"DEBUG: API call failed with status {response.status_code}")
-                print(f"DEBUG: API response text: {response.text}")
-                logger.error(f"[HTMX] API call failed with status {response.status_code}")
-                return JsonResponse({
-                    "success": False,
-                    "error": f"API call failed with status {response.status_code}: {response.text}"
-                }, status=500)
-                
-        except requests.exceptions.Timeout:
-            print("DEBUG: API request timed out")
-            logger.error("[HTMX] API request timed out")
+            processed_results = processor.process_all()
+            print("DEBUG: process_all() completed successfully", flush=True)
+            
+            try:
+                with open('./logs/debug_view.log', 'a') as f:
+                    f.write("DEBUG: process_all() completed successfully\n")
+                    f.flush()
+            except:
+                pass
+            
+            # Store processed results in session for the results page
+            request.session['analysis_results'] = processed_results
+            request.session['analysis_raw_results'] = api_results
+            
+            # Return JSON response with redirect URL for JavaScript
+            return JsonResponse({
+                "success": True,
+                "redirect_url": reverse('timeseries:results'),
+                "message": "Analysis completed successfully"
+            })
+        else:
+            print(f"DEBUG: API call failed with status {response.status_code}")
+            print(f"DEBUG: API response text: {response.text}")
+            logger.error(f"[HTMX] API call failed with status {response.status_code}")
             return JsonResponse({
                 "success": False,
-                "error": "Analysis timed out"
-            }, status=504)
-        except requests.exceptions.ConnectionError:
-            print("DEBUG: Failed to connect to API")
-            logger.error("[HTMX] Failed to connect to API")
-            return JsonResponse({
-                "success": False,
-                "error": "Could not connect to analysis API"
-            }, status=503)
-        except Exception as e:
-            print(f"DEBUG: Unexpected error: {e}")
-            import traceback
-            traceback.print_exc()
-            logger.exception("[HTMX] Unexpected error during API call")
-            return JsonResponse({
-                "success": False,
-                "error": str(e)
+                "error": f"API call failed with status {response.status_code}: {response.text}"
             }, status=500)
-    else:
-        return redirect(reverse("timeseries:analysis"))
+            
+    except requests.exceptions.Timeout:
+        print("DEBUG: API request timed out")
+        logger.error("[HTMX] API request timed out")
+        return JsonResponse({
+            "success": False,
+            "error": "Analysis timed out"
+        }, status=504)
+    except requests.exceptions.ConnectionError:
+        print("DEBUG: Failed to connect to API")
+        logger.error("[HTMX] Failed to connect to API")
+        return JsonResponse({
+            "success": False,
+            "error": "Could not connect to analysis API"
+        }, status=503)
+    except Exception as e:
+        print(f"DEBUG: Unexpected error: {e}")
+        import traceback
+        traceback.print_exc()
+        logger.exception("[HTMX] Unexpected error during API call")
+        return JsonResponse({
+            "success": False,
+            "error": f"An unexpected server error occurred: {str(e)}"
+        }, status=500)

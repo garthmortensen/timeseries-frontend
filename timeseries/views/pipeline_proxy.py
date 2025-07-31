@@ -5,6 +5,9 @@ from django.views.decorators.csrf import csrf_exempt
 from django.urls import reverse
 from django.shortcuts import render
 from django.conf import settings
+import logging
+
+logger = logging.getLogger(__name__)
 
 def run_pipeline_proxy(request):
     if request.method == "POST":
@@ -50,7 +53,13 @@ def run_pipeline_proxy(request):
             "spillover_params": spillover_params,
         }
         # Send to backend API
-        response = requests.post(f"{settings.TIMESERIES_API_URL}/api/v1/run_pipeline", json=payload)
+        try:
+            response = requests.post(f"{settings.TIMESERIES_API_URL}/api/v1/run_pipeline", json=payload)
+            response.raise_for_status()  # Raise an error for bad responses
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Request to Timeseries API failed: {e}")
+            return render(request, "timeseries/analysis_results.html", {"error": "Failed to connect to the analysis service. Please try again later."})
+
         # Optionally, render a template with results or redirect
         if response.status_code == 200:
             return render(request, "timeseries/analysis_results.html", {"results": response.json()})
