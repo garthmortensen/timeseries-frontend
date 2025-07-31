@@ -490,29 +490,32 @@
                 <div class="col-md-3">
                     <div class="mb-3">
                         <label for="arima-p" class="form-label">p: Auto-Regressive Component</label>
-                        <input type="number" class="form-control" id="arima-p" name="arima_p" min="0" max="10" value="2">
+                        <input type="number" class="form-control" id="arima-p" name="arima_p" min="0" max="5" value="2">
                         <div class="parameter-help">
                             The AR component assumes today's price depends on recent past prices. Think of it as "momentum" - if a stock has been rising for several days, AR captures the tendency for that trend to continue. Higher p values (3-5) capture longer-term momentum patterns but risk overfitting to noise. Start with p=1-2 for most financial series, increase if you see strong persistence in price movements.
                         </div>
                     </div>
+                    <div id="arima-p-error" class="mb-2"></div>
                 </div>
                 <div class="col-md-3">
                     <div class="mb-3">
                         <label for="arima-d" class="form-label">d: Integration Component</label>
-                        <input type="number" class="form-control" id="arima-d" name="arima_d" min="0" max="5" value="0">
+                        <input type="number" class="form-control" id="arima-d" name="arima_d" min="0" max="2" value="0">
                         <div class="parameter-help">
                             Differencing removes trends to make the data stationary (constant mean/variance over time). Most financial prices are "integrated" - they wander randomly and don't revert to a mean. d=1 means taking first differences (today's price minus yesterday's), which usually converts trending price data into stationary returns. Use d=0 for already-stationary data like volatility indices, d=2 rarely needed except for highly trending series. This analysis pipeline automatically differences prices to returns, so this is default to 0.
                         </div>
                     </div>
+                    <div id="arima-d-error" class="mb-2"></div>
                 </div>
                 <div class="col-md-3">
                     <div class="mb-3">
                         <label for="arima-q" class="form-label">q: Moving Average Component</label>
-                        <input type="number" class="form-control" id="arima-q" name="arima_q" min="0" max="10" value="4">
+                        <input type="number" class="form-control" id="arima-q" name="arima_q" min="0" max="5" value="4">
                         <div class="parameter-help">
                             The MA component captures how today's price reacts to recent random shocks or surprises. Unlike AR which uses actual past prices, MA uses past forecast errors. This helps model temporary market overreactions or corrections. Higher q values (3-6) are useful for financial data since markets often show clustered volatility and mean reversion after shocks.
                         </div>
                     </div>
+                    <div id="arima-q-error" class="mb-2"></div>
                 </div>
                 <div class="col-md-3">
                     <div class="mb-3">
@@ -522,6 +525,7 @@
                             Number of time periods to forecast into the future. Higher values (10-20) provide more detailed forecast plots but may be less reliable. Use 5-10 for daily data, 10-20 for weekly data. More than 20 steps is rarely meaningful for financial forecasting.
                         </div>
                     </div>
+                    <div id="arima-forecast-steps-error" class="mb-2"></div>
                 </div>
             </div>
         </div>
@@ -539,20 +543,22 @@
                 <div class="col-md-4">
                     <div class="mb-3">
                         <label for="garch-p" class="form-label">p: ARCH</label>
-                        <input type="number" class="form-control" id="garch-p" name="garch_p" min="0" max="5" value="1">
+                        <input type="number" class="form-control" id="garch-p" name="garch_p" min="0" max="3" value="1">
                         <div class="parameter-help">
                             ARCH captures how today's volatility depends on recent large price movements. If yesterday had a big price swing, today's volatility will likely be elevated. p=1 is usually sufficient since volatility shocks decay quickly. Higher values (2-3) may help with extremely volatile assets like crypto or emerging market currencies.
                         </div>
                     </div>
+                    <div id="garch-p-error" class="mb-2"></div>
                 </div>
                 <div class="col-md-4">
                     <div class="mb-3">
                         <label for="garch-q" class="form-label">q: Generalized ARCH</label>
-                        <input type="number" class="form-control" id="garch-q" name="garch_q" min="0" max="5" value="1">
+                        <input type="number" class="form-control" id="garch-q" name="garch_q" min="0" max="3" value="1">
                         <div class="parameter-help">
                             GARCH adds persistence to volatility clustering - the tendency for volatile periods to persist over time. This captures the "volatility of volatility" phenomenon where market stress tends to continue for weeks or months. q=1 handles most cases; q=2 for assets with very persistent volatility clustering like VIX or commodity futures.
                         </div>
                     </div>
+                    <div id="garch-q-error" class="mb-2"></div>
                 </div>
                 <div class="col-md-4">
                     <div class="mb-3">
@@ -575,7 +581,8 @@
             <h3 class="section-header">Spillover Analysis</h3>
             
             <div class="guide-text">
-                Spillover analysis uncovers how shocks in one market or asset propagate to others. For instance, a crash in the US stock market might ripple through European or Asian markets. This analysis sheds light on global market interconnectedness and contagion risks, enabling better risk assessment and diversification strategies.
+                Spillover analysis uncovers how shocks in one market or asset propagate to others. For instance, a crash in the US stock market might ripple through European or Asian markets. This analysis sheds light on global market interconnectedness and contagion risks, enabling better risk assessment and diversification strategies.<br>
+                <strong>Limits:</strong> Forecast Horizon ≤ 10, Max VAR Lags ≤ 20, Granger Significance ≤ 1, Rolling Window ≤ 365
             </div>
             
             <div class="form-check form-switch mb-3">
@@ -609,11 +616,12 @@
                     </div>
                     <div class="col-md-6">
                         <label for="forecast_horizon" class="form-label">Forecast Horizon</label>
-                        <input type="number" class="form-control" name="forecast_horizon" value="5" min="1" max="20">
+                        <input type="number" class="form-control" name="forecast_horizon" value="5" min="1" max="10">
                         <div class="parameter-help">
                             <strong>Steps ahead:</strong> Forecast horizon for spillover analysis
                         </div>
                     </div>
+                    <div id="forecast-horizon-error" class="mb-2"></div>
                 </div>
                 
                 <div class="row mt-3">
@@ -633,23 +641,26 @@
                             <strong>Model selection:</strong> Maximum lags to consider for VAR model
                         </div>
                     </div>
+                    <div id="max-lags-error" class="mb-2"></div>
                 </div>
                 
                 <div class="row mt-3">
                     <div class="col-md-6">
                         <label for="granger_significance_level" class="form-label">Granger Significance Level</label>
-                        <input type="number" class="form-control" name="granger_significance_level" value="0.05" min="0.01" max="0.10" step="0.01">
+                        <input type="number" class="form-control" name="granger_significance_level" value="0.05" min="0.01" max="1" step="0.01">
                         <div class="parameter-help">
                             <strong>P-value threshold:</strong> For Granger causality tests
                         </div>
                     </div>
+                    <div id="granger-significance-error" class="mb-2"></div>
                     <div class="col-md-6">
                         <label for="rolling_window" class="form-label">Rolling Window (optional)</label>
-                        <input type="number" class="form-control" name="rolling_window" placeholder="e.g., 252">
+                        <input type="number" class="form-control" name="rolling_window" placeholder="e.g., 252" min="1" max="365">
                         <div class="parameter-help">
                             <strong>Time-varying spillovers:</strong> Use rolling window analysis
                         </div>
                     </div>
+                    <div id="rolling-window-error" class="mb-2"></div>
                 </div>
                 
                 <div class="mt-3">

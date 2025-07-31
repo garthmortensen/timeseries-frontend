@@ -267,6 +267,49 @@ def run_pipeline_htmx(request):
         if len(symbols) > 5:
             return JsonResponse({"success": False, "error": "You can select up to 5 symbols only."}, status=400)
         
+        # Backend ARIMA parameter validation (security)
+        arima_params = data.get("arima_params", {})
+        arima_p = arima_params.get("p", 2)
+        arima_d = arima_params.get("d", 1)
+        arima_q = arima_params.get("q", 2)
+        arima_forecast_steps = arima_params.get("forecast_steps", 10)
+        
+        if arima_p > 5:
+            return JsonResponse({"success": False, "error": "ARIMA parameter p (Auto-Regressive Component) cannot exceed 5."}, status=400)
+        if arima_d > 2:
+            return JsonResponse({"success": False, "error": "ARIMA parameter d (Integration Component) cannot exceed 2."}, status=400)
+        if arima_q > 5:
+            return JsonResponse({"success": False, "error": "ARIMA parameter q (Moving Average Component) cannot exceed 5."}, status=400)
+        if arima_forecast_steps > 20:
+            return JsonResponse({"success": False, "error": "ARIMA forecast steps cannot exceed 20."}, status=400)
+        
+        # Backend GARCH parameter validation (security)
+        garch_params = data.get("garch_params", {})
+        garch_p = garch_params.get("p", 1)
+        garch_q = garch_params.get("q", 1)
+        
+        if garch_p > 3:
+            return JsonResponse({"success": False, "error": "GARCH parameter p (ARCH) cannot exceed 3."}, status=400)
+        if garch_q > 3:
+            return JsonResponse({"success": False, "error": "GARCH parameter q (Generalized ARCH) cannot exceed 3."}, status=400)
+        
+        # Backend spillover parameter validation (security)
+        if data.get("spillover_enabled"):
+            spillover_params = data.get("spillover_params", {})
+            forecast_horizon = spillover_params.get("forecast_horizon", 5)
+            max_lags = spillover_params.get("max_lags", 10)
+            granger_significance_level = spillover_params.get("granger_significance_level", 0.05)
+            rolling_window = spillover_params.get("rolling_window")
+            
+            if forecast_horizon > 10:
+                return JsonResponse({"success": False, "error": "Spillover forecast horizon cannot exceed 10."}, status=400)
+            if max_lags > 20:
+                return JsonResponse({"success": False, "error": "Maximum VAR lags cannot exceed 20."}, status=400)
+            if granger_significance_level > 1:
+                return JsonResponse({"success": False, "error": "Granger significance level cannot exceed 1."}, status=400)
+            if rolling_window is not None and rolling_window > 365:
+                return JsonResponse({"success": False, "error": "Rolling window cannot exceed 365 days."}, status=400)
+        
         # Call the API using requests
         print("DEBUG: About to call API")
         response = requests.post(f"{settings.TIMESERIES_API_URL}/api/v1/run_pipeline", json=payload, timeout=120)
