@@ -28,8 +28,14 @@ def results(request):
     """
     Results page.
     """
+    # Debug: Check what's in the session
+    print("DEBUG: Session keys:", list(request.session.keys()))
+    print("DEBUG: Session analysis_results exists:", 'analysis_results' in request.session)
+    
     # Retrieve processed results from session if available
     processed_results = request.session.get('analysis_results', {})
+    print("DEBUG: Processed results keys:", list(processed_results.keys()) if processed_results else "None")
+    
     param_list = ['ar.L1', 'ar.L2', 'ma.L1', 'ma.L2', 'sigma2']
     # Always set active_tab to 'overview' for best practice
     context = {
@@ -316,6 +322,12 @@ def run_pipeline_htmx(request):
             # Store processed results in session for the results page
             request.session['analysis_results'] = processed_results
             request.session['analysis_raw_results'] = api_results
+            
+            # Explicitly save the session to ensure it's persisted in cache
+            request.session.save()
+            
+            print(f"DEBUG: Session saved with keys: {list(request.session.keys())}")
+            print(f"DEBUG: Session contains analysis_results: {'analysis_results' in request.session}")
             
             # Return JSON response with redirect URL for JavaScript
             return JsonResponse({
