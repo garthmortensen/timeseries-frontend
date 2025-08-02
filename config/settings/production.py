@@ -51,15 +51,15 @@ else:
     SECURE_SSL_REDIRECT = False
 
 # Database configuration for Cloud Run
-# Use in-memory SQLite for Cloud Run since we don't need persistent data
+# Use persistent SQLite for Cloud Run to maintain session data
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': ':memory:',
+        'NAME': BASE_DIR / 'db.sqlite3',  # Use persistent file instead of :memory:
     }
 }
 
-# Cache configuration for sessions
+# Cache configuration - keep for other caching needs
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
@@ -67,9 +67,11 @@ CACHES = {
     }
 }
 
-# Use cache-based sessions instead of database sessions
-SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
-SESSION_CACHE_ALIAS = 'default'
+# Use database sessions instead of cache sessions for persistence
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_AGE = 3600  # 1 hour
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
 # Security settings
 SESSION_COOKIE_SECURE = True # Consider making this conditional if issues arise in local HTTP

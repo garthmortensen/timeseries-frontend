@@ -5,10 +5,12 @@ from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 from django.utils.dateparse import parse_date
 from django.views.decorators.http import require_POST
+from django.core.cache import cache
 from datetime import timedelta
 import json
 import requests
 import logging
+import hashlib
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +33,7 @@ def results(request):
     # Debug: Check what's in the session
     print("DEBUG: Session keys:", list(request.session.keys()))
     print("DEBUG: Session analysis_results exists:", 'analysis_results' in request.session)
+    print("DEBUG: Session raw results exist:", 'analysis_raw_results' in request.session)
     
     # Retrieve processed results from session if available
     processed_results = request.session.get('analysis_results', {})
@@ -63,10 +66,34 @@ def iterate(request):
     """
     return redirect(reverse('timeseries:analysis'))
 
+def view_api_response_popup(request):
+    """
+    View API response in popup - FIXED to not delete session data.
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    logger.info(f"Session keys available: {list(request.session.keys())}")
+    logger.info(f"Session has raw results: {'analysis_raw_results' in request.session}")
+    
+    # Use .get() to read without deleting session data
+    raw_results = request.session.get('analysis_raw_results', None)
+        
+    if raw_results is not None:
+        logger.info(f"Raw results found, size: {len(str(raw_results))}")
+        raw_results_json = json.dumps(raw_results, indent=2)
+    else:
+        logger.warning("No raw results found in session")
+        raw_results_json = 'No API response available.'
+    
+    # Don't modify session - just read and return
+    return render(request, 'timeseries/api_response_popup.html', {'raw_results_json': raw_results_json})
+
 def download_api_response(request):
     """
-    Download API response as JSON file.
+    Download API response as JSON file - FIXED to not delete session data.
     """
+    # Use .get() to read without deleting session data
     raw_results = request.session.get('analysis_raw_results', None)
     if raw_results is not None:
         import json
@@ -82,33 +109,41 @@ def download_api_response(request):
     else:
         return HttpResponse("No API response available to download.", content_type="text/plain")
 
-def view_api_response_popup(request):
-    """
-    View API response in popup.
-    """
-    raw_results = request.session.get('analysis_raw_results', None)
-    if raw_results is not None:
-        import json
-        raw_results_json = json.dumps(raw_results, indent=2)
-    else:
-        raw_results_json = 'No API response available.'
-    return render(request, 'timeseries/api_response_popup.html', {'raw_results_json': raw_results_json})
-
 def export_csv(request, data_type):
     """
-    Export CSV data using HTMX for better UX.
+    Export CSV data using HTMX for better UX - FIXED to not delete session data.
     """
     import csv
     import io
     from django.utils import timezone
     
-    # Get processed results from session
+    # Debug session state
+    print(f"DEBUG: export_csv called for {data_type}")
+    print(f"DEBUG: Session keys: {list(request.session.keys())}")
+    print(f"DEBUG: Has analysis_results: {'analysis_results' in request.session}")
+    
+    # Use .get() to read without deleting session data
     processed_results = request.session.get('analysis_results', {})
+    
+    if not processed_results:
+        print("DEBUG: No processed results found in session")
+        if request.headers.get('HX-Request'):
+            return HttpResponse(
+                '<div class="alert alert-danger">No analysis results found in session. Please run an analysis first.</div>',
+                content_type='text/html'
+            )
+        else:
+            return HttpResponse("No analysis results found in session. Please run an analysis first.", content_type="text/plain")
+    
     data_arrays = processed_results.get('data_arrays', {})
     symbols = processed_results.get('symbols', [])
     
+    print(f"DEBUG: Data arrays available: {list(data_arrays.keys())}")
+    print(f"DEBUG: Symbols: {symbols}")
+    
     # Check if the requested data type exists
     if data_type not in data_arrays:
+        print(f"DEBUG: Requested data type '{data_type}' not found in data_arrays")
         if request.headers.get('HX-Request'):
             return HttpResponse(
                 f'<div class="alert alert-danger">No {data_type.replace("_", " ")} data available for export.</div>',
@@ -121,7 +156,11 @@ def export_csv(request, data_type):
     timestamps = data_info.get('timestamps', [])
     symbol_data = data_info.get('symbol_data', {})
     
+    print(f"DEBUG: Timestamps count: {len(timestamps)}")
+    print(f"DEBUG: Symbol data keys: {list(symbol_data.keys())}")
+    
     if not timestamps or not symbol_data:
+        print(f"DEBUG: Missing data - timestamps: {len(timestamps)}, symbol_data: {len(symbol_data)}")
         if request.headers.get('HX-Request'):
             return HttpResponse(
                 f'<div class="alert alert-warning">No data rows available for {data_type.replace("_", " ")}.</div>',
@@ -156,6 +195,8 @@ def export_csv(request, data_type):
     # Generate filename with timestamp
     current_time = timezone.now().strftime('%Y%m%d_%H%M%S')
     filename = f"timeseries_{data_type}_{current_time}.csv"
+    
+    print(f"DEBUG: Generated CSV with {len(csv_content)} characters")
     
     # Return CSV file
     response = HttpResponse(csv_content, content_type='text/csv')
@@ -362,15 +403,17 @@ def run_pipeline_htmx(request):
             except:
                 pass
             
-            # Store processed results in session for the results page
-            request.session['analysis_results'] = processed_results
+            # Store both raw and processed results in session (database-backed)
             request.session['analysis_raw_results'] = api_results
+            request.session['analysis_results'] = processed_results
+            request.session['has_api_results'] = True  # Flag to check if results exist
             
-            # Explicitly save the session to ensure it's persisted in cache
+            # Explicitly save the session to ensure it's persisted
             request.session.save()
             
             print(f"DEBUG: Session saved with keys: {list(request.session.keys())}")
             print(f"DEBUG: Session contains analysis_results: {'analysis_results' in request.session}")
+            print(f"DEBUG: Session contains raw results: {'analysis_raw_results' in request.session}")
             
             # Return JSON response with redirect URL for JavaScript
             return JsonResponse({

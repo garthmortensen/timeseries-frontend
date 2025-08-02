@@ -21,7 +21,21 @@ A Django frontend for spillover analysis and time series modeling.
 
 Implementation hosted at www.spilloverlab.com.
 
+## TODO:
+
+on first run, i can navigate to 
+https://www.spilloverlab.com/results/
+
+- Download API Response works multiple times.
+- View API Response only works the first time
+- After clicking View API Response once, Download API Response returns "No API response available."
+- After clicking View API Response once, clicking View API Response a second time returns "No API response available."
+- Provenance tab Export CSV only works the first time. 
+- After clicking Provenance tab Export CSV once, clicking Export CSV a second time returns No returns_data data available for export.
+
+
 ## Features
+
 
 - User-friendly interface for time series analysis
 - Interactive charts with Plotly

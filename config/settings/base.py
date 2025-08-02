@@ -141,6 +141,24 @@ else:
 # Timeout for requests made to the backend Timeseries API
 API_TIMEOUT_SECONDS = int(os.environ.get("API_TIMEOUT_SECONDS", 60))
 
+# Cache configuration
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-timeseries-cache',
+        'TIMEOUT': 3600,  # 1 hour default timeout
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000,
+        }
+    }
+}
+
+# Session configuration - Use database backend for persistence
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_AGE = 3600  # 1 hour
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+
 # Logging configuration
 # Logging configuration
 LOGGING = {
