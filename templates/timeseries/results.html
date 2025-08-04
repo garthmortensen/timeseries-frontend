@@ -2213,6 +2213,72 @@
                         {% endif %}
                     {% endfor %}
                 {% endif %}
+
+                <!-- Granger Causality & Spillover Analysis Background Context -->
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0">
+                            <i class="bi bi-arrow-through-heart me-2"></i>
+                            Granger Causality & Spillover Analysis Background Context
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <h6 class="text-primary">What Is Granger Causality</h6>
+                            <p class="mb-0">Granger causality is a statistical test that determines whether past values of one time series (X) help predict future values of another time series (Y) beyond what Y's own past values can predict. Named after Nobel Prize winner Clive Granger, it doesn't imply true causation but rather "predictive causality" - if X Granger-causes Y, then X contains useful information for forecasting Y. The test works by comparing two models: one that uses only Y's past values to predict Y, and another that uses both Y's and X's past values. If the second model significantly improves prediction accuracy, we conclude that X Granger-causes Y.</p>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6 class="text-primary">Why It Matters</h6>
+                            <p class="mb-0">In financial markets, Granger causality reveals lead-lag relationships between assets, sectors, or economic indicators. For example, if oil prices Granger-cause airline stock returns, this suggests oil price movements contain predictive information about future airline performance. This knowledge is invaluable for risk management, portfolio construction, and trading strategies. It helps identify leading indicators, understand market transmission mechanisms, and build more sophisticated forecasting models. However, it's crucial to remember that Granger causality reflects correlation patterns in historical data and may not persist in the future.</p>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6 class="text-primary">Diebold-Yilmaz Spillover Methodology</h6>
+                            <p class="mb-0">The Diebold-Yilmaz spillover methodology, developed by Francis Diebold and Kamil Yilmaz, provides a comprehensive framework for measuring interconnectedness in financial markets. It builds on Vector Autoregression (VAR) models and Forecast Error Variance Decomposition (FEVD) to quantify how shocks in one market or asset propagate to others. The methodology produces a "spillover index" that measures the percentage of forecast error variance that comes from spillovers between variables, rather than from each variable's own innovations. This approach has become the gold standard for analyzing financial contagion, systemic risk, and market interconnectedness.</p>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6 class="text-primary">Forecast Error Variance Decomposition (FEVD)</h6>
+                            <p class="mb-0">FEVD is a core component of spillover analysis that breaks down the forecast error variance of each variable into portions attributable to its own shocks versus shocks from other variables in the system. For example, if we're analyzing three stocks (A, B, C), FEVD tells us what percentage of stock A's forecast errors come from its own price movements versus movements in stocks B and C. This decomposition reveals the relative importance of different sources of uncertainty and helps identify which variables are most influential in the system. FEVD forms the foundation for calculating directional spillovers (from specific sources to specific targets) and the total spillover index.</p>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6 class="text-primary">Practical Applications</h6>
+                            <ul class="mb-0">
+                                <li><strong>Risk Management:</strong> Identify assets that tend to move together during stress periods</li>
+                                <li><strong>Portfolio Diversification:</strong> Find assets with low spillover connections for better diversification</li>
+                                <li><strong>Systemic Risk Assessment:</strong> Measure overall market interconnectedness and contagion potential</li>
+                                <li><strong>Trading Strategies:</strong> Exploit lead-lag relationships between assets</li>
+                                <li><strong>Regulatory Policy:</strong> Understand how shocks propagate through financial systems</li>
+                                <li><strong>Crisis Analysis:</strong> Study how financial crises spread across markets and countries</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6 class="text-primary">Interpretation Guidelines</h6>
+                            <ul class="mb-0">
+                                <li><strong>Significance Levels:</strong> 1% significance indicates very strong evidence of Granger causality; 5% indicates moderate evidence</li>
+                                <li><strong>Net Spillover:</strong> Positive values indicate a variable is a net transmitter of shocks; negative values indicate a net receiver</li>
+                                <li><strong>Total Spillover Index:</strong> Higher values (>50%) suggest high market interconnectedness; lower values indicate more independent markets</li>
+                                <li><strong>Directional Spillovers:</strong> Show the flow of shocks from specific sources to targets, helping identify transmission channels</li>
+                                <li><strong>Time Variation:</strong> Spillover patterns can change over time, especially during crisis periods when correlations typically increase</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="mb-0">
+                            <h6 class="text-primary">Limitations And Considerations</h6>
+                            <ul class="mb-0">
+                                <li><strong>Linear Relationships:</strong> Standard Granger causality tests assume linear relationships and may miss nonlinear dependencies</li>
+                                <li><strong>Stationarity Requirement:</strong> Variables must be stationary or properly transformed for valid inference</li>
+                                <li><strong>Lag Selection:</strong> Results can be sensitive to the chosen lag length in VAR models</li>
+                                <li><strong>Structural Breaks:</strong> Relationships may change during crisis periods or regime shifts</li>
+                                <li><strong>Contemporaneous Effects:</strong> Standard analysis focuses on lagged relationships and may miss same-period interactions</li>
+                                <li><strong>Sample Size:</strong> Reliable results require sufficient data, typically 100+ observations</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
