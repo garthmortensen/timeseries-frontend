@@ -54,9 +54,15 @@ MIDDLEWARE = [
 ]
 
 # Add debug toolbar if in debug mode
-if os.environ.get('DJANGO_DEBUG', 'False') == 'True':
-    INSTALLED_APPS.append('debug_toolbar')
-    MIDDLEWARE.append('debug_toolbar.middleware.DebugToolbarMiddleware')
+DEBUG_ENABLED = os.environ.get('DEBUG', 'False').lower() in ('true', '1', 'yes') or os.environ.get('DJANGO_DEBUG', 'False').lower() in ('true', '1', 'yes')
+if DEBUG_ENABLED:
+    try:
+        import debug_toolbar
+        INSTALLED_APPS.append('debug_toolbar')
+        MIDDLEWARE.append('debug_toolbar.middleware.DebugToolbarMiddleware')
+    except ImportError:
+        # debug_toolbar not available, skip it
+        pass
 
 ROOT_URLCONF = 'config.urls'
 
