@@ -112,3 +112,21 @@ def replace_underscore(value):
     if isinstance(value, str):
         return value.replace('_', ' ')
     return value
+
+@register.filter
+def enumerate_list(iterable):
+    """
+    Template filter to enumerate over an iterable, similar to Python's enumerate().
+    
+    Usage in template: {% for i, item in my_list|enumerate_list %}
+    
+    Args:
+        iterable: The iterable to enumerate over
+        
+    Returns:
+        A list of tuples (index, item)
+    """
+    try:
+        return list(enumerate(iterable))
+    except (TypeError, AttributeError):
+        return []

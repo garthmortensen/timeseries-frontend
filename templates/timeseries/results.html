@@ -1645,47 +1645,456 @@
     <!-- Granger Causality Tab -->
     <div class="tab-pane fade {% if active_tab == 'granger-causality' %}show active{% endif %}" id="granger-causality" role="tabpanel" aria-labelledby="granger-causality-tab">
         <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="card-title mb-0"><i class="bi bi-arrow-through-heart"></i> Granger Causality Results</h5>
+            <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #e17055, #d63031);">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-arrow-through-heart me-2"></i> 
+                    Granger Causality & Vector Autoregression Analysis
+                </h5>
+                <small class="opacity-75">Statistical analysis of predictive relationships and interconnections between time series variables</small>
             </div>
-            <div class="card-body">
-                {% if granger_causality_results.causality_results %}
-                    <div class="table-responsive">
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Relationship</th>
-                                    <th>Significant at 5%</th>
-                                    <th>Significant at 1%</th>
-                                    <th>Min P-Value</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for relationship, test in granger_causality_results.causality_results.items %}
-                                    <tr>
-                                        <td><strong>{{ relationship }}</strong></td>
-                                        <td>
-                                            {% if test.significance_summary.significant_at_5pct %}
-                                                <span class="badge bg-success">Yes</span>
-                                            {% else %}
-                                                <span class="badge bg-secondary">No</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            {% if test.significance_summary.significant_at_1pct %}
-                                                <span class="badge bg-success">Yes</span>
-                                            {% else %}
-                                                <span class="badge bg-secondary">No</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>{{ test.significance_summary.min_p_value|floatformat:4|default:"-" }}</td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+            <div class="card-body p-0">
+                {% if granger_causality_results.causality_results or var_results.interpretation %}
+                    
+                    <!-- VAR Model Interpretation Section -->
+                    {% if var_results.interpretation %}
+                    <div class="card border-0 border-bottom mb-0" style="border-color: #e9ecef !important;">
+                        <div class="card-header bg-light border-0">
+                            <h6 class="mb-0 fw-bold text-dark">
+                                <i class="bi bi-bezier2 me-2"></i>Vector Autoregression (VAR) Model Overview
+                            </h6>
+                            <small class="text-muted">Multivariate time series model capturing dynamic relationships</small>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-primary border-0" style="background-color: #e3f2fd;">
+                                <p class="mb-0">{{ var_results.interpretation }}</p>
+                            </div>
+                            
+                            {% if var_results.selected_lag %}
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-3">
+                                    <div class="bg-light rounded p-3 text-center">
+                                        <div class="fw-bold text-dark">{{ var_results.selected_lag }}</div>
+                                        <small class="text-muted">Selected Lag</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="bg-light rounded p-3 text-center">
+                                        <div class="fw-bold text-dark">{{ var_results.ic_used|default:"AIC" }}</div>
+                                        <small class="text-muted">Selection Criterion</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="bg-light rounded p-3 text-center">
+                                        <div class="fw-bold text-dark">{{ symbols|length }}</div>
+                                        <small class="text-muted">Variables</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="bg-light rounded p-3 text-center">
+                                        <div class="fw-bold text-dark">{{ var_results.total_parameters|default:"-" }}</div>
+                                        <small class="text-muted">Total Parameters</small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
                     </div>
+                    {% endif %}
+
+                    <!-- Granger Causality Results Section -->
+                    {% if granger_causality_results.causality_results %}
+                    <div class="card border-0 border-bottom mb-0" style="border-color: #e9ecef !important;">
+                        <div class="card-header bg-light border-0">
+                            <h6 class="mb-0 fw-bold text-dark">
+                                <i class="bi bi-arrow-through-heart me-2"></i>Granger Causality Test Results
+                            </h6>
+                            <small class="text-muted">Statistical tests for predictive relationships between variables</small>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Causal Relationship</th>
+                                            <th class="text-center">Significant at 5%</th>
+                                            <th class="text-center">Significant at 1%</th>
+                                            <th class="text-center">Min P-Value</th>
+                                            <th class="text-center">Optimal Lag</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for relationship, test in granger_causality_results.causality_results.items %}
+                                            <tr>
+                                                <td>
+                                                    <strong>{{ relationship }}</strong>
+                                                    {% if test.significance_summary.significant_at_5pct %}
+                                                        <span class="badge bg-success ms-2">Significant</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td class="text-center">
+                                                    {% if test.significance_summary.significant_at_5pct %}
+                                                        <span class="badge bg-success">
+                                                            <i class="bi bi-check-circle"></i> Yes
+                                                        </span>
+                                                    {% else %}
+                                                        <span class="badge bg-secondary">
+                                                            <i class="bi bi-x-circle"></i> No
+                                                        </span>
+                                                    {% endif %}
+                                                </td>
+                                                <td class="text-center">
+                                                    {% if test.significance_summary.significant_at_1pct %}
+                                                        <span class="badge bg-success">
+                                                            <i class="bi bi-check-circle"></i> Yes
+                                                        </span>
+                                                    {% else %}
+                                                        <span class="badge bg-secondary">
+                                                            <i class="bi bi-x-circle"></i> No
+                                                        </span>
+                                                    {% endif %}
+                                                </td>
+                                                <td class="text-center">
+                                                    <code>{{ test.significance_summary.min_p_value|floatformat:4|default:"-" }}</code>
+                                                </td>
+                                                <td class="text-center">
+                                                    {{ test.optimal_lag|default:"-" }}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Detailed Interpretations Section -->
+                    {% if granger_causality_results.interpretations %}
+                    <div class="card border-0 border-bottom mb-0" style="border-color: #e9ecef !important;">
+                        <div class="card-header bg-light border-0">
+                            <h6 class="mb-0 fw-bold text-dark">
+                                <i class="bi bi-chat-left-text me-2"></i>Detailed Relationship Interpretations
+                            </h6>
+                            <small class="text-muted">In-depth analysis of each causal relationship</small>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                {% for relationship, interpretation in granger_causality_results.interpretations.items %}
+                                    <div class="col-lg-6 mb-4">
+                                        <div class="card border h-100">
+                                            <div class="card-header d-flex align-items-center justify-content-between">
+                                                <div>
+                                                    <h6 class="mb-0 text-primary">{{ relationship }}</h6>
+                                                    <small class="text-muted">Causal Direction Analysis</small>
+                                                </div>
+                                                <div>
+                                                    {% if "Significant Causality" in interpretation %}
+                                                        <span class="badge bg-success">
+                                                            <i class="bi bi-arrow-right"></i> Causal
+                                                        </span>
+                                                    {% else %}
+                                                        <span class="badge bg-secondary">
+                                                            <i class="bi bi-dash"></i> No Causality
+                                                        </span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="card-body">
+                                                <p class="mb-0 text-justify">{{ interpretation }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- FEVD Matrix Section -->
+                    {% if var_results.fevd_matrix %}
+                    <div class="card border-0 border-bottom mb-0" style="border-color: #e9ecef !important;">
+                        <div class="card-header bg-light border-0">
+                            <h6 class="mb-0 fw-bold text-dark">
+                                <i class="bi bi-grid-3x3 me-2"></i>Forecast Error Variance Decomposition (FEVD) Matrix
+                            </h6>
+                            <small class="text-muted">Shows how forecast errors in each variable are explained by innovations in other variables</small>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-info mb-3">
+                                <i class="bi bi-info-circle"></i>
+                                <strong>FEVD Matrix:</strong> Each cell (i,j) shows the percentage of forecast error variance in variable i explained by innovations in variable j. Row sums equal 100%.
+                            </div>
+                            
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover">
+                                    <thead class="table-dark text-center">
+                                        <tr>
+                                            <th>Variable</th>
+                                            {% for symbol in symbols %}
+                                                <th>{{ symbol }}</th>
+                                            {% endfor %}
+                                            <th class="bg-secondary">Total (%)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for i, symbol in symbols|enumerate_list %}
+                                            <tr>
+                                                <th class="bg-light text-center">{{ symbol }}</th>
+                                                {% for j, target_symbol in symbols|enumerate_list %}
+                                                    <td class="text-center">
+                                                        {% with value=var_results.fevd_matrix|index:i|index:j %}
+                                                            {% if i == j %}
+                                                                <strong class="text-primary">{{ value|floatformat:1 }}%</strong>
+                                                            {% elif value > 20 %}
+                                                                <span class="text-danger fw-bold">{{ value|floatformat:1 }}%</span>
+                                                            {% elif value > 10 %}
+                                                                <span class="text-warning fw-medium">{{ value|floatformat:1 }}%</span>
+                                                            {% else %}
+                                                                <span class="text-muted">{{ value|floatformat:1 }}%</span>
+                                                            {% endif %}
+                                                        {% endwith %}
+                                                    </td>
+                                                {% endfor %}
+                                                <td class="text-center bg-light">
+                                                    <strong>100.0%</strong>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="row mt-3">
+                                <div class="col-md-8">
+                                    <small class="text-muted">
+                                        <span class="text-primary">■</span> Own innovations (diagonal) &nbsp;
+                                        <span class="text-danger">■</span> High external influence (>20%) &nbsp;
+                                        <span class="text-warning">■</span> Moderate external influence (10-20%) &nbsp;
+                                        <span class="text-muted">■</span> Low external influence (<10%)
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- FEVD Interpretations Section -->
+                    {% if var_results.fevd_interpretation %}
+                    <div class="card border-0 border-bottom mb-0" style="border-color: #e9ecef !important;">
+                        <div class="card-header bg-light border-0">
+                            <h6 class="mb-0 fw-bold text-dark">
+                                <i class="bi bi-chat-dots me-2"></i>FEVD Analysis by Variable
+                            </h6>
+                            <small class="text-muted">Detailed breakdown of forecast error variance sources for each variable</small>
+                        </div>
+                        <div class="card-body">
+                            {% for symbol, interpretation in var_results.fevd_interpretation.items %}
+                                <div class="card mb-3 border-start border-primary border-3">
+                                    <div class="card-header bg-light d-flex align-items-center">
+                                        <h6 class="mb-0 text-primary">{{ symbol|upper }}</h6>
+                                        <span class="badge bg-primary ms-auto">FEVD Analysis</span>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="mb-0 text-justify">{{ interpretation }}</p>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Spillover Results Section -->
+                    {% if spillover_results %}
+                    <div class="card border-0 border-bottom mb-0" style="border-color: #e9ecef !important;">
+                        <div class="card-header bg-light border-0">
+                            <h6 class="mb-0 fw-bold text-dark">
+                                <i class="bi bi-arrows-angle-expand me-2"></i>Spillover Analysis Results
+                            </h6>
+                            <small class="text-muted">Comprehensive analysis of shock transmission between variables</small>
+                        </div>
+                        <div class="card-body">
+                            
+                            <!-- Total Spillover Index -->
+                            {% if spillover_results.total_spillover_index %}
+                            <div class="alert alert-primary mb-4">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <h5 class="mb-1">
+                                            <i class="bi bi-speedometer2 me-2"></i>
+                                            Total Spillover Index: {{ spillover_results.total_spillover_index|floatformat:2 }}%
+                                        </h5>
+                                        <p class="mb-0">Overall level of interconnectedness and shock transmission in the system</p>
+                                    </div>
+                                    <div class="text-center">
+                                        {% if spillover_results.total_spillover_index > 70 %}
+                                            <span class="badge bg-danger fs-6 p-2">High Spillover</span>
+                                        {% elif spillover_results.total_spillover_index > 40 %}
+                                            <span class="badge bg-warning fs-6 p-2">Moderate Spillover</span>
+                                        {% else %}
+                                            <span class="badge bg-success fs-6 p-2">Low Spillover</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Directional Spillover Table -->
+                            {% if spillover_results.directional_spillover %}
+                            <div class="mb-4">
+                                <h6 class="text-primary mb-3">
+                                    <i class="bi bi-arrow-left-right me-2"></i>Directional Spillover Effects
+                                </h6>
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-hover">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>Asset</th>
+                                                <th class="text-center">Spillover TO Others (%)</th>
+                                                <th class="text-center">Spillover FROM Others (%)</th>
+                                                <th class="text-center">Net Spillover (%)</th>
+                                                <th class="text-center">Role</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for symbol in symbols %}
+                                                {% with spillover_data=spillover_results.directional_spillover|lookup:symbol %}
+                                                    {% with net_spillover=spillover_results.net_spillover|lookup:symbol %}
+                                                        <tr>
+                                                            <td><strong>{{ symbol|upper }}</strong></td>
+                                                            <td class="text-center">
+                                                                <span class="badge bg-info">{{ spillover_data.to|floatformat:2 }}%</span>
+                                                            </td>
+                                                            <td class="text-center">
+                                                                <span class="badge bg-warning">{{ spillover_data.from|floatformat:2 }}%</span>
+                                                            </td>
+                                                            <td class="text-center">
+                                                                {% if net_spillover > 0 %}
+                                                                    <span class="text-success fw-bold">+{{ net_spillover|floatformat:2 }}%</span>
+                                                                {% elif net_spillover < 0 %}
+                                                                    <span class="text-danger fw-bold">{{ net_spillover|floatformat:2 }}%</span>
+                                                                {% else %}
+                                                                    <span class="text-muted fw-bold">{{ net_spillover|floatformat:2 }}%</span>
+                                                                {% endif %}
+                                                            </td>
+                                                            <td class="text-center">
+                                                                {% if net_spillover > 5 %}
+                                                                    <span class="badge bg-success">Net Transmitter</span>
+                                                                {% elif net_spillover < -5 %}
+                                                                    <span class="badge bg-danger">Net Receiver</span>
+                                                                {% else %}
+                                                                    <span class="badge bg-secondary">Neutral</span>
+                                                                {% endif %}
+                                                            </td>
+                                                        </tr>
+                                                    {% endwith %}
+                                                {% endwith %}
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Pairwise Spillover Matrix -->
+                            {% if spillover_results.pairwise_spillover %}
+                            <div class="mb-4">
+                                <h6 class="text-primary mb-3">
+                                    <i class="bi bi-grid me-2"></i>Pairwise Spillover Matrix
+                                </h6>
+                                <div class="alert alert-info mb-3">
+                                    <i class="bi bi-info-circle"></i>
+                                    <strong>Pairwise Spillover:</strong> Each cell (i,j) shows the spillover from variable j to variable i. Diagonal elements are zero by definition.
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered">
+                                        <thead class="table-dark text-center">
+                                            <tr>
+                                                <th>From \ To</th>
+                                                {% for symbol in symbols %}
+                                                    <th>{{ symbol }}</th>
+                                                {% endfor %}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for from_symbol in symbols %}
+                                                <tr>
+                                                    <th class="bg-light text-center">{{ from_symbol }}</th>
+                                                    {% for to_symbol in symbols %}
+                                                        <td class="text-center">
+                                                            {% if from_symbol == to_symbol %}
+                                                                <span class="text-muted">—</span>
+                                                            {% else %}
+                                                                {% with spillover_value=spillover_results.pairwise_spillover|lookup:from_symbol|lookup:to_symbol %}
+                                                                    {% if spillover_value > 15 %}
+                                                                        <span class="text-danger fw-bold">{{ spillover_value|floatformat:2 }}%</span>
+                                                                    {% elif spillover_value > 8 %}
+                                                                        <span class="text-warning fw-medium">{{ spillover_value|floatformat:2 }}%</span>
+                                                                    {% else %}
+                                                                        <span class="text-muted">{{ spillover_value|floatformat:2 }}%</span>
+                                                                    {% endif %}
+                                                                {% endwith %}
+                                                            {% endif %}
+                                                        </td>
+                                                    {% endfor %}
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="mt-2">
+                                    <small class="text-muted">
+                                        <span class="text-danger">■</span> Strong spillover (>15%) &nbsp;
+                                        <span class="text-warning">■</span> Moderate spillover (8-15%) &nbsp;
+                                        <span class="text-muted">■</span> Weak spillover (<8%)
+                                    </small>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Spillover Interpretation -->
+                            {% if spillover_results.interpretation %}
+                            <div class="alert alert-light">
+                                <h6 class="text-primary mb-2">
+                                    <i class="bi bi-lightbulb me-2"></i>Spillover Analysis Summary
+                                </h6>
+                                <p class="mb-0">{{ spillover_results.interpretation }}</p>
+                            </div>
+                            {% endif %}
+
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Interpretation Guide -->
+                    <div class="card-footer bg-light border-top">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h6 class="mb-2 text-dark">
+                                    <i class="bi bi-lightbulb me-2 text-warning"></i>
+                                    Granger Causality & VAR Guide
+                                </h6>
+                                <p class="mb-0 small text-muted">
+                                    <strong>Granger Causality</strong> tests if past values of X help predict Y beyond Y's own history. 
+                                    <strong>FEVD</strong> shows forecast error variance sources. 
+                                    <strong>Spillover</strong> measures shock transmission between variables. 
+                                    Significance levels: <span class="badge bg-success">5%</span> moderate, <span class="badge bg-danger">1%</span> strong evidence.
+                                </p>
+                            </div>
+                            <div class="col-md-4 text-md-end mt-2 mt-md-0">
+                                <div class="d-flex flex-column gap-2">
+                                    <span class="badge bg-info">VAR: Dynamic relationships</span>
+                                    <span class="badge bg-warning">FEVD: Variance sources</span>
+                                    <span class="badge bg-danger">Spillover: Shock transmission</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 {% else %}
-                    <p class="text-muted">No Granger causality results available.</p>
+                    <div class="text-center p-5">
+                        <i class="bi bi-exclamation-circle text-muted" style="font-size: 3rem;"></i>
+                        <p class="text-muted mt-3 mb-0">No Granger causality or VAR analysis results available.</p>
+                    </div>
                 {% endif %}
             </div>
         </div>
