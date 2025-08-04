@@ -10,6 +10,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial Django project setup
 - Basic spillover analysis interface
 - Google Cloud Run deployment configuration
+## frontend-v0.12.0 (2025-08-03)
+
+### Feat
+
+- **causality**: populate page with more api content
+- **style**: rename tabs, adjust styles
+- **cache**: switch from cache to db, ensure pop() not used, while get() is
+- **limit**: set frontend and backend parameters limits
+- **favicon**: django collectstatic
+- **favicon**: add favicon and related base.html change
+- **log**: add logging to find root cause
+- **logging**: add additional clarity
+- **logging**: increase logging details to determine why json response not parsing
+- **constraints**: add js constraints for time and symbols
+- **analysis**: add input constraints on backend
+- **results**: parse and design results tabs
+- **overview**: improve garch content
+- **overview**: improve arima
+- **QA**: add more QA
+- **json-download**: add timestamp to filename
+- **provenance**: add provenance back in
+- **garch**: parse garch api for garch tab
+- **logs**: adding logs back in
+- **plots**: fix series visualizations
+- **loading**: carve loading spinner js out of analysis.html
+- **analysis**: restore language, guide-text
+
+### Fix
+
+- **debug**: skip debug toolbar in prod
+- **debug**: adjust debug logic for production
+- **db**: add migrate to dockerfile for db table support
+- **api_url**: update assignments
+- **cache**: successfully replace sqlite with in-memory to support stateless cloud containers
+- **logs**: greater clarity
+- **db**: replace sqlite with in-memory
+- **proxy**: remove proxy
+- **plots**: extend plots to fill horizontal width
+- **Export-CSV**: fix button functionality
+- **results**: fix Export CSV spinner so it doesnt spin automatically
+- **settings**: adjust for localhost and dev.spillover and www.spillover
+- **production**: still not working
+- **production**: working on dev
+- **production**: adjust code to allow dev
+
 ## frontend-v0.11.1 (2025-07-21)
 
 ### Fix
