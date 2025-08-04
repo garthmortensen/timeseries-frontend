@@ -123,7 +123,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # URL for the backend Timeseries API
 # Used by the api_proxy view and other direct server-to-server API calls
-TIMESERIES_API_URL_ENV = os.environ.get("API_URL")
+TIMESERIES_API_URL_ENV = os.environ.get("API_URL")  # Changed from "API_URL" to use your environment variable
 if TIMESERIES_API_URL_ENV:
     if not TIMESERIES_API_URL_ENV.startswith(("http://", "https://")):
         # If it looks like a domain (e.g., contains a dot, not localhost) and has no scheme, assume https

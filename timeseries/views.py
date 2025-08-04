@@ -11,6 +11,7 @@ import json
 import requests
 import logging
 import hashlib
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -214,40 +215,51 @@ def api_proxy(request, api_path):
 
 def debug_data(request):
     """
-    Debug data view.
+    Debug data view to check API configuration.
     """
-    return JsonResponse({"debug": "Debug data not implemented"})
+    from django.conf import settings
+    import os
+    
+    debug_info = {
+        "TIMESERIES_API_URL": getattr(settings, 'TIMESERIES_API_URL', 'Not set'),
+        "API_URL_ENV": os.environ.get('API_URL', 'Not set'),
+        "DJANGO_SETTINGS_MODULE": os.environ.get('DJANGO_SETTINGS_MODULE', 'Not set'),
+        "DEBUG": getattr(settings, 'DEBUG', 'Not set'),
+        "ALLOWED_HOSTS": getattr(settings, 'ALLOWED_HOSTS', []),
+        "session_keys": list(request.session.keys()),
+        "has_api_results": 'analysis_raw_results' in request.session,
+        "session_engine": getattr(settings, 'SESSION_ENGINE', 'Not set'),
+    }
+    
+    return JsonResponse(debug_info, indent=2)
 
+# Add enhanced error handling and logging to the API call
 @csrf_exempt
 def run_pipeline_htmx(request):
     """
     HTMX-compatible view for running analysis with simple redirect response.
     """
-    if request.method != "POST":
-        return redirect(reverse("timeseries:analysis"))
-
+    if request.method != 'POST':
+        return JsonResponse({"success": False, "error": "Method not allowed"}, status=405)
+    
+    logger.info(f"[HTMX] Starting analysis request")
+    
     try:
-        print("DEBUG: run_pipeline_htmx called!")
+        # Parse the incoming JSON data
+        data = json.loads(request.body)
+        logger.info(f"[HTMX] Request data received with keys: {list(data.keys())}")
         
-        # Support both JSON and form POSTs
-        if request.content_type and "application/json" in request.content_type:
-            try:
-                data = json.loads(request.body)
-                print(f"DEBUG: Received JSON data with keys: {list(data.keys())}")
-            except Exception as e:
-                print(f"DEBUG: Error parsing JSON: {e}")
-                data = {}
-        else:
-            data = request.POST
-            print("DEBUG: Received form POST data")
+        # Extract and validate symbols
+        symbols = data.get("symbols", [])
         
-        logger.info("[HTMX] Starting analysis")
-        
-        # Process form data into API payload (simplified version)
-        symbols = data.get("symbols", "MSFT,AAPL,GOOGL")
         if isinstance(symbols, str):
-            symbols = [s.strip() for s in symbols.split(",") if s.strip()]
-        elif isinstance(symbols, list):
+            try:
+                symbols = json.loads(symbols)
+            except json.JSONDecodeError:
+                # If it's just a comma-separated string, split it
+                symbols = [s.strip() for s in symbols.split(',') if s.strip()]
+        
+        if isinstance(symbols, list):
             # symbols is already a list
             pass
         else:
@@ -290,66 +302,33 @@ def run_pipeline_htmx(request):
         
         # Backend date range validation (security)
         from datetime import datetime
-        start = data.get("data_start_date")
-        end = data.get("data_end_date")
         try:
-            start_date = datetime.strptime(start, "%Y-%m-%d") if start else None
-            end_date = datetime.strptime(end, "%Y-%m-%d") if end else None
-        except Exception:
-            start_date = end_date = None
-        if not start_date or not end_date:
-            return JsonResponse({"success": False, "error": "Invalid start or end date."}, status=400)
-        if end_date < start_date:
-            return JsonResponse({"success": False, "error": "End date must be after start date."}, status=400)
-        if (end_date - start_date).days > 1826:
-            return JsonResponse({"success": False, "error": "Date range cannot exceed 5 years."}, status=400)
-        
-        # Backend symbol count validation (security)
-        if len(symbols) > 5:
-            return JsonResponse({"success": False, "error": "You can select up to 5 symbols only."}, status=400)
-        
-        # Backend ARIMA parameter validation (security)
-        arima_params = data.get("arima_params", {})
-        arima_p = arima_params.get("p", 2)
-        arima_d = arima_params.get("d", 1)
-        arima_q = arima_params.get("q", 2)
-        arima_forecast_steps = arima_params.get("forecast_steps", 10)
-        
-        if arima_p > 5:
-            return JsonResponse({"success": False, "error": "ARIMA parameter p (Auto-Regressive Component) cannot exceed 5."}, status=400)
-        if arima_d > 2:
-            return JsonResponse({"success": False, "error": "ARIMA parameter d (Integration Component) cannot exceed 2."}, status=400)
-        if arima_q > 5:
-            return JsonResponse({"success": False, "error": "ARIMA parameter q (Moving Average Component) cannot exceed 5."}, status=400)
-        if arima_forecast_steps > 20:
-            return JsonResponse({"success": False, "error": "ARIMA forecast steps cannot exceed 20."}, status=400)
-        
-        # Backend GARCH parameter validation (security)
-        garch_params = data.get("garch_params", {})
-        garch_p = garch_params.get("p", 1)
-        garch_q = garch_params.get("q", 1)
-        
-        if garch_p > 3:
-            return JsonResponse({"success": False, "error": "GARCH parameter p (ARCH) cannot exceed 3."}, status=400)
-        if garch_q > 3:
-            return JsonResponse({"success": False, "error": "GARCH parameter q (Generalized ARCH) cannot exceed 3."}, status=400)
-        
-        # Backend spillover parameter validation (security)
-        if data.get("spillover_enabled"):
-            spillover_params = data.get("spillover_params", {})
-            forecast_horizon = spillover_params.get("forecast_horizon", 5)
-            max_lags = spillover_params.get("max_lags", 10)
-            granger_significance_level = spillover_params.get("granger_significance_level", 0.05)
-            rolling_window = spillover_params.get("rolling_window")
+            start_date = datetime.strptime(payload["data_start_date"], "%Y-%m-%d")
+            end_date = datetime.strptime(payload["data_end_date"], "%Y-%m-%d")
+            if start_date >= end_date:
+                return JsonResponse({"success": False, "error": "Start date must be before end date."}, status=400)
+            if (end_date - start_date).days < 30:
+                return JsonResponse({"success": False, "error": "Date range must be at least 30 days."}, status=400)
             
-            if forecast_horizon > 10:
-                return JsonResponse({"success": False, "error": "Spillover forecast horizon cannot exceed 10."}, status=400)
-            if max_lags > 20:
-                return JsonResponse({"success": False, "error": "Maximum VAR lags cannot exceed 20."}, status=400)
-            if granger_significance_level > 1:
+            # Additional validation
+            spillover_enabled = payload.get("spillover_enabled", False)
+            if spillover_enabled and len(symbols) < 2:
+                return JsonResponse({"success": False, "error": "Spillover analysis requires at least 2 symbols."}, status=400)
+            granger_significance_level = payload.get("spillover_params", {}).get("granger_significance_level", 0.05)
+            if granger_significance_level is not None and granger_significance_level > 1.0:
                 return JsonResponse({"success": False, "error": "Granger significance level cannot exceed 1."}, status=400)
+            rolling_window = payload.get("spillover_params", {}).get("rolling_window")
             if rolling_window is not None and rolling_window > 365:
                 return JsonResponse({"success": False, "error": "Rolling window cannot exceed 365 days."}, status=400)
+        except ValueError:
+            return JsonResponse({"success": False, "error": "Invalid date format. Use YYYY-MM-DD."}, status=400)
+        except Exception as e:
+            return JsonResponse({"success": False, "error": f"Validation error: {str(e)}"}, status=400)
+            
+        # Log API configuration
+        api_url = settings.TIMESERIES_API_URL
+        logger.info(f"[HTMX] Calling API at: {api_url}")
+        print(f"DEBUG: Calling API at: {api_url}")
         
         # Call the API using requests
         print("DEBUG: About to call API")
@@ -425,6 +404,18 @@ def run_pipeline_htmx(request):
             print(f"DEBUG: API call failed with status {response.status_code}")
             print(f"DEBUG: API response text: {response.text}")
             logger.error(f"[HTMX] API call failed with status {response.status_code}")
+            logger.error(f"[HTMX] API response: {response.text}")
+            
+            # Enhanced error logging for production debugging
+            error_details = {
+                "status_code": response.status_code,
+                "response_text": response.text[:500],  # First 500 chars
+                "api_url": api_url,
+                "payload_symbols": payload.get('symbols', []),
+                "timestamp": datetime.now().isoformat()
+            }
+            logger.error(f"[HTMX] Detailed API error: {json.dumps(error_details, indent=2)}")
+            
             return JsonResponse({
                 "success": False,
                 "error": f"API call failed with status {response.status_code}: {response.text}"
@@ -435,21 +426,41 @@ def run_pipeline_htmx(request):
         logger.error("[HTMX] API request timed out")
         return JsonResponse({
             "success": False,
-            "error": "Analysis timed out"
-        }, status=504)
-    except requests.exceptions.ConnectionError:
-        print("DEBUG: Failed to connect to API")
-        logger.error("[HTMX] Failed to connect to API")
+            "error": "API request timed out. The analysis is taking longer than expected."
+        }, status=408)
+        
+    except requests.exceptions.ConnectionError as e:
+        print(f"DEBUG: API connection error: {e}")
+        logger.error(f"[HTMX] API connection error: {e}")
+        logger.error(f"[HTMX] Attempted to connect to: {settings.TIMESERIES_API_URL}")
+        
         return JsonResponse({
             "success": False,
-            "error": "Could not connect to analysis API"
+            "error": f"Could not connect to API server at {settings.TIMESERIES_API_URL}. Please try again later."
         }, status=503)
+        
+    except requests.exceptions.RequestException as e:
+        print(f"DEBUG: API request exception: {e}")
+        logger.error(f"[HTMX] API request exception: {e}")
+        return JsonResponse({
+            "success": False,
+            "error": f"API request failed: {str(e)}"
+        }, status=500)
+        
+    except json.JSONDecodeError as e:
+        logger.error(f"[HTMX] JSON decode error: {e}")
+        return JsonResponse({
+            "success": False,
+            "error": "Invalid JSON in request body"
+        }, status=400)
+        
     except Exception as e:
         print(f"DEBUG: Unexpected error: {e}")
+        logger.error(f"[HTMX] Unexpected error: {e}")
         import traceback
-        traceback.print_exc()
-        logger.exception("[HTMX] Unexpected error during API call")
+        logger.error(f"[HTMX] Traceback: {traceback.format_exc()}")
+        
         return JsonResponse({
             "success": False,
-            "error": f"An unexpected server error occurred: {str(e)}"
+            "error": f"An unexpected error occurred: {str(e)}"
         }, status=500)

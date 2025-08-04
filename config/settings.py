@@ -135,7 +135,8 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 API_URL = os.environ.get("API_URL", "http://localhost:8001")
-TIMESERIES_API_URL = os.environ.get("TIMESERIES_API_URL", "http://localhost:8001")
+# Use API_URL for consistency - TIMESERIES_API_URL should be the same as API_URL
+TIMESERIES_API_URL = API_URL
 
 # Settings for running behind a reverse proxy like Google Cloud Run
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
