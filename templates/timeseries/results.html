@@ -107,7 +107,7 @@
     <li class="nav-item" role="presentation">
         <button class="nav-link {% if active_tab == 'explainer' %}active{% endif %}" id="explainer-tab" data-bs-toggle="tab" data-bs-target="#explainer" 
                 type="button" role="tab" aria-controls="explainer" aria-selected="{% if active_tab == 'explainer' %}true{% else %}false{% endif %}">
-            <i class="bi bi-question-circle"></i> Background
+            <i class="bi bi-question-circle"></i> Concepts
         </button>
     </li>
     <li class="nav-item" role="presentation">
@@ -1249,8 +1249,8 @@
                                     <div class="card-body">
                                         <!-- Executive Summary Section -->
                                         {% if garch.interpretation.executive_summary %}
-                                            <div class="alert alert-warning border-0 mb-4" style="background-color: #fff3cd;">
-                                                <h6 class="text-warning mb-2 d-flex align-items-center">
+                                            <div class="alert alert-primary border-0 mb-4" style="background-color: #e3f2fd;">
+                                                <h6 class="text-primary mb-2 d-flex align-items-center">
                                                     <i class="bi bi-lightbulb me-2"></i>Executive Summary
                                                 </h6>
                                                 <p class="mb-0">{{ garch.interpretation.executive_summary.bottom_line }}</p>
@@ -1539,7 +1539,7 @@
                     {% if plots|lookup:plot_key %}
                         <div class="card mb-4">
                             <div class="card-header">
-                                <h5 class="card-title mb-0">
+                                                               <h5 class="card-title mb-0">
                                     <i class="bi bi-lightning me-2"></i> 
                                     {{ symbol|upper }} - GARCH Analysis Visualization
                                 </h5>
@@ -1691,7 +1691,7 @@
         </div>
     </div>
 
-    <!-- Background Tab -->
+    <!-- Concepts Tab -->
     <div class="tab-pane fade {% if active_tab == 'explainer' %}show active{% endif %}" id="explainer" role="tabpanel" aria-labelledby="explainer-tab">
         <div class="card mb-4">
             <div class="card-header">
@@ -1799,25 +1799,6 @@
                                             {% endif %}
                                         </div>
                                     {% endfor %}
-                                </div>
-                            </div>
-                        {% endif %}
-                    {% endfor %}
-                {% endif %}
-
-                <!-- What is GARCH Section -->
-                {% if garch_results %}
-                    {% for symbol, garch in garch_results.items %}
-                        {% if garch.interpretation.background_context.what_is_garch and forloop.first %}
-                            <div class="card mb-4">
-                                <div class="card-header bg-warning text-dark">
-                                    <h6 class="mb-0">
-                                        <i class="bi bi-lightning-charge me-2"></i>
-                                        What is GARCH?
-                                    </h6>
-                                </div>
-                                <div class="card-body">
-                                    <p class="mb-0">{{ garch.interpretation.background_context.what_is_garch }}</p>
                                 </div>
                             </div>
                         {% endif %}
