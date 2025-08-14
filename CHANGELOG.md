@@ -10,6 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial Django project setup
 - Basic spillover analysis interface
 - Google Cloud Run deployment configuration
+## frontend-v0.13.0 (2025-08-14)
+
+### Feat
+
+- **concepts**: missed causality concepts in api, so add into frontend :(
+
+### Fix
+
+- **CORS**: add generic api_proxy() so future endpoints can be proxied same-origin
+
 ## frontend-v0.12.0 (2025-08-03)
 
 ### Feat
