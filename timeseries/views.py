@@ -206,12 +206,63 @@ def export_csv(request, data_type):
 
 def api_proxy(request, api_path):
     """
-    Generic API proxy.
+    Generic server-side API proxy to avoid browser CORS/corporate proxy issues.
+
+    Usage from client: call same-origin /api_proxy/<path> instead of hitting the upstream directly.
+    This view forwards the request to settings.TIMESERIES_API_URL and returns the upstream response.
     """
-    print(f"DEBUG: api_proxy called with path: {api_path}")
-    print(f"DEBUG: Request method: {request.method}")
-    print(f"DEBUG: This is the WRONG view - should be run_pipeline_htmx")
-    return JsonResponse({"error": "API proxy not implemented"})
+    method = request.method.upper()
+    if method not in ("GET", "POST"):
+        return JsonResponse({"detail": "Method not allowed"}, status=405)
+
+    # Build upstream URL
+    base = getattr(settings, 'TIMESERIES_API_URL', '').rstrip('/')
+    path = str(api_path).lstrip('/')
+    upstream_url = f"{base}/{path}"
+
+    # Prepare data for POST
+    json_payload = None
+    headers = {"Accept": "application/json"}
+    try:
+        if method == "POST":
+            if request.content_type and 'application/json' in request.content_type.lower():
+                # Raw JSON body
+                body = request.body.decode('utf-8') or '{}'
+                json_payload = json.loads(body)
+            else:
+                # Form-encoded -> convert to simple dict
+                json_payload = {k: v for k, v in request.POST.items()}
+
+        # Forward request to upstream
+        resp = requests.request(
+            method,
+            upstream_url,
+            params=request.GET.dict() if request.GET else None,
+            json=json_payload,
+            timeout=getattr(settings, 'API_TIMEOUT_SECONDS', 60),
+        )
+
+        # Try to return JSON; fall back to text
+        content_type = resp.headers.get('Content-Type', '')
+        status = resp.status_code
+        if 'application/json' in content_type:
+            try:
+                data = resp.json()
+                # safe=False allows lists as top-level JSON
+                return JsonResponse(data, status=status, safe=isinstance(data, dict))
+            except ValueError:
+                # JSON header but not JSON body; return text
+                return HttpResponse(resp.text, status=status, content_type=content_type or 'text/plain')
+        else:
+            # Non-JSON; return as-is
+            return HttpResponse(resp.content, status=status, content_type=content_type or 'application/octet-stream')
+
+    except requests.exceptions.Timeout:
+        logger.error("[api_proxy] Upstream request timed out: %s", upstream_url)
+        return JsonResponse({"detail": "Upstream request timed out"}, status=504)
+    except requests.exceptions.RequestException as e:
+        logger.error("[api_proxy] Upstream request failed: %s | error=%s", upstream_url, e)
+        return JsonResponse({"detail": "Upstream request failed", "error": str(e)}, status=502)
 
 def debug_data(request):
     """
