@@ -54,7 +54,7 @@ def run_pipeline_proxy(request):
         }
         # Send to backend API
         try:
-            response = requests.post(f"{settings.TIMESERIES_API_URL}/api/v1/run_pipeline", json=payload)
+            response = requests.post(f"{settings.TIMESERIES_API_URL}/api/v1/run_pipeline", json=payload, timeout=160)
             response.raise_for_status()  # Raise an error for bad responses
         except requests.exceptions.RequestException as e:
             logger.error(f"Request to Timeseries API failed: {e}")

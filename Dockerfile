@@ -50,5 +50,5 @@ RUN uv run python manage.py collectstatic --noinput
 # Run database migrations to ensure tables exist
 RUN uv run python manage.py migrate --noinput
 
-# Use gunicorn with PORT environment variable for Cloud Run compatibility
-CMD uv run gunicorn --bind 0.0.0.0:${PORT:-8080} --workers 2 config.wsgi:application
+# Use gunicorn with configuration file for Cloud Run compatibility
+CMD uv run gunicorn --config gunicorn.conf.py config.wsgi:application

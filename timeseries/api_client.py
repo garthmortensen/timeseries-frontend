@@ -22,7 +22,7 @@ class TimeseriesAPIClient:
         Initialize the client with the API base URL.
         """
         self.base_url = settings.TIMESERIES_API_URL
-        self.timeout = 30  # Request timeout in seconds
+        self.timeout = 160  # Request timeout in seconds (increased for heavy pipeline operations)
     
     def _make_request(self, method, endpoint, data=None):
         """
