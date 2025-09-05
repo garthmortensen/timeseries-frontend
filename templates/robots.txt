@@ -3,7 +3,6 @@ Disallow: /admin/
 Disallow: /api/
 Disallow: /media/
 Disallow: /static/
-Disallow: /results/
 Disallow: /debug/
 Allow: /
 Allow: /analysis/

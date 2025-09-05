@@ -21,21 +21,7 @@ A Django frontend for spillover analysis and time series modeling.
 
 Implementation hosted at www.spilloverlab.com.
 
-## TODO:
-
-on first run, i can navigate to 
-https://www.spilloverlab.com/results/
-
-- Download API Response works multiple times.
-- View API Response only works the first time
-- After clicking View API Response once, Download API Response returns "No API response available."
-- After clicking View API Response once, clicking View API Response a second time returns "No API response available."
-- Provenance tab Export CSV only works the first time. 
-- After clicking Provenance tab Export CSV once, clicking Export CSV a second time returns No returns_data data available for export.
-
-
 ## Features
-
 
 - User-friendly interface for time series analysis
 - Interactive charts with Plotly
@@ -44,14 +30,40 @@ https://www.spilloverlab.com/results/
 - API integration with the backend pipeline
 - User authentication and saved analysis
 
+## API Design Lessons Learned
+
+### Monolithic Response Anti-Pattern
+
+I regretably created a single, large API endpoint that returns all analysis results in one massive JSON response.
+
+This is a mistake because:
+
+- It violates the **Single Responsibility Principle** - the endpoint does too much
+- Poor **performance** - clients must wait for all data even if they only need specific sections
+- **Tight coupling** between frontend tabs and backend data structure
+
+**Better approach:**
+
+```http
+# Instead of:
+GET /api/analysis/complete  # Returns everything
+
+# Use resource-specific endpoints:
+GET /api/analysis/{id}/summary
+GET /api/analysis/{id}/forecasts  
+GET /api/analysis/{id}/statistics
+GET /api/analysis/{id}/diagnostics
+```
+
+**Frontend benefits of the improved design:**
+
+- **Lazy loading** - load each tab's data only when needed
+- **Parallel requests** - fetch multiple resources simultaneously with Promise.all()
+
 ## Usage notes
 
-
-Use 250, 500 obs for ARCH, GARCH. 
+Use 250, 500 obs for ARCH, GARCH.
 > Considering the size of biases and convergence errors, it is proposed that at least 250 observations are needed for ARCH(1) models and 500 observations for GARCH(1,1) models. [Small sample properties of GARCH estimates and persistence](https://www.tandfonline.com/doi/abs/10.1080/13518470500039436)
-
-
-
 
 ### Integration Overview
 
@@ -455,33 +467,6 @@ timeseries-frontend/.................
     └── cicd.yml                    # CI/CD pipeline configuration
 ```
 
-## Development Roadmap
-
-1. **Setup Django Project**
-   - Initialize Django project structure
-   - Configure dev/prod settings
-   - Set up Django REST Framework
-
-2. **Create Core Views**
-   - Homepage w/intro
-   - Analysis w/forms
-   - Results w/visualizations
-
-3. **API Integration**
-   - Connect to backend API endpoints
-   - Handle authentication and data transfer
-   - Implement error handling
-
-4. **Dashboard Development**
-   - Design interactive dashboard
-   - Implement data visualizations
-   - Add filtering and customization options
-
-5. **Testing & Deployment**
-   - Write unit and integration tests
-   - Setup CI/CD with GitHub Actions
-   - Configure for prod deployment
-
 ## Getting Started
 
 ```bash
@@ -510,13 +495,6 @@ Deploy frontend using:
 - Docker containers
 - Google Cloud Run
 
-## Integration with Backend
-
-Frontend communicates with the backend API via:
-
-- RESTful API calls
-- JSON data exchange
-- JWT tokens authentication
 
 ## Design Principles
 
@@ -636,389 +614,4 @@ flowchart LR
     ResultNone --> MarketEfficiency
     Result1pct --> RiskManagement
     Result5pct --> RiskManagement
-```
-
-## API Documentation
-
-The frontend communicates with the timeseries-api backend through a comprehensive RESTful API. Here's the complete API reference:
-
-### Base Configuration
-
-```python
-# API Client Configuration
-API_BASE_URL = "http://localhost:8000"  # Development
-API_BASE_URL = "https://api.spilloverlab.com"  # Production
-API_TIMEOUT = 30  # seconds
-```
-
-### Authentication
-
-Currently using session-based authentication. Future versions will support:
-- JWT tokens for stateless authentication
-- API keys for programmatic access
-- OAuth2 integration for third-party services
-
-### Core API Endpoints
-
-#### 1. Health Check
-```http
-GET /health
-```
-
-**Response:**
-```json
-{
-  "status": "healthy",
-  "timestamp": "2025-06-15T10:30:00Z",
-  "version": "1.0.0"
-}
-```
-
-#### 2. Pipeline Execution (Primary Endpoint)
-```http
-POST /run_pipeline
-Content-Type: application/json
-```
-
-**Request Body:**
-```json
-{
-  "source_actual_or_synthetic_data": "synthetic",
-  "data_start_date": "2023-01-01",
-  "data_end_date": "2023-12-31",
-  "symbols": ["AAPL", "GOOGL", "MSFT"],
-  "synthetic_anchor_prices": [150.0, 2800.0, 300.0],
-  "synthetic_random_seed": 42,
-  "arima_params": {
-    "p": 1,
-    "d": 1,
-    "q": 1,
-    "forecast_steps": 5
-  },
-  "garch_params": {
-    "p": 1,
-    "q": 1,
-    "dist": "t",
-    "forecast_steps": 5
-  },
-  "scaling_method": "standardize",
-  "spillover_enabled": true,
-  "spillover_params": {
-    "method": "diebold_yilmaz",
-    "forecast_horizon": 10,
-    "window_size": null,
-    "max_lag": 5,
-    "alpha": 0.05
-  }
-}
-```
-
-**Response Structure:**
-```json
-{
-  "original_data": [
-    {"date": "2023-01-01", "AAPL": 150.0, "GOOGL": 2800.0, "MSFT": 300.0}
-  ],
-  "returns_data": [
-    {"date": "2023-01-02", "AAPL": 0.0153, "GOOGL": -0.0089, "MSFT": 0.0067}
-  ],
-  "scaled_data": [
-    {"date": "2023-01-02", "AAPL": 0.8234, "GOOGL": -0.4567, "MSFT": 0.3421}
-  ],
-  "stationarity_results": {
-    "all_symbols_stationarity": {
-      "AAPL": {
-        "adf_statistic": -3.45,
-        "p_value": 0.032,
-        "critical_values": {"1%": -3.75, "5%": -3.0, "10%": -2.63},
-        "is_stationary": true,
-        "interpretation": "The series is stationary (p-value: 0.0320)."
-      }
-    }
-  },
-  "series_stats": {
-    "AAPL": {
-      "mean": 0.0008,
-      "std": 0.0234,
-      "skew": -0.1234,
-      "kurt": 3.4567,
-      "jarque_bera": 12.34,
-      "ljung_box": 8.92
-    }
-  },
-  "arima_results": {
-    "all_symbols_arima": {
-      "AAPL": {
-        "summary": "ARIMA(1,1,1) Model Results...",
-        "forecast": [0.002, 0.003, 0.0025, 0.0028, 0.0024],
-        "interpretation": "The ARIMA model shows an increasing trend..."
-      }
-    }
-  },
-  "garch_results": {
-    "all_symbols_garch": {
-      "AAPL": {
-        "summary": "GARCH(1,1) Model Results...",
-        "forecast": [0.0025, 0.0028, 0.0030, 0.0027, 0.0029],
-        "interpretation": "The GARCH model predicts stable volatility..."
-      }
-    }
-  },
-  "spillover_results": {
-    "total_spillover_index": 45.67,
-    "directional_spillover": {
-      "AAPL_to_others": 15.23,
-      "GOOGL_to_others": 18.45,
-      "MSFT_to_others": 12.99
-    },
-    "net_spillover": {
-      "AAPL": 2.34,
-      "GOOGL": -1.23,
-      "MSFT": -1.11
-    },
-    "pairwise_spillover": {
-      "AAPL": {"GOOGL": 8.45, "MSFT": 6.78},
-      "GOOGL": {"AAPL": 9.12, "MSFT": 9.33},
-      "MSFT": {"AAPL": 5.67, "GOOGL": 7.32}
-    },
-    "granger_causality": {
-      "AAPL->GOOGL": {
-        "causality_1pct": true,
-        "causality_5pct": true,
-        "optimal_lag_1pct": 2,
-        "optimal_lag_5pct": 2,
-        "significance_summary": {
-          "min_p_value": 0.0089
-        }
-      }
-    },
-    "fevd_table": {
-      "AAPL": {"AAPL": 65.2, "GOOGL": 20.3, "MSFT": 14.5},
-      "GOOGL": {"AAPL": 18.7, "GOOGL": 58.9, "MSFT": 22.4},
-      "MSFT": {"AAPL": 16.1, "GOOGL": 25.6, "MSFT": 58.3}
-    },
-    "interpretation": "The system shows a total spillover index of 45.67%..."
-  },
-  "granger_causality_results": {
-    "causality_results": {
-      "AAPL->GOOGL": {
-        "causality_1pct": true,
-        "causality_5pct": true,
-        "optimal_lag_1pct": 2,
-        "optimal_lag_5pct": 2,
-        "significance_summary": {"min_p_value": 0.0089}
-      }
-    },
-    "interpretations": {
-      "AAPL->GOOGL": "⭐ Highly Significant Causality (1% level): AAPL strongly Granger-causes GOOGL..."
-    },
-    "metadata": {
-      "max_lag": 5,
-      "n_pairs_tested": 6,
-      "significance_levels": ["1%", "5%"],
-      "config_enabled": true
-    }
-  },
-  "var_results": {
-    "fitted_model": "VAR model fitted for 3 variables (AAPL, GOOGL, MSFT) as part of spillover analysis",
-    "selected_lag": 2,
-    "ic_used": "AIC",
-    "coefficients": {
-      "AAPL": {"lag1_AAPL": 0.123, "lag1_GOOGL": 0.045},
-      "GOOGL": {"lag1_AAPL": 0.078, "lag1_GOOGL": 0.156}
-    },
-    "granger_causality": {
-      "AAPL->GOOGL": {"causality_1pct": true}
-    },
-    "fevd_matrix": [
-      [65.2, 20.3, 14.5],
-      [18.7, 58.9, 22.4],
-      [16.1, 25.6, 58.3]
-    ],
-    "fevd_interpretation": {
-      "AAPL": "For AAPL, forecast errors are explained as follows: 65.2% comes from its own innovations..."
-    },
-    "interpretation": "The Vector Autoregression (VAR) model has been successfully fitted with 2 lag(s)..."
-  }
-}
-```
-
-### Data Source Options
-
-#### Synthetic Data Parameters
-```json
-{
-  "source_actual_or_synthetic_data": "synthetic",
-  "synthetic_anchor_prices": [150.0, 2800.0, 300.0],
-  "synthetic_random_seed": 42
-}
-```
-
-#### Real Market Data Parameters
-```json
-{
-  "source_actual_or_synthetic_data": "actual",
-  "symbols": ["AAPL", "GOOGL", "MSFT"],
-  "data_start_date": "2023-01-01",
-  "data_end_date": "2023-12-31"
-}
-```
-
-### Model Configuration Options
-
-#### ARIMA Parameters
-```json
-{
-  "arima_params": {
-    "p": 1,              // Autoregressive order (0-5)
-    "d": 1,              // Differencing order (0-2) 
-    "q": 1,              // Moving average order (0-5)
-    "forecast_steps": 5   // Number of periods to forecast (1-20)
-  }
-}
-```
-
-#### GARCH Parameters
-```json
-{
-  "garch_params": {
-    "p": 1,              // GARCH order (1-3)
-    "q": 1,              // ARCH order (1-3)
-    "dist": "t",         // Distribution: "normal", "t", "skewt"
-    "forecast_steps": 5   // Number of periods to forecast (1-20)
-  }
-}
-```
-
-#### Spillover Analysis Parameters
-```json
-{
-  "spillover_enabled": true,
-  "spillover_params": {
-    "method": "diebold_yilmaz",    // Analysis method
-    "forecast_horizon": 10,         // FEVD forecast horizon (5-20)
-    "window_size": null,           // Rolling window (null for full sample)
-    "max_lag": 5,                  // Maximum VAR lag order (1-10)
-    "alpha": 0.05                  // Significance level (0.01, 0.05, 0.10)
-  }
-}
-```
-
-### Error Handling
-
-The API uses standard HTTP status codes and provides detailed error messages:
-
-#### Client Errors (4xx)
-```json
-{
-  "message": "Validation error: Invalid date format",
-  "error_type": "ValidationError",
-  "details": {
-    "field": "data_start_date",
-    "expected_format": "YYYY-MM-DD"
-  }
-}
-```
-
-#### Server Errors (5xx)
-```json
-{
-  "message": "Pipeline failed: Insufficient data points for analysis",
-  "error_type": "InsufficientDataError",
-  "error_location": "DataProcessor in data_processor.py at line 142"
-}
-```
-
-### Frontend API Client Implementation
-
-The frontend uses a dedicated API client class for backend communication:
-
-```python
-class APIClient:
-    """
-    Handles all communication with the timeseries-api backend.
-    Provides methods for pipeline execution and error handling.
-    """
-    
-    def __init__(self, base_url: str, timeout: int = 30):
-        self.base_url = base_url
-        self.timeout = timeout
-        self.session = requests.Session()
-    
-    def run_full_pipeline(self, pipeline_params: dict) -> dict:
-        """
-        Execute the complete time series analysis pipeline.
-        
-        Args:
-            pipeline_params: Dictionary with all pipeline parameters
-            
-        Returns:
-            Complete analysis results including all models and interpretations
-            
-        Raises:
-            APIClientException: For API errors
-            APIConnectionError: For connection issues
-        """
-        return self._make_request("POST", "/run_pipeline", pipeline_params)
-    
-    def get_health(self) -> dict:
-        """Check API health status."""
-        return self._make_request("GET", "/health")
-    
-    def _make_request(self, method: str, endpoint: str, data: dict = None) -> dict:
-        """Make HTTP request with error handling."""
-        # Implementation details...
-```
-
-### Data Validation Rules
-
-The API enforces the following validation rules:
-
-#### Date Parameters
-- Format: `YYYY-MM-DD`
-- `data_start_date` must be before `data_end_date`
-- Maximum date range: 5 years
-- Minimum date range: 30 days
-
-#### Symbol Parameters
-- Minimum symbols: 1
-- Maximum symbols: 10
-- Valid formats: Uppercase alphanumeric (e.g., "AAPL", "BTC-USD")
-
-#### Model Parameters
-- ARIMA orders: p,q ∈ [0,5], d ∈ [0,2]
-- GARCH orders: p,q ∈ [1,3]
-- Forecast steps: [1,20]
-- Spillover max_lag: [1,10]
-
-### Rate Limiting
-
-API requests are rate-limited to ensure fair usage:
-
-- **Development**: 100 requests per hour
-- **Production**: 1000 requests per hour per user
-- **Burst limit**: 10 requests per minute
-
-### Response Caching
-
-The frontend implements intelligent caching:
-
-- **Pipeline results**: Cached for 1 hour based on parameter hash
-- **Health checks**: Cached for 5 minutes
-- **Static analysis**: Cached for 24 hours
-
-### WebSocket Support (Future)
-
-Planned WebSocket endpoints for real-time updates:
-
-```javascript
-// Future WebSocket implementation
-const ws = new WebSocket('wss://api.spilloverlab.com/ws/pipeline');
-ws.onmessage = function(event) {
-    const update = JSON.parse(event.data);
-    updateProgressBar(update.progress);
-    if (update.step_complete) {
-        displayStepResults(update.step_name, update.results);
-    }
-};
 ```
